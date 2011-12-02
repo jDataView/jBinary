@@ -5,7 +5,7 @@ jParser makes it easy to parse binary files in Javascript.
 
  * You write the structure once, it gets parsed automatically.
  * The parsing process can be extended with custom functions. It allows to parse non trivial files with ease.
- * It works both in the browser and NodeJS.
+ * It works both in the browser and NodeJS as it is powered by [jDataView](https://github.com/vjeux/jDataView).
 
 API
 ======
