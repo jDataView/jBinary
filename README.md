@@ -25,6 +25,7 @@ jParser methods:
   * **skip(count)**: Advance in the file by ``count`` bytes.
   * **seek(position)**: Go to ``position``.
   * **seek(position, callback)**: Go to ``position``, execute the ``callback`` and return to the previous position.
+  * **current**: The current object being parsed. See it as a way to use what has been parsed just before.
 
 jParser constructor:
 
@@ -97,7 +98,21 @@ string0: function (length) {
 }
 ```
 
-**Control Parsing** The best part of jParser is that complicated parsing logic can be expressed within the structure. It allows to parse complex files without having to split structure from parsing code.
+**Back Reference** Instead of using an integer for the array size, you can put a function that will return an integer. In this function, you can use ```this.current``` to reference the englobing object being parsed.
+
+```javascript
+image: {
+  width: 'uint8',
+  height: 'uint8',
+  pixels: [
+    'array',
+    ['array', 'rgba', function () { return this.current.width; }],
+    function () { return this.current.height; }
+  ]
+}
+```
+
+**Advanced Parsing** The best part of jParser is that complicated parsing logic can be expressed within the structure. It allows to parse complex files without having to split structure from parsing code.
 
 ```javascript
 entryHeader: {
@@ -127,6 +142,8 @@ file: {
   names: ['entry', 'name']
 }
 ```
+
+
 
 Caveats
 =======
