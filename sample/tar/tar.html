@@ -1,0 +1,75 @@
+<script src="../../../jDataView/src/jquery-1.7.1-binary-ajax.js"></script>
+<script src="../../../jDataView/src/jdataview.js"></script>
+<script src="../../src/jparser.js"></script>
+
+<style>
+textarea { width: 80%; height: 300px; }
+</style>
+<p>Content of the file <a href="jquery.tar">jquery.tar</a></p>
+
+<script>
+function untar(view) {
+	var parser = new jParser(view, {
+		oct: function (size) {
+			return parseInt(this.parse(['string', size]), 8);
+		},
+
+		string0: function (size) {
+			return this.parse(['string', size]).replace(/\0+$/, '');
+		},
+
+		padding: ['skip', function () {
+			return (512 - (this.tell() % 512)) % 512;
+		}],
+
+		block: function (type) {
+			var res = [];
+			while (this.tell() < this.view.byteLength) {
+				res.push(this.parse(type));
+			}
+			return res;
+		},
+
+		file: {
+			name: ['string0', 100],
+			mode: ['oct', 8],
+			owner: ['oct', 8],
+			group: ['oct', 8],
+			size: ['oct', 12],
+			modtime: ['oct', 12],
+			checksum: ['oct', 8],
+			link: ['oct', 1],
+			name_linked: ['string0', 100],
+			ustar: ['string', 6],
+			ustar_version: ['oct', 2],
+			owner_name: ['string0', 32],
+			group_name: ['string0', 32],
+			device: ['array', ['oct', 8], 2],
+			name_prefix: ['string0', 155],
+			padding1: 'padding',
+			content: ['string', function () { return this.current.size; }],
+			padding2: 'padding'
+		},
+
+		all: ['block', 'file']
+	});
+
+	var files = parser.parse('all');
+
+	// Display the files
+
+	for (var i = 0; i < files.length; ++i) {
+		var file = files[i];
+		var content = file.content;
+		file.content = null; // Just for the display
+		$('body').append($('<pre></pre>').html(JSON.stringify(file, null, '  ')));
+		if (file.size) {
+			$('body').append($('<textarea></textarea>').val(content));
+		}
+	}
+}
+
+// Download the file
+$.get('jquery.tar', untar, 'dataview');
+
+</script>
