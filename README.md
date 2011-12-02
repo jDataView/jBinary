@@ -149,6 +149,43 @@ file: {
 ```
 
 
+Get Started
+=======
+
+**NodeJS**: Just use ```npm``` to install ```jParser``` and you are set :)
+
+```bash
+npm install jParser
+```
+
+```javascript
+var fs = require('fs');
+var jParser = require('jParser');
+
+fs.readFile('file.bin', function (err, data) {
+  var parser = new jParser(data, {
+    magic: ['array', 'uint8', 4]
+  });
+  console.log(parser.parse('magic'));
+});
+```
+
+**Browser**: I've [patched jQuery](https://github.com/vjeux/jDataView/blob/master/jquery/jquery-patch.txt) to allow to download binary files using the best binary format. You include this patched jQuery, jDataView and jParser and you are set :)
+
+```html
+<script src="https://raw.github.com/vjeux/jDataView/master/jquery/jquery-1.7.1-binary-ajax.js"></script>
+<script src="https://raw.github.com/vjeux/jDataView/master/src/jdataview.js"></script>
+<script src="https://raw.github.com/vjeux/jParser/master/src/jparser.js"></script>
+
+<script>
+$.get('file.bin', function (data) {
+  var parser = new jParser(data, {
+    magic: ['array', 'uint8', 4]
+  });
+  console.log(parser.parse('magic'));
+}, 'dataview');
+</script>
+```
 
 Caveats
 =======
