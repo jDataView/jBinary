@@ -15,12 +15,17 @@ Primitive Structures:
   * **Unsigned Int**: uint8, uint16, uint32
   * **Signed Int**: int8, int16, int32
   * **Float**: float32, float64
-  * **String**: char, [string, len]
-  * **Array**: [array, type, len]
+  * **String**: char, string(len)
+  * **Array**: array(type, len)
+  * **Position**: tell(), skip(len), seek(pos), seek(pos, func)
 
 jParser methods:
 
-  * **parse(structure)**: Run the parsing, can be used recursively.
+  * **parse(value)**: Run the parsing, can be used recursively.
+    * **Function**: Calls the function.
+    * **String**: Dereferences the value in the structure.
+    * **Array**: Function call, the function is the first element and arguments are the following.
+    * **Object**: Returns an object with the same keys and parses the values.
   * **tell()**: Return the current position.
   * **skip(count)**: Advance in the file by ``count`` bytes.
   * **seek(position)**: Go to ``position``.
