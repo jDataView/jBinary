@@ -127,3 +127,21 @@ file: {
   names: ['entry', 'name']
 }
 ```
+
+Demos
+=====
+
+**<a href="http://fooo.fr/~vjeux/github/jsWoWModelViewer/modelviewer.html">World of Warcraft Model Viewer</a>.** It uses jParser to read the binary model and then WebGL to display it.
+
+  * **[m2.js](http://fooo.fr/~vjeux/github/jsWoWModelViewer/scripts/m2.js)**: jParser structure.
+  * [model.json](http://fooo.fr/~vjeux/github/jsWoWModelViewer/model.json): parsed file.
+
+<a href="http://fooo.fr/~vjeux/github/jsWoWModelViewer/modelviewer.html"><img src="http://fooo.fr/~vjeux/github/jsWoWModelViewer/images/modelviewer.png"></a>
+
+**Diablo 3 Internal Files**.
+
+  * **[convert.coffee](http://fooo.fr/~vjeux/boub/d3/files/convert.coffee)**: jParser structure. CoffeeScript makes it even easier to write file structure.
+  * Example of parsed files:
+    * [Items_Weapons.json](http://fooo.fr/~vjeux/boub/d3/files/GameBalance/Items_Weapons.json)
+    * [Quest/ProtectorOfTristam.json](http://fooo.fr/~vjeux/boub/d3/files/Quest/ProtectorOfTristram.json)
+    * [TreasureClass/SkeletonKing](http://fooo.fr/~vjeux/boub/d3/files/TreasureClass/SkeletonKing.json)
