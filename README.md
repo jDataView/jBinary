@@ -17,7 +17,7 @@ Primitive Structures:
   * **Float**: float32, float64
   * **String**: char, string(len)
   * **Array**: array(type, len)
-  * **Position**: tell(), skip(len), seek(pos), seek(pos, func)
+  * **Position**: tell, skip(len), seek(pos), seek(pos, func)
 
 jParser methods:
 
