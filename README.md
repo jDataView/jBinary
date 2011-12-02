@@ -30,10 +30,10 @@ You have the ability to define C-like structures. It's a Javascript object where
 
 ```javascript
 header: {
-		fileId: 'int32',
- 	recordIndex: 'int32',
-		hash: ['array', 'uint32', 8],
-		fileName: ['string', 256],
+  fileId: 'int32',
+  recordIndex: 'int32',
+  hash: ['array', 'uint32', 8],
+  fileName: ['string', 256],
 }
 ```
 
