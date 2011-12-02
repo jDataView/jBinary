@@ -61,9 +61,13 @@ uvAnimation: {
 Helpers
 
 ```javascript
-float2: ['array', 'float', 2],
-float3: ['array', 'float', 3],
-float4: ['array', 'float', 4],
+float3: ['array', 'float32', 3],
+float4: {
+  x: 'float32',
+  y: 'float32',
+  z: 'float32',
+  w: 'float32'
+},
 hex32: function () {
   return '0x' + this.parse('uint32').toString(16);
 }
@@ -88,7 +92,12 @@ entry: function (type) {
   return res;
 }
 
+name: {
+ language: 'int32',
+ text: ['string', 256]
+},
+
 file: {
-  value: ['entry', 'uint32']
+  names: ['entry', 'name']
 }
 ```
