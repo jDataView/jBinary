@@ -159,6 +159,15 @@ If you follow those two rules, the library will work in all the current Javascri
 Demos
 =====
 
+**ICO Parser**. This is a basic example to parse a binary file in NodeJS. It shows how to solve many common issues with binary file parsing.
+
+ * **[ico.js](http://fooo.fr/~vjeux/github/jParser/sample/ico/ico.node.js)**: jParser structure.
+ * **[ico.json](http://fooo.fr/~vjeux/github/jParser/sample/ico/favicon.json): parsed file.
+
+**[Tar Extractor](http://fooo.fr/~vjeux/github/jParser/sample/tar/tar.html)**. This is a basic example to parse a binary file in the browser.
+
+ * **[tar.html](http://fooo.fr/~vjeux/github/jParser/sample/tar/tar.html)**: jParser structure.
+
 **<a href="http://fooo.fr/~vjeux/github/jsWoWModelViewer/modelviewer.html">World of Warcraft Model Viewer</a>.** It uses jParser to read the binary model and then WebGL to display it.
 
   * **[m2.js](http://fooo.fr/~vjeux/github/jsWoWModelViewer/scripts/m2.js)**: jParser structure.
