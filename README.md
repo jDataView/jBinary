@@ -3,10 +3,10 @@
 
 jParser makes it easy to parse binary files in Javascript.
 
-Blocks
+API
 ======
 
-Primitives:
+Primitive Structures:
 
   * **Unsigned Int**: uint8, uint16, uint32
   * **Signed Int**: int8, int16, int32
@@ -14,29 +14,31 @@ Primitives:
   * **String**: char, [string, len]
   * **Array**: [array, type, len]
 
+jParser methods:
+
+  * **parse(structure)**: Run the parsing, can be used recursively.
+  * **tell()**: Return the current position.
+  * **skip(count)**: Advance in the file by ``count`` bytes.
+  * **seek(position)**: Go to ``position``.
+  * **seek(position, callback)**: Go to ``position``, execute the ``callback`` and return to the previous position.
 
 Examples
 ========
 
-Basic C Structure
+**Basic C Structure**
+You have the ability to define C-like structures. It's a Javascript object where keys are labels and values are types.
 
 ```javascript
 header: {
-  header_sz:   'uint32',
-  width:   'int32',
-  height: 	'int32',
-  nplanes: 	'uint16',
-  bitspp: 	'uint16',
-  compress_type:'uint32',
-  bmp_bytesz: 	'uint32',
-  hres: 	'int32',
-  vres: 	'int32',
-  ncolors: 	'uint32',
-  nimpcolors: 	'uint32'
+		fileId: 'int32',
+ 	recordIndex: 'int32',
+		hash: ['array', 'uint32', 8],
+		fileName: ['string', 256],
 }
 ```
 
-Structure using references to other structures
+**References**
+Structures can reference other structures. Use structure name within a string in order to reference it. The following is an example from World of Warcraft model files.
 
 ```javascript
 nofs: {
@@ -58,20 +60,25 @@ uvAnimation: {
 }
 ```
 
-Helpers
+**Helpers**
+It is really easy to make new primitive types. You can either use existing constructions such as objects (```float3```) or arrays (```float4```). In case you want to do something more complicated, you always have the option to define a new function and use ```this.parse``` to keep parsing (```hex32```, ```string0```).
 
 ```javascript
-float3: ['array', 'float32', 3],
-float4: {
+float3: {
   x: 'float32',
   y: 'float32',
-  z: 'float32',
-  w: 'float32'
+  z: 'float32'
 },
+float4: ['array', 'float32', 4],
 hex32: function () {
   return '0x' + this.parse('uint32').toString(16);
+},
+string0: function (length) {
+  return this.parse(['string', length]).replace(/[\u0000]+$/g, '');
 }
 ```
+
+**Control Parsing** The best part of jParser is that complicated parsing logic can be expressed within the structure. It allows to parse complex files without having to split structure from parsing code.
 
 ```javascript
 entryHeader: {
