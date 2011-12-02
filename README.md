@@ -22,6 +22,12 @@ jParser methods:
   * **seek(position)**: Go to ``position``.
   * **seek(position, callback)**: Go to ``position``, execute the ``callback`` and return to the previous position.
 
+jParser constructor:
+
+  * **new jParser(data, structure)**
+    * ``data`` can be a String, [ArrayBuffer](https://developer.mozilla.org/en/JavaScript_typed_arrays), [Node Buffer](http://nodejs.org/docs/v0.6.2/api/buffers.html) or [jDataView](https://github.com/vjeux/jDataView).
+    * ``structure`` is an object with all the defined structures.
+
 Examples
 ========
 
