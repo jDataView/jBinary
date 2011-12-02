@@ -1,6 +1,6 @@
 
 var fs = require('fs');
-var jParser = require('../src/jparser.js');
+var jParser = require('../../src/jparser.js');
 
 fs.readFile('favicon.ico', function (err, buffer) {
 	var parser = new jParser(buffer, {
