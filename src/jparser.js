@@ -1,5 +1,10 @@
 (function () {
 
+if (typeof jDataView === 'undefined' && typeof require !== 'undefined') {
+	jDataView = require('jDataView');
+}
+
+
 // Extend code from underscorejs
 var extend = function (obj) {
 	for (var i = 1; i < arguments.length; ++i) {
@@ -17,9 +22,19 @@ function jParser(view, structure) {
 	if (!(this instanceof arguments.callee)) {
 		throw new Error("Constructor may not be called as a function");
 	}
+	if (!(view instanceof jDataView)) {
+		view = new jDataView(view);
+	}
 	this.view = view;
 	this.view.seek(0);
 	this.structure = extend({}, jParser.prototype.structure, structure);
+}
+
+function toInt(val) {
+	if (typeof val === 'function') {
+		val = val.call(this);
+	}
+	return val;
 }
 
 jParser.prototype.structure = {
@@ -32,11 +47,11 @@ jParser.prototype.structure = {
 	float32: function () { return this.view.getFloat32(); },
 	float64: function () { return this.view.getFloat64(); },
 	char: function () { return this.view.getChar(); },
-	string: function (length) { return this.view.getString(length); },
+	string: function (length) {
+		return this.view.getString(toInt.call(this, length));
+	},
 	array: function (type, length) {
-		if (typeof length === 'function') {
-			length = length();
-		}
+		length = toInt.call(this, length);
 		var results = [];
 		for (var i = 0; i < length; ++i) {
 			results.push(this.parse(type));
@@ -44,31 +59,30 @@ jParser.prototype.structure = {
 		return results;
 	},
 	seek: function (position, block) {
-		if (typeof position === 'function') {
-			position = position();
-		}
+		position = toInt.call(this, position);
 		if (block instanceof Function) {
 			var old_position = this.view.tell();
 			this.view.seek(position);
-			block();
-			return this.view.seek(old_position);
+			var result = block.call(this);
+			this.view.seek(old_position);
+			return result;
 		} else {
 			return this.view.seek(position);
 		}
 	},
 	tell: function () {
 		return this.view.tell();
+	},
+	skip: function (offset) {
+		offset = toInt.call(this, offset);
+		this.view.seek(this.view.tell() + offset);
+		return offset;
 	}
 };
 
 jParser.prototype.seek = jParser.prototype.structure.seek;
 jParser.prototype.tell = jParser.prototype.structure.tell;
-jParser.prototype.skip = function (offset) {
-	if (typeof offset === 'function') {
-		offset = offset();
-	}
-	return this.view.seek(this.view.tell() + offset);
-};
+jParser.prototype.skip = jParser.prototype.structure.skip;
 
 jParser.prototype.parse = function (structure) {
 	// f, 1, 2 means f(1, 2)
@@ -94,6 +108,7 @@ jParser.prototype.parse = function (structure) {
 	if (typeof structure === 'object') {
 		var output = {};
 		for (var key in structure) {
+			this.current = output;
 			output[key] = this.parse(structure[key]);
 		}
 		return output;
