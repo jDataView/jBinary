@@ -19,7 +19,7 @@ Primitive Structures:
   * **Array**: array(type, len)
   * **Position**: tell, skip(len), seek(pos), seek(pos, func)
 
-jParser methods:
+jParser Methods:
 
   * **parse(value)**: Run the parsing, can be used recursively.
     * **Function**: Calls the function.
@@ -32,7 +32,7 @@ jParser methods:
   * **seek(position, callback)**: Go to ``position``, execute the ``callback`` and return to the previous position.
   * **current**: The current object being parsed. See it as a way to use what has been parsed just before.
 
-jParser constructor:
+jParser Constructor:
 
   * **new jParser(data, structure)**
     * ``data`` is a [jDataView](https://github.com/vjeux/jDataView). You can give pretty much anything (String, [ArrayBuffer](https://developer.mozilla.org/en/JavaScript_typed_arrays), [Node Buffer](http://nodejs.org/docs/v0.6.2/api/buffers.html)), it will be casted to jDataView automatically.
