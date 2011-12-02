@@ -94,7 +94,7 @@ hex32: function () {
   return '0x' + this.parse('uint32').toString(16);
 },
 string0: function (length) {
-  return this.parse(['string', length]).replace(/[\u0000]+$/g, '');
+  return this.parse(['string', length]).replace(/\0+$/g, '');
 }
 ```
 
