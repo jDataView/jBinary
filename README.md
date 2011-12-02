@@ -128,6 +128,17 @@ file: {
 }
 ```
 
+Caveats
+=======
+
+This tool works thanks to a feature that is not in the Javascript specification: When you iterate over an object keys, the keys will be listed in their order of insertion. Note that Chrome and Opera do not respect this implicit rule for keys that are numbers.
+
+If you follow those two rules, the library will work in all the current Javascript implementations.
+
+ * Do not start a key name with a digit
+ * Do not put the same key twice in the same object
+
+
 Demos
 =====
 
