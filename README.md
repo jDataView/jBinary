@@ -77,7 +77,7 @@ hex32: function () {
 entryHeader: {
   start: 'int32',
   count: 'int32'
-}
+},
 
 entry: function (type) {
   var that = this;
@@ -90,7 +90,7 @@ entry: function (type) {
     }
   });
   return res;
-}
+},
 
 name: {
  language: 'int32',
