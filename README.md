@@ -25,7 +25,7 @@ jParser methods:
 jParser constructor:
 
   * **new jParser(data, structure)**
-    * ``data`` can be a String, [ArrayBuffer](https://developer.mozilla.org/en/JavaScript_typed_arrays), [Node Buffer](http://nodejs.org/docs/v0.6.2/api/buffers.html) or [jDataView](https://github.com/vjeux/jDataView).
+    * ``data`` is a [jDataView](https://github.com/vjeux/jDataView). You can give pretty much anything (String, [ArrayBuffer](https://developer.mozilla.org/en/JavaScript_typed_arrays), [Node Buffer](http://nodejs.org/docs/v0.6.2/api/buffers.html)), it will be casted to jDataView automatically.
     * ``structure`` is an object with all the defined structures.
 
 Examples
@@ -35,12 +35,21 @@ Examples
 You have the ability to define C-like structures. It's a Javascript object where keys are labels and values are types.
 
 ```javascript
-header: {
-  fileId: 'int32',
-  recordIndex: 'int32',
-  hash: ['array', 'uint32', 8],
-  fileName: ['string', 256],
-}
+var parser = new jParser(file, {
+  header: {
+    fileId: 'int32',
+    recordIndex: 'int32',
+    hash: ['array', 'uint32', 4],
+    fileName: ['string', 256],
+  }
+});
+parser.parse('header');
+// {
+//   fileId: 42,
+//   recordIndex: 6002,
+//   hash: [4237894687, 3491173757, 3626834111, 2631772842],
+//   fileName: ".\\Resources\\Excel\\Items_Weapons.xls"
+// }
 ```
 
 **References**
