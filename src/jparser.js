@@ -23,7 +23,7 @@ function jParser(view, structure) {
 		throw new Error("Constructor may not be called as a function");
 	}
 	if (!(view instanceof jDataView)) {
-		view = new jDataView(view);
+		view = new jDataView(view, undefined, undefined, true);
 	}
 	this.view = view;
 	this.view.seek(0);
