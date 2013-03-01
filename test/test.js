@@ -9,7 +9,7 @@ var test = QUnit.test;
 var buffer = jDataView.createBuffer(0x00,
 	0xff, 0xfe, 0xfd, 0xfc,
 	0xfa, 0x00, 0xba, 0x01);
-var view = new jDataView(buffer, 1);
+var view = new jDataView(buffer, 1, undefined, true);
 var parser = new jParser(view);
 
 function chr (x) {
