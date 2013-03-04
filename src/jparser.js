@@ -77,6 +77,31 @@ jParser.prototype.structure = {
 		offset = toInt.call(this, offset);
 		this.view.seek(this.view.tell() + offset);
 		return offset;
+	},
+	bitfield: function (structure) {
+        var output = {},
+            bitShift = 0;
+
+        for (var key in structure) {
+            var fieldInfo = structure[key],
+                fieldValue;
+
+            if (typeof fieldInfo === 'object') {
+                fieldValue = this.bitfield(fieldInfo);
+            } else {
+                var bitSize = toInt.call(this, fieldInfo),
+                    fullValue = this.view.getUint32(undefined, true);
+
+                bitShift += bitSize;
+                fieldValue = (fullValue >>> (32 - bitShift)) & ~(-1 << bitSize);
+                bitShift &= 7;
+                this.skip(4 - (bitSize >>> 3));
+            }
+
+            output[key] = fieldValue;
+        }
+
+        return output;
 	}
 };
 
