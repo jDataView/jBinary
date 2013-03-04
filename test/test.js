@@ -80,3 +80,15 @@ test('seek', function () {
 	});
 	equal(parser.tell(), 3);
 });
+
+test('bitfield', function () {
+    parser.seek(6);
+    var bitfield = parser.parse(['bitfield', {
+        first5: 5,
+        next5: 5,
+        last6: 6
+    }]);
+    equal(bitfield.first5, 0x17);
+    equal(bitfield.next5, 0x08);
+    equal(bitfield.last6, 0x01);
+})

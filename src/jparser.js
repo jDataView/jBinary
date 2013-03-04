@@ -90,12 +90,19 @@ jParser.prototype.structure = {
                 fieldValue = this.bitfield(fieldInfo);
             } else {
                 var bitSize = toInt.call(this, fieldInfo),
-                    fullValue = this.view.getUint32(undefined, true);
+                    byteSize = ((bitShift + bitSize + 7) >>> 3) - (bitShift >>> 3);
+
+                var b = this.view.getBytes(byteSize, undefined, true),
+                    fullValue = 0;
+
+                for (var i = 0, shift = 0; i < b.length; i++, shift += 8) {
+                    fullValue |= b[i] << shift;
+                }
 
                 bitShift += bitSize;
-                fieldValue = (fullValue >>> (32 - bitShift)) & ~(-1 << bitSize);
+                fieldValue = (fullValue >>> (shift - bitShift)) & ~(-1 << bitSize);
+                this.skip(-byteSize + (bitShift >>> 3));
                 bitShift &= 7;
-                this.skip(4 - (bitSize >>> 3));
             }
 
             output[key] = fieldValue;
