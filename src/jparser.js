@@ -79,7 +79,8 @@ jParser.prototype.structure = {
 		return offset;
 	},
 	bitfield: function (structure, bitShift) {
-		var output = {};
+		var output = {},
+            current = this.current;
 
 		bitShift = bitShift || 0;
 
@@ -118,6 +119,8 @@ jParser.prototype.structure = {
 			output[key] = fieldValue;
 		}
 
+        this.current = current;
+
 		return output;
 	}
 };
@@ -148,11 +151,16 @@ jParser.prototype.parse = function (structure) {
 
 	// {key: val} means {key: parse(val)}
 	if (typeof structure === 'object') {
-		var output = {};
+		var output = {},
+            current = this.current;
+
 		for (var key in structure) {
 			this.current = output;
 			output[key] = this.parse(structure[key]);
 		}
+
+        this.current = current;
+
 		return output;
 	}
 
