@@ -81,7 +81,7 @@ jParser.prototype.structure = {
 	bitfield: function (structure, bitShift) {
 		var output = {};
 
-        bitShift = bitShift || 0;
+		bitShift = bitShift || 0;
 
 		for (var key in structure) {
 			var fieldInfo = structure[key],
@@ -90,29 +90,29 @@ jParser.prototype.structure = {
 			if (typeof fieldInfo === 'object') {
 				fieldValue = this.parse(this.structure.bitfield, fieldInfo, bitShift);
 			} else {
-                this.current = output;
+				this.current = output;
 
-                var bitSize = toInt.call(this, fieldInfo);
-                fieldValue = 0;
+				var bitSize = toInt.call(this, fieldInfo);
+				fieldValue = 0;
 
-                if (bitShift < 0) {
-                    var byteShift = bitShift >> 3; // Math.floor(bitShift / 8)
-                    this.skip(byteShift);
-                    bitShift &= 7; // bitShift + 8 * Math.floor(bitShift / 8)
-                }
-                if (bitShift > 0 && bitSize >= 8 - bitShift) {
-                    fieldValue = this.view.getUint8() & ~(-1 << (8 - bitShift));
-                    bitSize -= 8 - bitShift;
-                    bitShift = 0;
-                }
-                while (bitSize >= 8) {
-                    fieldValue = this.view.getUint8() | (fieldValue << 8);
-                    bitSize -= 8;
-                }
-                if (bitSize > 0) {
-                    fieldValue = ((this.view.getUint8() >>> (8 - (bitShift + bitSize))) & ~(-1 << bitSize)) | (fieldValue << bitSize);
-                    bitShift = bitShift + bitSize - 8; // passing negative value for next pass
-                }
+				if (bitShift < 0) {
+					var byteShift = bitShift >> 3; // Math.floor(bitShift / 8)
+					this.skip(byteShift);
+					bitShift &= 7; // bitShift + 8 * Math.floor(bitShift / 8)
+				}
+				if (bitShift > 0 && bitSize >= 8 - bitShift) {
+					fieldValue = this.view.getUint8() & ~(-1 << (8 - bitShift));
+					bitSize -= 8 - bitShift;
+					bitShift = 0;
+				}
+				while (bitSize >= 8) {
+					fieldValue = this.view.getUint8() | (fieldValue << 8);
+					bitSize -= 8;
+				}
+				if (bitSize > 0) {
+					fieldValue = ((this.view.getUint8() >>> (8 - (bitShift + bitSize))) & ~(-1 << bitSize)) | (fieldValue << bitSize);
+					bitShift = bitShift + bitSize - 8; // passing negative value for next pass
+				}
 			}
 
 			output[key] = fieldValue;

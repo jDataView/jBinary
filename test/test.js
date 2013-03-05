@@ -86,19 +86,19 @@ test('bitfield', function () {
 	var bitfield = parser.parse(['bitfield', {
 		first5: 5,
 		next5: function () {
-            return 5;
-        },
+			return 5;
+		},
 		last6: {
-            first3: 3,
-            last3: 3
-        }
+			first3: 3,
+			last3: 3
+		}
 	}]);
-    deepEqual(bitfield, {
-        first5: 0x17,
-        next5: 0x08,
-        last6: {
-            first3: 0,
-            last3: 1
-        }
-    });
+	deepEqual(bitfield, {
+		first5: 0x17,
+		next5: 0x08,
+		last6: {
+			first3: 0,
+			last3: 1
+		}
+	});
 })
