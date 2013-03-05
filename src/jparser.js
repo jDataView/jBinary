@@ -79,36 +79,36 @@ jParser.prototype.structure = {
 		return offset;
 	},
 	bitfield: function (structure) {
-        var output = {},
-            bitShift = 0;
+		var output = {},
+			bitShift = 0;
 
-        for (var key in structure) {
-            var fieldInfo = structure[key],
-                fieldValue;
+		for (var key in structure) {
+			var fieldInfo = structure[key],
+				fieldValue;
 
-            if (typeof fieldInfo === 'object') {
-                fieldValue = this.bitfield(fieldInfo);
-            } else {
-                var bitSize = toInt.call(this, fieldInfo),
-                    byteSize = ((bitShift + bitSize + 7) >>> 3) - (bitShift >>> 3);
+			if (typeof fieldInfo === 'object') {
+				fieldValue = this.bitfield(fieldInfo);
+			} else {
+				var bitSize = toInt.call(this, fieldInfo),
+					byteSize = ((bitShift + bitSize + 7) >>> 3) - (bitShift >>> 3); // = Math.ceil((bitShift + bitSize) / 8) - Math.floor(bitShift / 8)
 
-                var b = this.view.getBytes(byteSize, undefined, true),
-                    fullValue = 0;
+				var b = this.view.getBytes(byteSize, undefined, true),
+					fullValue = 0;
 
-                for (var i = 0, shift = 0; i < b.length; i++, shift += 8) {
-                    fullValue |= b[i] << shift;
-                }
+				for (var i = 0, shift = 0; i < b.length; i++, shift += 8) {
+					fullValue += b[i] << shift;
+				}
 
-                bitShift += bitSize;
-                fieldValue = (fullValue >>> (shift - bitShift)) & ~(-1 << bitSize);
-                this.skip(-byteSize + (bitShift >>> 3));
-                bitShift &= 7;
-            }
+				bitShift += bitSize;
+				fieldValue = (fullValue >>> (shift - bitShift)) & ~(-1 << bitSize);
+				this.skip(-byteSize + (bitShift >>> 3)); // = this.skip(-byteSize + Math.floor(bitShift / 8))
+				bitShift &= 7; // = bitShift %= 8
+			}
 
-            output[key] = fieldValue;
-        }
+			output[key] = fieldValue;
+		}
 
-        return output;
+		return output;
 	}
 };
 
@@ -136,7 +136,7 @@ jParser.prototype.parse = function (structure) {
 		return this.parse.apply(this, [this.structure[key]].concat(structure.slice(1)));
 	}
 
-    // {key: val} means {key: parse(val)}
+	// {key: val} means {key: parse(val)}
 	if (typeof structure === 'object') {
 		var output = {};
 		for (var key in structure) {
