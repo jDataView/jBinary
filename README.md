@@ -18,6 +18,12 @@ Primitive Structures:
   * **String**: char, string(len)
   * **Array**: array(type, len)
   * **Position**: tell, skip(len), seek(pos), seek(pos, func)
+  * **BitField**: bitfield(structure, bitShift)
+    * ``structure`` is ``Object`` with keys as field names and bit-sizes of each value (functions returning bit-sizes can be used as well); can contain sub-structures inside.
+    * ``bitField`` is starting binary shift (if needed).
+    * BitField values are returned as unsigned integer (so you can work with them using simple JavaScript binary operators).
+    * Left-to-right (like big-endian) mode is the only supported for now.
+    * BitField structures are always padded to one byte after parsing.
 
 jParser Methods:
 
@@ -51,6 +57,15 @@ var parser = new jParser(file, {
     recordIndex: 'int32',
     hash: ['array', 'uint32', 4],
     fileName: ['string', 256],
+    flags: ['bitfield', {
+      version: 2,
+      precisionFlag: 1,
+      availabilityFlag: 1,
+      marker: {
+       part1: 2,
+       part2: 2
+      }
+    }]
   }
 });
 parser.parse('header');
@@ -58,7 +73,16 @@ parser.parse('header');
 //   fileId: 42,
 //   recordIndex: 6002,
 //   hash: [4237894687, 3491173757, 3626834111, 2631772842],
-//   fileName: ".\\Resources\\Excel\\Items_Weapons.xls"
+//   fileName: ".\\Resources\\Excel\\Items_Weapons.xls",
+//   flags: {
+//     version: 3,
+//     precisionFlag: 0,
+//     availabilityFlag: 1,
+//     marker: {
+//       part1: 2,
+//       part2: 0
+//     }
+//   }
 // }
 ```
 
