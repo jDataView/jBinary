@@ -17,17 +17,20 @@ Primitive Structures:
   * **Float**: float32, float64
   * **String**: char, string(len)
   * **Array**: array(type, len)
+  * **BitField**: (bitCount)
   * **Position**: tell, skip(len), seek(pos), seek(pos, func)
-  * **BitField**: bitfield(structure, bitShift)
-    * ``structure`` is ``Object`` with keys as field names and bit-sizes of each value (functions returning bit-sizes can be used as well); can contain sub-structures inside.
-    * ``bitField`` is starting binary shift (if needed).
-    * BitField values are returned as unsigned integer (so you can work with them using simple JavaScript binary operators).
-    * Left-to-right (like big-endian) mode is the only supported for now.
-    * BitField structures are always padded to one byte after parsing.
+  * **Conditionals**: if(predicate, type)
 
 jParser Methods:
 
   * **parse(value)**: Run the parsing, can be used recursively.
+    * **Number**: Reads bitfield of given length in left-to-right mode and returns them as unsigned integer
+      (so you can work with them using simple JavaScript binary operators).
+      Please note that you can mix bitfields with primitive and complex types in one structure or even use
+      them in own functions, but **ALWAYS** make sure that consecutive bitfields are padded to integer
+      byte count (or **8*N bit count**) before reading any other data types; most popular data formats
+      already follow this rule but better to check out when writing own structures if you don't want
+      to get unexpected behavior.
     * **Function**: Calls the function.
     * **String**: Dereferences the value in the structure.
     * **Array**: Function call, the function is the first element and arguments are the following.
@@ -57,15 +60,15 @@ var parser = new jParser(file, {
     recordIndex: 'int32',
     hash: ['array', 'uint32', 4],
     fileName: ['string', 256],
-    flags: ['bitfield', {
-      version: 2,
+    version: 2,
+    flags: {
       precisionFlag: 1,
-      availabilityFlag: 1,
       marker: {
        part1: 2,
        part2: 2
       }
-    }]
+    },
+    _reserved: 1 // padding to 8*N bits
   }
 });
 parser.parse('header');
@@ -74,15 +77,15 @@ parser.parse('header');
 //   recordIndex: 6002,
 //   hash: [4237894687, 3491173757, 3626834111, 2631772842],
 //   fileName: ".\\Resources\\Excel\\Items_Weapons.xls",
+//   version: 3,
 //   flags: {
-//     version: 3,
-//     precisionFlag: 0,
-//     availabilityFlag: 1,
+//     precisionFlag: 1,
 //     marker: {
 //       part1: 2,
 //       part2: 0
 //     }
-//   }
+//   },
+//   _reserved: 0
 // }
 ```
 
