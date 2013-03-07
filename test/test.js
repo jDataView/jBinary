@@ -41,8 +41,8 @@ test('float', function () {
 
 test('string', function () {
 	parser.seek(5);
-	equal(parser.parse('char'), chr(0));
-	equal(parser.parse(['string', 2]), chr(65533) + chr(1));
+	equal(parser.parse('char'), chr(0x00));
+	equal(parser.parse(['string', 2]), chr(0xba) + chr(0x01));
 });
 
 test('array', function () {
@@ -79,4 +79,25 @@ test('seek', function () {
 		equal(parser.tell(), 0);
 	});
 	equal(parser.tell(), 3);
+});
+
+test('bitfield', function () {
+	parser.seek(6);
+	deepEqual(parser.parse({
+		first5: 5,
+		next5: function () {
+			return this.parse(5);
+		},
+		last6: {
+			first3: 3,
+			last3: 3
+		}
+	}), {
+		first5: 0x17,
+		next5: 0x08,
+		last6: {
+			first3: 0,
+			last3: 1
+		}
+	});
 });
