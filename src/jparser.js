@@ -227,18 +227,19 @@ jParser.prototype.write = function (structure, data) {
 		}
 		if (bitSize > 0) {
 			var pos = this.tell();
-			var byte = this.view.getUint8(pos) & (-1 << (8 - (this._bitShift + bitSize)));
+			var byte = this.view.getUint8(pos) & ~(~(-1 << bitSize) << (8 - (this._bitShift + bitSize)));
 			byte |= (data & ~(-1 << bitSize)) << (8 - (this._bitShift + bitSize));
 			this.view.setUint8(pos, byte);
 			this._bitShift += bitSize - 8; // passing negative value for next pass
 		}
 
-		return fieldValue;
+		return;
 	}
 
 	// f, 1, 2, data means f(1, 2, data)
 	if (structure instanceof Function) {
-		return (structure.write || structure).apply(this, Array.prototype.slice.call(arguments, 1));
+		(structure.write || structure).apply(this, Array.prototype.slice.call(arguments, 1));
+		return;
 	}
 
 	// 'int32', ..., value is a shortcut for ['int32', ..., value]
@@ -252,23 +253,23 @@ jParser.prototype.write = function (structure, data) {
 		if (!(key in this.structure)) {
 			throw new Error("Missing structure for `" + key + "`");
 		}
-		return this.write.apply(this, [this.structure[key]].concat(structure.slice(1)).concat([data]));
+		this.write.apply(this, [this.structure[key]].concat(structure.slice(1)).concat([data]));
+		return;
 	}
 
 	// {key: type}, data means write(type, data[key])
 	if (typeof structure === 'object') {
-		var output = {},
-			current = this.current;
+		var current = this.current;
 
-		this.current = output;
+		this.current = data;
 
 		for (var key in structure) {
-			var value = this.write(structure[key], data[key]);
+			this.write(structure[key], data[key]);
 		}
 
 		this.current = current;
 
-		return output;
+		return;
 	}
 
 	throw new Error("Unknown structure type `" + structure + "`");

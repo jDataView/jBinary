@@ -5,11 +5,13 @@ if (typeof jDataView === 'undefined') {
 var module = QUnit.module;
 var test = QUnit.test;
 
-
-var buffer = jDataView.createBuffer(0x00,
+var dataBytes = [
+	0x00,
 	0xff, 0xfe, 0xfd, 0xfc,
-	0xfa, 0x00, 0xba, 0x01);
-var view = new jDataView(buffer, 1, undefined, true);
+	0xfa, 0x00, 0xba, 0x01
+];
+var dataStart = 1;
+var view = new jDataView(dataBytes.slice(), dataStart, undefined, true);
 var parser = new jParser(view);
 
 function chr (x) {
@@ -101,3 +103,103 @@ test('bitfield', function () {
 		}
 	});
 });
+
+module("Write", {
+	teardown: function () {
+		view.setBytes(0, dataBytes.slice(dataStart), true);
+	}
+});
+
+// writer = [type, value, getterArgs, checkFn]
+function testWriters(name, writers) {
+	test(name, function () {
+		for (var i = 0; i < writers.length; i++) {
+			var writer = writers[i],
+				type = writer[0],
+				value = writer[1],
+				check = writer[3] || equal;
+
+			parser.seek(0);
+			parser.write(type, value);
+			parser.seek(0);
+			var actual = writer[2] instanceof Function ? writer[2]() : parser.parse.apply(parser, [].concat(type, writer[2]));
+			check(actual, value);
+		}
+	});
+}
+
+testWriters('uint', [
+	['uint8', 17],
+	['uint16', 39871],
+	['uint32', 2463856109]
+]);
+
+testWriters('int', [
+	['int8', -15],
+	['int16', -972],
+	['int32', -1846290834]
+]);
+
+testWriters('float', [
+	['float32', -1.0751052490836633e+37],
+	['float64', 2.531423904252017e-300]
+]);
+
+testWriters('string', [
+	['char', chr(0x89)],
+	['string', 'smth', 4]
+]);
+
+testWriters('array', [
+	[['array', 'uint8'], [0x54, 0x17, 0x29, 0x34, 0x5a, 0xfb, 0x00, 0xff], 8, deepEqual],
+	[['array', 'int32'], [-59371033, 2021738594], 2, deepEqual]
+]);
+
+testWriters('object', [
+	[
+		{
+			a: 'int32',
+			b: 'int8',
+			c: ['array', 'uint8']
+		},
+		{
+			a: -7943512,
+			b: -105,
+			c: [17, 94]
+		},
+		function () {
+			return parser.parse({
+				a: 'int32',
+				b: 'int8',
+				c: ['array', 'uint8', 2]
+			});
+		},
+		deepEqual
+	]
+]);
+
+testWriters('bitfield', [
+	[
+		{
+			first5: 5,
+			next5: jParser.Property(
+				function () { return this.parse(5) },
+				function (value) { this.write(5, value) }
+			),
+			last6: {
+				first3: 3,
+				last3: 3
+			}
+		},
+		{
+			first5: 17,
+			next5: 21,
+			last6: {
+				first3: 2,
+				last3: 5
+			}
+		},
+		,
+		deepEqual
+	]
+]);
