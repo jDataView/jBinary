@@ -1,4 +1,4 @@
-(function () {
+(function (exports) {
 
 if (typeof jDataView === 'undefined' && typeof require !== 'undefined') {
 	jDataView = require('jDataView');
@@ -37,31 +37,39 @@ function jParser(view, structure) {
 	this.structure = inherit(jParser.prototype.structure, structure);
 }
 
+jParser.Property = function (reader, writer, forceNew) {
+	if (!writer) {
+		return reader;
+	}
+	var property = forceNew ? function () { return reader.apply(this, arguments) } : reader;
+	property.write = writer;
+	return property;
+};
+
 function toInt(val) {
 	return val instanceof Function ? val.call(this) : val;
 }
 
 jParser.prototype.structure = {
-	uint8: function () { return this.view.getUint8(); },
-	uint16: function () { return this.view.getUint16(); },
-	uint32: function () { return this.view.getUint32(); },
-	int8: function () { return this.view.getInt8(); },
-	int16: function () { return this.view.getInt16(); },
-	int32: function () { return this.view.getInt32(); },
-	float32: function () { return this.view.getFloat32(); },
-	float64: function () { return this.view.getFloat64(); },
-	char: function () { return this.view.getChar(); },
-	string: function (length) {
-		return this.view.getString(toInt.call(this, length));
-	},
-	array: function (type, length) {
-		length = toInt.call(this, length);
-		var results = [];
-		for (var i = 0; i < length; ++i) {
-			results.push(this.parse(type));
+	string: jParser.Property(
+		function (length) { return this.view.getString(toInt.call(this, length)) },
+		function (subString) { this.view.writeString(subString) }
+	),
+	array: jParser.Property(
+		function (type, length) {
+			length = toInt.call(this, length);
+			var results = new Array(length);
+			for (var i = 0; i < length; ++i) {
+				results[i] = this.parse(type);
+			}
+			return results;
+		},
+		function (type, values) {
+			for (var i = 0, length = values.length; i < length; i++) {
+				this.write(type, values[i]);
+			}
 		}
-		return results;
-	},
+	),
 	seek: function (position, block) {
 		position = toInt.call(this, position);
 		if (block instanceof Function) {
@@ -81,13 +89,47 @@ jParser.prototype.structure = {
 		offset = toInt.call(this, offset);
 		this.view.seek(this.view.tell() + offset);
 		return offset;
-	},
-	if: function (predicate) {
-		if (predicate instanceof Function ? predicate.call(this) : predicate) {
-			return this.parse.apply(this, Array.prototype.slice.call(arguments, 1));
-		}
 	}
 };
+
+function conditionalMethod(method) {
+	return function (predicate) {
+		if (predicate instanceof Function ? predicate.call(this) : predicate) {
+			return this[method].apply(this, Array.prototype.slice.call(arguments, 1));
+		}
+	};
+}
+
+jParser.prototype.structure.if = jParser.Property(
+	conditionalMethod('parse'),
+	conditionalMethod('write')
+);
+
+var dataTypes = [
+	'Uint8',
+	'Uint16',
+	'Uint32',
+	'Int8',
+	'Int16',
+	'Int32',
+	'Float32',
+	'Float64',
+	'Char'
+];
+
+function dataMethod(method, type) {
+	return function (value) {
+		return this.view[method + type](value);
+	};
+}
+
+for (var i = 0; i < dataTypes.length; i++) {
+	var dataType = dataTypes[i];
+	jParser.prototype.structure[dataType.toLowerCase()] = jParser.Property(
+		dataMethod('get', dataType),
+		dataMethod('write', dataType)
+	);
+}
 
 jParser.prototype.seek = jParser.prototype.structure.seek;
 jParser.prototype.tell = jParser.prototype.structure.tell;
@@ -162,20 +204,80 @@ jParser.prototype.parse = function (structure) {
 	throw new Error("Unknown structure type `" + structure + "`");
 };
 
+jParser.prototype.write = function (structure, data) {
+	if (typeof structure === 'number') {
+		var bitSize = structure;
 
-var all;
-if (typeof self !== 'undefined') {
-	all = self;
-} else if (typeof window !== 'undefined') {
-	all = window;
-} else if (typeof global !== 'undefined') {
-	all = global;
-}
-// Browser + Web Worker
-all.jParser = jParser;
-// NodeJS + NPM
-if (typeof module !== 'undefined') {
+		if (this._bitShift < 0) {
+			var byteShift = this._bitShift >> 3; // Math.floor(_bitShift / 8)
+			this.skip(byteShift);
+			this._bitShift &= 7; // _bitShift + 8 * Math.floor(_bitShift / 8)
+		}
+		if (this._bitShift > 0 && bitSize >= 8 - this._bitShift) {
+			var pos = this.tell();
+			var byte = this.view.getUint8(pos) & (-1 << (8 - this._bitShift));
+			byte |= data >>> (bitSize - (8 - this._bitShift));
+			this.view.setUint8(pos, byte);
+			bitSize -= 8 - this._bitShift;
+			this._bitShift = 0;
+		}
+		while (bitSize >= 8) {
+			this.view.writeUint8((data >>> (bitSize - 8)) & 0xff);
+			bitSize -= 8;
+		}
+		if (bitSize > 0) {
+			var pos = this.tell();
+			var byte = this.view.getUint8(pos) & (-1 << (8 - (this._bitShift + bitSize)));
+			byte |= (data & ~(-1 << bitSize)) << (8 - (this._bitShift + bitSize));
+			this.view.setUint8(pos, byte);
+			this._bitShift += bitSize - 8; // passing negative value for next pass
+		}
+
+		return fieldValue;
+	}
+
+	// f, 1, 2, data means f(1, 2, data)
+	if (structure instanceof Function) {
+		return (structure.write || structure).apply(this, Array.prototype.slice.call(arguments, 1));
+	}
+
+	// 'int32', ..., value is a shortcut for ['int32', ..., value]
+	if (typeof structure === 'string') {
+		structure = Array.prototype.slice.call(arguments);
+	}
+
+	// ['string', 256], data means structure['string'](256, data)
+	if (structure instanceof Array) {
+		var key = structure[0];
+		if (!(key in this.structure)) {
+			throw new Error("Missing structure for `" + key + "`");
+		}
+		return this.write.apply(this, [this.structure[key]].concat(structure.slice(1)).concat([data]));
+	}
+
+	// {key: type}, data means write(type, data[key])
+	if (typeof structure === 'object') {
+		var output = {},
+			current = this.current;
+
+		this.current = output;
+
+		for (var key in structure) {
+			var value = this.write(structure[key], data[key]);
+		}
+
+		this.current = current;
+
+		return output;
+	}
+
+	throw new Error("Unknown structure type `" + structure + "`");
+};
+
+if (typeof module !== 'undefined' && exports === module.exports) {
 	module.exports = jParser;
+} else {
+	exports.jParser = jParser;
 }
 
-})();
+})(this);

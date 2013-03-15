@@ -17,7 +17,7 @@ function chr (x) {
 }
 
 
-module("Values");
+module("Parse");
 test('uint', function () {
 	parser.seek(0);
 	equal(parser.parse('uint8'), 255);
