@@ -52,7 +52,15 @@ function toInt(val) {
 jParser.prototype.structure = {
 	string: jParser.Property(
 		function (length) { return this.view.getString(toInt.call(this, length)) },
-		function (subString) { this.view.writeString(subString) }
+		function (length, subString) {
+			if (subString.length > length) {
+				subString = subString.slice(0, length);
+			} else
+			if (subString.length < length) {
+				subString += String.fromCharCode.apply(null, new Array(length - subString.length));
+			}
+			this.view.writeString(subString);
+		}
 	),
 	array: jParser.Property(
 		function (type, length) {
@@ -63,8 +71,8 @@ jParser.prototype.structure = {
 			}
 			return results;
 		},
-		function (type, values) {
-			for (var i = 0, length = values.length; i < length; i++) {
+		function (type, length, values) {
+			for (var i = 0; i < length; i++) {
 				this.write(type, values[i]);
 			}
 		}
@@ -275,6 +283,18 @@ jParser.prototype.write = function (structure, data) {
 	}
 
 	throw new Error("Unknown structure type `" + structure + "`");
+};
+
+jParser.prototype.modify = function (structure, callback) {
+	var data = this.seek(this.tell(), function () {
+		return this.parse(structure);
+	});
+	var newData = callback(data);
+	if (newData === undefined) {
+		newData = data;
+	}
+	this.write(structure, newData);
+	return newData;
 };
 
 if (typeof module !== 'undefined' && exports === module.exports) {

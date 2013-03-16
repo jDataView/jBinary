@@ -110,20 +110,19 @@ module("Write", {
 	}
 });
 
-// writer = [type, value, checkFn, getterArgs]
+// writer = [type, value, checkFn]
 function testWriters(name, writers) {
 	test(name, function () {
 		for (var i = 0; i < writers.length; i++) {
 			var writer = writers[i],
 				type = writer[0],
 				value = writer[1],
-				check = writer[2] || equal,
-				getterType = writer[3] || type;
+				check = writer[2] || equal;
 
 			parser.seek(0);
 			parser.write(type, value);
 			parser.seek(0);
-			check(parser.parse(getterType), value);
+			check(parser.parse(type), value);
 		}
 	});
 }
@@ -147,26 +146,19 @@ testWriters('float', [
 
 testWriters('string', [
 	['char', chr(0x89)],
-	[
-		'string',
-		'smth',
-		,
-		['string', 4]
-	]
+	[['string', 4], 'smth']
 ]);
 
 testWriters('array', [
 	[
-		['array', 'uint8'],
+		['array', 'uint8', 8],
 		[0x54, 0x17, 0x29, 0x34, 0x5a, 0xfb, 0x00, 0xff],
-		deepEqual,
-		['array', 'uint8', 8]
+		deepEqual
 	],
 	[
-		['array', 'int32'],
+		['array', 'int32', 2],
 		[-59371033, 2021738594],
-		deepEqual,
-		['array', 'int32', 2]
+		deepEqual
 	]
 ]);
 
@@ -175,19 +167,14 @@ testWriters('object', [
 		{
 			a: 'int32',
 			b: 'int8',
-			c: ['array', 'uint8']
+			c: ['array', 'uint8', 2]
 		},
 		{
 			a: -7943512,
 			b: -105,
 			c: [17, 94]
 		},
-		deepEqual,
-		{
-			a: 'int32',
-			b: 'int8',
-			c: ['array', 'uint8', 2]
-		}
+		deepEqual
 	]
 ]);
 
@@ -215,3 +202,23 @@ testWriters('bitfield', [
 		deepEqual
 	]
 ]);
+
+test('modify', function () {
+	var structure = {
+		a: 'int32',
+		b: 'int8',
+		c: ['array', 'uint8', 2]
+	};
+
+	parser.seek(0);
+	parser.modify(structure, function (data) {
+		data.c[0] = 17;
+	});
+
+	parser.seek(0);
+	deepEqual(parser.parse(structure), {
+		a: -50462977,
+		b: -6,
+		c: [17, 186]
+	});
+})

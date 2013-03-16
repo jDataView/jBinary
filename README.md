@@ -16,8 +16,11 @@ Primitive Structures:
   * **Signed Int**: int8, int16, int32
   * **Float**: float32, float64
   * **String**: char, string(len)
-  * **Array**: array(type, len)
   * **BitField**: (bitCount)
+
+Extensions:
+
+  * **Array**: array(type, len)
   * **Position**: tell, skip(len), seek(pos), seek(pos, func)
   * **Conditionals**: if(predicate, type)
 
@@ -35,7 +38,8 @@ jParser Methods:
     * **String**: Dereferences the value in the structure.
     * **Array**: Function call, the function is the first element and arguments are the following.
     * **Object**: Returns an object with the same keys and parses the values.
-  * **write(type, data)**: Run the building and writing binary data (works in the same way parse does, but accepts additional data parameter).
+  * **write(type, data)**: Run the writing binary data (works in the same way parse does, but accepts additional data parameter).
+  * **modify(type, callback)**: Parse data at current position, pass it to callback and write returned or just modified data object at current position.
   * **tell()**: Return the current position.
   * **skip(count)**: Advance in the file by ``count`` bytes.
   * **seek(position)**: Go to ``position``.
@@ -52,7 +56,7 @@ jParser Property Constructor:
 
   * **jParser.Property(reader, writer, forceNew = false)**
     * ``reader`` is function for parsing data read from current position.
-    * ``writer`` is function for writing binary representation of data at current position.
+    * ``writer`` is function for writing binary representation of data at current position; should accept same parameter list as reader does + additional data parameter.
     * ``forceNew`` is optional parameter that forces creation of new function to be returned from property constructor instead or modifying original ``reader``.
 
 Examples
@@ -79,7 +83,7 @@ var parser = new jParser(file, {
     _reserved: 1 // padding to 8*N bits
   }
 });
-parser.parse('header');
+var header = parser.parse('header');
 // {
 //   fileId: 42,
 //   recordIndex: 6002,
@@ -95,6 +99,9 @@ parser.parse('header');
 //   },
 //   _reserved: 0
 // }
+header.flags.precisionFlag = 0;
+parser.seek(0);
+parser.write('header', header);
 ```
 
 **References**
