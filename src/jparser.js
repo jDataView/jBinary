@@ -69,6 +69,58 @@ jParser.prototype.structure = {
 			}
 		}
 	),
+	bitfield: jParser.Property(
+		function (bitSize) {
+			var fieldValue = 0;
+
+			if (this._bitShift < 0 || this._bitShift >= 8) {
+				var byteShift = this._bitShift >> 3; // Math.floor(_bitShift / 8)
+				this.skip(byteShift);
+				this._bitShift &= 7; // _bitShift + 8 * Math.floor(_bitShift / 8)
+			}
+			if (this._bitShift > 0 && bitSize >= 8 - this._bitShift) {
+				fieldValue = this.view.getUint8() & ~(-1 << (8 - this._bitShift));
+				bitSize -= 8 - this._bitShift;
+				this._bitShift = 0;
+			}
+			while (bitSize >= 8) {
+				fieldValue = this.view.getUint8() | (fieldValue << 8);
+				bitSize -= 8;
+			}
+			if (bitSize > 0) {
+				fieldValue = ((this.view.getUint8() >>> (8 - (this._bitShift + bitSize))) & ~(-1 << bitSize)) | (fieldValue << bitSize);
+				this._bitShift += bitSize - 8; // passing negative value for next pass
+			}
+
+			return fieldValue;
+		},
+		function (bitSize, value) {
+			if (this._bitShift < 0 || this._bitShift >= 8) {
+				var byteShift = this._bitShift >> 3; // Math.floor(_bitShift / 8)
+				this.skip(byteShift);
+				this._bitShift &= 7; // _bitShift + 8 * Math.floor(_bitShift / 8)
+			}
+			if (this._bitShift > 0 && bitSize >= 8 - this._bitShift) {
+				var pos = this.tell();
+				var byte = this.view.getUint8(pos) & (-1 << (8 - this._bitShift));
+				byte |= value >>> (bitSize - (8 - this._bitShift));
+				this.view.setUint8(pos, byte);
+				bitSize -= 8 - this._bitShift;
+				this._bitShift = 0;
+			}
+			while (bitSize >= 8) {
+				this.view.writeUint8((value >>> (bitSize - 8)) & 0xff);
+				bitSize -= 8;
+			}
+			if (bitSize > 0) {
+				var pos = this.tell();
+				var byte = this.view.getUint8(pos) & ~(~(-1 << bitSize) << (8 - (this._bitShift + bitSize)));
+				byte |= (value & ~(-1 << bitSize)) << (8 - (this._bitShift + bitSize));
+				this.view.setUint8(pos, byte);
+				this._bitShift += bitSize - 8; // passing negative value for next pass
+			}
+		}
+	),
 	seek: function (position, block) {
 		position = toInt.call(this, position);
 		if (block instanceof Function) {
@@ -136,29 +188,7 @@ jParser.prototype.skip = jParser.prototype.structure.skip;
 
 jParser.prototype.parse = function (structure) {
 	if (typeof structure === 'number') {
-		var fieldValue = 0,
-			bitSize = structure;
-
-		if (this._bitShift < 0) {
-			var byteShift = this._bitShift >> 3; // Math.floor(_bitShift / 8)
-			this.skip(byteShift);
-			this._bitShift &= 7; // _bitShift + 8 * Math.floor(_bitShift / 8)
-		}
-		if (this._bitShift > 0 && bitSize >= 8 - this._bitShift) {
-			fieldValue = this.view.getUint8() & ~(-1 << (8 - this._bitShift));
-			bitSize -= 8 - this._bitShift;
-			this._bitShift = 0;
-		}
-		while (bitSize >= 8) {
-			fieldValue = this.view.getUint8() | (fieldValue << 8);
-			bitSize -= 8;
-		}
-		if (bitSize > 0) {
-			fieldValue = ((this.view.getUint8() >>> (8 - (this._bitShift + bitSize))) & ~(-1 << bitSize)) | (fieldValue << bitSize);
-			this._bitShift += bitSize - 8; // passing negative value for next pass
-		}
-
-		return fieldValue;
+		structure = ['bitfield', structure];
 	}
 
 	// f, 1, 2 means f(1, 2)
@@ -205,34 +235,7 @@ jParser.prototype.parse = function (structure) {
 
 jParser.prototype.write = function (structure, data) {
 	if (typeof structure === 'number') {
-		var bitSize = structure;
-
-		if (this._bitShift < 0) {
-			var byteShift = this._bitShift >> 3; // Math.floor(_bitShift / 8)
-			this.skip(byteShift);
-			this._bitShift &= 7; // _bitShift + 8 * Math.floor(_bitShift / 8)
-		}
-		if (this._bitShift > 0 && bitSize >= 8 - this._bitShift) {
-			var pos = this.tell();
-			var byte = this.view.getUint8(pos) & (-1 << (8 - this._bitShift));
-			byte |= data >>> (bitSize - (8 - this._bitShift));
-			this.view.setUint8(pos, byte);
-			bitSize -= 8 - this._bitShift;
-			this._bitShift = 0;
-		}
-		while (bitSize >= 8) {
-			this.view.writeUint8((data >>> (bitSize - 8)) & 0xff);
-			bitSize -= 8;
-		}
-		if (bitSize > 0) {
-			var pos = this.tell();
-			var byte = this.view.getUint8(pos) & ~(~(-1 << bitSize) << (8 - (this._bitShift + bitSize)));
-			byte |= (data & ~(-1 << bitSize)) << (8 - (this._bitShift + bitSize));
-			this.view.setUint8(pos, byte);
-			this._bitShift += bitSize - 8; // passing negative value for next pass
-		}
-
-		return;
+		structure = ['bitfield', structure];
 	}
 
 	// f, 1, 2, data means f(1, 2, data)
