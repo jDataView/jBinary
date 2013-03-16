@@ -38,11 +38,10 @@ function jParser(view, structure) {
 }
 
 jParser.Property = function (reader, writer, forceNew) {
-	if (!writer) {
-		return reader;
-	}
 	var property = forceNew ? function () { return reader.apply(this, arguments) } : reader;
-	property.write = writer;
+	if (writer) {
+		property.write = writer;
+	}
 	return property;
 };
 
@@ -257,7 +256,7 @@ jParser.prototype.write = function (structure, data) {
 		return;
 	}
 
-	// {key: type}, data means write(type, data[key])
+	// {key: type}, {key: value} means write(type, value)
 	if (typeof structure === 'object') {
 		var current = this.current;
 

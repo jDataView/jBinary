@@ -1,10 +1,10 @@
-<a href="http://blog.vjeux.com/2011/javascript/binaryparser-unleash-javascript-power.html">jParser</a> - Parsing binary files made easy.
+<a href="http://blog.vjeux.com/2011/javascript/binaryparser-unleash-javascript-power.html">jParser</a> - Manipulating binary files made easy.
 ================================
 
-jParser makes it easy to parse binary files in Javascript.
+jParser makes it easy to parse and build binary files in Javascript.
 
- * You write the structure once, it gets parsed automatically.
- * The parsing process can be extended with custom functions. It allows to parse non trivial files with ease.
+ * You write the structure once, it gets parsed or built automatically.
+ * Both parsing and building processes can be extended with custom functions. It allows to manipulate non trivial files with ease.
  * It works both in the browser and NodeJS as it is powered by [jDataView](https://github.com/vjeux/jDataView).
 
 API
@@ -23,7 +23,7 @@ Primitive Structures:
 
 jParser Methods:
 
-  * **parse(value)**: Run the parsing, can be used recursively.
+  * **parse(type)**: Run the parsing, can be used recursively.
     * **Number**: Reads bitfield of given length in left-to-right mode and returns them as unsigned integer
       (so you can work with them using simple JavaScript binary operators).
       Please note that you can mix bitfields with primitive and complex types in one structure or even use
@@ -35,6 +35,7 @@ jParser Methods:
     * **String**: Dereferences the value in the structure.
     * **Array**: Function call, the function is the first element and arguments are the following.
     * **Object**: Returns an object with the same keys and parses the values.
+  * **write(type, data)**: Run the building and writing binary data (works in the same way parse does, but accepts additional data parameter).
   * **tell()**: Return the current position.
   * **skip(count)**: Advance in the file by ``count`` bytes.
   * **seek(position)**: Go to ``position``.
@@ -44,8 +45,15 @@ jParser Methods:
 jParser Constructor:
 
   * **new jParser(data, structure)**
-    * ``data`` is a [jDataView](https://github.com/vjeux/jDataView). You can give pretty much anything (String, [ArrayBuffer](https://developer.mozilla.org/en/JavaScript_typed_arrays), [Node Buffer](http://nodejs.org/docs/v0.6.2/api/buffers.html)), it will be casted to jDataView automatically.
+    * ``data`` is a [jDataView](https://github.com/vjeux/jDataView). You can give pretty much anything (String, Array, [ArrayBuffer](https://developer.mozilla.org/en/JavaScript_typed_arrays), [Node Buffer](http://nodejs.org/docs/v0.6.2/api/buffers.html)), it will be casted to jDataView automatically.
     * ``structure`` is an object with all the defined structures.
+
+jParser Property Constructor:
+
+  * **jParser.Property(reader, writer, forceNew = false)**
+    * ``reader`` is function for parsing data read from current position.
+    * ``writer`` is function for writing binary representation of data at current position.
+    * ``forceNew`` is optional parameter that forces creation of new function to be returned from property constructor instead or modifying original ``reader``.
 
 Examples
 ========
