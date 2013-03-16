@@ -1,11 +1,12 @@
-<a href="http://blog.vjeux.com/2011/javascript/binaryparser-unleash-javascript-power.html">jParser</a> - Manipulating binary files made easy.
+jBinary - Manipulating binary files made easy.
 ================================
 
-jParser makes it easy to parse and build binary files in Javascript.
+jBinary makes it easy to parse and build binary files in JavaScript.
+It's derived from [jParser](https://github.com/vjeux/jParser) binary parsing library as new tool with full set of I/O operations for manipulations on binary data in JavaScript.
 
  * You write the structure once, it gets parsed or built automatically.
  * Both parsing and building processes can be extended with custom functions. It allows to manipulate non trivial files with ease.
- * It works both in the browser and NodeJS as it is powered by [jDataView](https://github.com/vjeux/jDataView).
+ * It works both in the browser and NodeJS as it is powered by [jDataView](https://github.com/vjeux/jDataView) (or, actually, it's [extended version](https://github.com/RReverser/jDataView) that is now successfully merged into primary repo).
 
 API
 ======
@@ -24,7 +25,7 @@ Extensions:
   * **Position**: tell, skip(len), seek(pos), seek(pos, func)
   * **Conditionals**: if(predicate, type)
 
-jParser Methods:
+jBinary Methods:
 
   * **parse(type)**: Run the parsing, can be used recursively.
     * **Number**: Reads bitfield of given length in left-to-right mode and returns them as unsigned integer
@@ -46,15 +47,15 @@ jParser Methods:
   * **seek(position, callback)**: Go to ``position``, execute the ``callback`` and return to the previous position.
   * **current**: The current object being parsed. See it as a way to use what has been parsed just before.
 
-jParser Constructor:
+jBinary Constructor:
 
-  * **new jParser(data, structure)**
+  * **new jBinary(data, structure)**
     * ``data`` is a [jDataView](https://github.com/vjeux/jDataView). You can give pretty much anything (String, Array, [ArrayBuffer](https://developer.mozilla.org/en/JavaScript_typed_arrays), [Node Buffer](http://nodejs.org/docs/v0.6.2/api/buffers.html)), it will be casted to jDataView automatically.
     * ``structure`` is an object with all the defined structures.
 
-jParser Property Constructor:
+jBinary Property Constructor:
 
-  * **jParser.Property(reader, writer, forceNew = false)**
+  * **jBinary.Property(reader, writer, forceNew = false)**
     * ``reader`` is function for parsing data read from current position.
     * ``writer`` is function for writing binary representation of data at current position; should accept same parameter list as reader does + additional data parameter.
     * ``forceNew`` is optional parameter that forces creation of new function to be returned from property constructor instead or modifying original ``reader``.
@@ -63,10 +64,10 @@ Examples
 ========
 
 **Basic C Structure**
-You have the ability to define C-like structures. It's a Javascript object where keys are labels and values are types.
+You have the ability to define C-like structures. It's a JavaScript object where keys are labels and values are types.
 
 ```javascript
-var parser = new jParser(file, {
+var parser = new jBinary(file, {
   header: {
     fileId: 'int32',
     recordIndex: 'int32',
@@ -83,6 +84,8 @@ var parser = new jParser(file, {
     _reserved: 1 // padding to 8*N bits
   }
 });
+
+// Parsing:
 var header = parser.parse('header');
 // {
 //   fileId: 42,
@@ -99,9 +102,19 @@ var header = parser.parse('header');
 //   },
 //   _reserved: 0
 // }
-header.flags.precisionFlag = 0;
+
+
+// Writing:
 parser.seek(0);
+header.flags.precisionFlag = 0;
 parser.write('header', header);
+
+// In-place editing:
+parser.seek(0);
+parser.modify('header', function (header) {
+  header.flags.precisionFlag = 0;
+  // return header; - not necessary here since we are modifying original object
+});
 ```
 
 **References**
@@ -159,7 +172,7 @@ image: {
 }
 ```
 
-**Advanced Parsing** The best part of jParser is that complicated parsing logic can be expressed within the structure. It allows to parse complex files without having to split structure from parsing code.
+**Advanced Parsing** The best part of jBinary is that complicated logic can be expressed within the structure. It allows to parse complex files without having to split structure from parsing code.
 
 ```javascript
 entryHeader: {
@@ -194,34 +207,34 @@ file: {
 Get Started
 =======
 
-**NodeJS**: Just use ```npm``` to install ```jParser``` and you are set :)
+**NodeJS**: Just use ```npm``` to install ```jBinary``` and you are set :)
 
 ```bash
-npm install jParser
+npm install jBinary
 ```
 
 ```javascript
 var fs = require('fs');
-var jParser = require('jParser');
+var jBinary = require('jBinary');
 
 fs.readFile('file.bin', function (err, data) {
-  var parser = new jParser(data, {
+  var parser = new jBinary(data, {
     magic: ['array', 'uint8', 4]
   });
   console.log(parser.parse('magic'));
 });
 ```
 
-**Browser**: I've [patched jQuery](https://github.com/vjeux/jDataView/blob/master/jquery/jquery-patch.txt) to allow to download binary files using the best binary format. You include this patched jQuery, jDataView and jParser and you are set :)
+**Browser**: [Vjeux](https://github.com/vjeux/) had [patched jQuery](https://github.com/vjeux/jDataView/blob/master/jquery/jquery-patch.txt) to allow to download binary files using the best binary format. You include this patched jQuery, jDataView and jBinary and you are set :)
 
 ```html
 <script src="https://raw.github.com/vjeux/jDataView/master/jquery/jquery-1.7.1-binary-ajax.js"></script>
 <script src="https://raw.github.com/vjeux/jDataView/master/src/jdataview.js"></script>
-<script src="https://raw.github.com/vjeux/jParser/master/src/jparser.js"></script>
+<script src="https://raw.github.com/vjeux/jBinary/master/src/jbinary.js"></script>
 
 <script>
 $.get('file.bin', function (data) {
-  var parser = new jParser(data, {
+  var parser = new jBinary(data, {
     magic: ['array', 'uint8', 4]
   });
   console.log(parser.parse('magic'));
@@ -232,9 +245,9 @@ $.get('file.bin', function (data) {
 Caveats
 =======
 
-This tool works thanks to a feature that is not in the Javascript specification: When you iterate over an object keys, the keys will be listed in their order of insertion. Note that Chrome and Opera do not respect this implicit rule for keys that are numbers.
+This tool works thanks to a feature that is not in the JavaScript specification: When you iterate over an object keys, the keys will be listed in their order of insertion. Note that Chrome and Opera do not respect this implicit rule for keys that are numbers.
 
-If you follow those two rules, the library will work in all the current Javascript implementations.
+If you follow those two rules, the library will work in all the current JavaScript implementations.
 
  * Do not start a key name with a digit
  * Do not put the same key twice in the same object
@@ -245,23 +258,23 @@ Demos
 
 **ICO Parser**. This is a basic example to parse a binary file in NodeJS. It shows how to solve many common issues with binary file parsing.
 
- * **[ico.js](https://github.com/vjeux/jParser/blob/master/sample/ico/ico.node.js)**: jParser structure.
- * [ico.json](http://fooo.fr/~vjeux/github/jParser/sample/ico/favicon.json): parsed file.
+ * **[ico.js](https://github.com/vjeux/jBinary/blob/master/sample/ico/ico.node.js)**: jBinary structure.
+ * [ico.json](http://fooo.fr/~vjeux/github/jBinary/sample/ico/favicon.json): parsed file.
 
-**[Tar Extractor](http://fooo.fr/~vjeux/github/jParser/sample/tar/tar.html)**. This is a basic example to parse a binary file in the browser.
+**[Tar Extractor](http://fooo.fr/~vjeux/github/jBinary/sample/tar/tar.html)**. This is a basic example to parse a binary file in the browser.
 
- * **[tar.html](https://github.com/vjeux/jParser/blob/master/sample/tar/tar.html)**: jParser structure.
+ * **[tar.html](https://github.com/vjeux/jBinary/blob/master/sample/tar/tar.html)**: jBinary structure.
 
-**<a href="http://fooo.fr/~vjeux/github/jsWoWModelViewer/modelviewer.html">World of Warcraft Model Viewer</a>.** It uses jParser to read the binary model and then WebGL to display it.
+**<a href="http://fooo.fr/~vjeux/github/jsWoWModelViewer/modelviewer.html">World of Warcraft Model Viewer</a>.** It uses jBinary to read the binary model and then WebGL to display it.
 
-  * **[m2.js](http://fooo.fr/~vjeux/github/jsWoWModelViewer/scripts/m2.js)**: jParser structure.
+  * **[m2.js](http://fooo.fr/~vjeux/github/jsWoWModelViewer/scripts/m2.js)**: jBinary structure.
   * [model.json](http://fooo.fr/~vjeux/github/jsWoWModelViewer/model.json): parsed file.
 
 <a href="http://fooo.fr/~vjeux/github/jsWoWModelViewer/modelviewer.html"><img src="http://fooo.fr/~vjeux/github/jsWoWModelViewer/images/modelviewer.png"></a>
 
 **Diablo 3 Internal Files**.
 
-  * **[convert.coffee](http://fooo.fr/~vjeux/boub/d3/files/convert.coffee)**: jParser structure. CoffeeScript makes it even easier to write file structure.
+  * **[convert.coffee](http://fooo.fr/~vjeux/boub/d3/files/convert.coffee)**: jBinary structure. CoffeeScript makes it even easier to write file structure.
   * Example of parsed files:
     * [Items_Weapons.json](http://fooo.fr/~vjeux/boub/d3/files/GameBalance/Items_Weapons.json)
     * [Quest/ProtectorOfTristam.json](http://fooo.fr/~vjeux/boub/d3/files/Quest/ProtectorOfTristram.json)

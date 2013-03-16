@@ -1,6 +1,6 @@
 <script	src="https://raw.github.com/vjeux/jDataView/master/jquery/jquery-1.7.1-binary-ajax.js"></script>
 <script src="https://raw.github.com/vjeux/jDataView/master/src/jdataview.js"></script>
-<script src="../../src/jparser.js"></script>
+<script src="../../src/jbinary.js"></script>
 
 <style>
 textarea { width: 80%; height: 300px; }
@@ -9,7 +9,7 @@ textarea { width: 80%; height: 300px; }
 
 <script>
 function untar(view) {
-	var parser = new jParser(view, {
+	var parser = new jBinary(view, {
 		oct: function (size) {
 			return parseInt(this.parse(['string', size]), 8);
 		},

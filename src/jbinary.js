@@ -24,7 +24,7 @@ function inherit(obj) {
 	return obj;
 }
 
-function jParser(view, structure) {
+function jBinary(view, structure) {
 	if (!(this instanceof arguments.callee)) {
 		throw new Error("Constructor may not be called as a function");
 	}
@@ -34,10 +34,10 @@ function jParser(view, structure) {
 	this.view = view;
 	this.view.seek(0);
 	this._bitShift = 0;
-	this.structure = inherit(jParser.prototype.structure, structure);
+	this.structure = inherit(jBinary.prototype.structure, structure);
 }
 
-jParser.Property = function (reader, writer, forceNew) {
+jBinary.Property = function (reader, writer, forceNew) {
 	var property = forceNew ? function () { return reader.apply(this, arguments) } : reader;
 	if (writer) {
 		property.write = writer;
@@ -49,8 +49,8 @@ function toInt(val) {
 	return val instanceof Function ? val.call(this) : val;
 }
 
-jParser.prototype.structure = {
-	string: jParser.Property(
+jBinary.prototype.structure = {
+	string: jBinary.Property(
 		function (length) { return this.view.getString(toInt.call(this, length)) },
 		function (length, subString) {
 			if (subString.length > length) {
@@ -62,7 +62,7 @@ jParser.prototype.structure = {
 			this.view.writeString(subString);
 		}
 	),
-	array: jParser.Property(
+	array: jBinary.Property(
 		function (type, length) {
 			length = toInt.call(this, length);
 			var results = new Array(length);
@@ -77,7 +77,7 @@ jParser.prototype.structure = {
 			}
 		}
 	),
-	bitfield: jParser.Property(
+	bitfield: jBinary.Property(
 		function (bitSize) {
 			var fieldValue = 0;
 
@@ -159,7 +159,7 @@ function conditionalMethod(method) {
 	};
 }
 
-jParser.prototype.structure.if = jParser.Property(
+jBinary.prototype.structure.if = jBinary.Property(
 	conditionalMethod('parse'),
 	conditionalMethod('write')
 );
@@ -184,17 +184,17 @@ function dataMethod(method, type) {
 
 for (var i = 0; i < dataTypes.length; i++) {
 	var dataType = dataTypes[i];
-	jParser.prototype.structure[dataType.toLowerCase()] = jParser.Property(
+	jBinary.prototype.structure[dataType.toLowerCase()] = jBinary.Property(
 		dataMethod('get', dataType),
 		dataMethod('write', dataType)
 	);
 }
 
-jParser.prototype.seek = jParser.prototype.structure.seek;
-jParser.prototype.tell = jParser.prototype.structure.tell;
-jParser.prototype.skip = jParser.prototype.structure.skip;
+jBinary.prototype.seek = jBinary.prototype.structure.seek;
+jBinary.prototype.tell = jBinary.prototype.structure.tell;
+jBinary.prototype.skip = jBinary.prototype.structure.skip;
 
-jParser.prototype.parse = function (structure) {
+jBinary.prototype.parse = function (structure) {
 	if (typeof structure === 'number') {
 		structure = ['bitfield', structure];
 	}
@@ -241,7 +241,7 @@ jParser.prototype.parse = function (structure) {
 	throw new Error("Unknown structure type `" + structure + "`");
 };
 
-jParser.prototype.write = function (structure, data) {
+jBinary.prototype.write = function (structure, data) {
 	if (typeof structure === 'number') {
 		structure = ['bitfield', structure];
 	}
@@ -285,7 +285,7 @@ jParser.prototype.write = function (structure, data) {
 	throw new Error("Unknown structure type `" + structure + "`");
 };
 
-jParser.prototype.modify = function (structure, callback) {
+jBinary.prototype.modify = function (structure, callback) {
 	var data = this.seek(this.tell(), function () {
 		return this.parse(structure);
 	});
@@ -298,9 +298,9 @@ jParser.prototype.modify = function (structure, callback) {
 };
 
 if (typeof module !== 'undefined' && exports === module.exports) {
-	module.exports = jParser;
+	module.exports = jBinary;
 } else {
-	exports.jParser = jParser;
+	exports.jBinary = jBinary;
 }
 
 })(this);

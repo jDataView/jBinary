@@ -2,6 +2,9 @@
 if (typeof jDataView === 'undefined') {
 	jDataView = require('jDataView');
 }
+if (typeof jBinary === 'undefined') {
+	jBinary = require('..');
+}
 var module = QUnit.module;
 var test = QUnit.test;
 
@@ -12,7 +15,7 @@ var dataBytes = [
 ];
 var dataStart = 1;
 var view = new jDataView(dataBytes.slice(), dataStart, undefined, true);
-var parser = new jParser(view);
+var parser = new jBinary(view);
 
 function chr (x) {
 	return String.fromCharCode(x);
@@ -182,7 +185,7 @@ testWriters('bitfield', [
 	[
 		{
 			first5: 5,
-			next5: jParser.Property(
+			next5: jBinary.Property(
 				function () { return this.parse(5) },
 				function (value) { this.write(5, value) }
 			),

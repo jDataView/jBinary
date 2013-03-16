@@ -1,9 +1,9 @@
 
 var fs = require('fs');
-var jParser = require('../../src/jparser.js');
+var jBinary = require('../../src/jbinary.js');
 
 fs.readFile('favicon.ico', function (err, buffer) {
-	var parser = new jParser(buffer, {
+	var parser = new jBinary(buffer, {
 		uint4: function () {
 			// By default, we can only parse 8 bits at a time.
 			// When uint4 is called, it will parse 8 bits,

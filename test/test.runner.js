@@ -5,6 +5,6 @@ testrunner.options.assertions = false;
 testrunner.options.summary = false;
 testrunner.options.coverage = false;
 testrunner.run({
-	code: '../src/jparser.js',
+	code: '../src/jbinary.js',
 	tests: './test.js'
 });
