@@ -88,6 +88,10 @@ jBinary.Value.prototype = {
 			});
 		}
 		return this.cache;
+	},
+
+	path: function (path, value) {
+		return this.value(value);
 	}
 };
 
@@ -140,7 +144,7 @@ jBinary.Types['object'] = jBinary.Value.inherit({
 		}
 		function subProp(name) {
 			var prop = base[name], propValue = value !== undefined ? value[name] : undefined;
-			return prop.path && subPath.length > 0 ? prop.path(subPath, propValue) : prop.value(propValue);
+			return prop.path(subPath, propValue);
 		}
 		return name == '*' ? this.map(subProp) : subProp(name);
 	},
@@ -324,13 +328,13 @@ jBinary.prototype = {
 
 	parse: function (descriptor, params) {
 		var instance = this.describe.apply(this, arguments);
-		return instance.path ? instance.path('**') : instance.value();
+		return instance.path('**');
 	},
 
 	write: function (descriptor, params, value) {
 		value = arguments[arguments.length - 1];
 		var instance = this.describe.apply(this, Array.prototype.slice.call(arguments, 0, -1));
-		instance.path ? instance.path('**', value) : instance.value(value);
+		instance.path('**', value);
 		instance.atStart(function () { this.flush(this.binary) });
 		return value;
 	},
@@ -338,13 +342,13 @@ jBinary.prototype = {
 	modify: function (descriptor, params, callback) {
 		callback = arguments[arguments.length - 1];
 		var instance = this.describe.apply(this, Array.prototype.slice.call(arguments, 0, -1));
-		var value = instance.path ? instance.path('**') : instance.value();
+		var value = instance.path('**');
 		return instance.atStart(function () {
 			var newValue = callback.call(this.binary, value);
 			if (newValue === undefined) {
 				newValue = value;
 			}
-			this.path ? this.path('**', newValue) : this.value(newValue);
+			this.path('**', newValue);
 			this.flush(this.binary);
 			return newValue;
 		});

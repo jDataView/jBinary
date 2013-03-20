@@ -126,11 +126,7 @@ function testWriters(name, writers) {
 			var instance = parser.describe(type);
 			instance.path ? instance.path('**', value) : instance.value(value);
 			var outInstance = instance.flush().seek(0, function () { return this.describe(type) });
-			if (outInstance.path) {
-				deepEqual(outInstance.path('**'), value);
-			} else {
-				equal(outInstance.value(), value);
-			}
+			deepEqual(outInstance.path('**'), value);
 		}
 	});
 }
