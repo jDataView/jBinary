@@ -1,4 +1,3 @@
-
 if (typeof jDataView === 'undefined') {
 	jDataView = require('jDataView');
 }
@@ -47,15 +46,15 @@ test('float', function () {
 test('string', function () {
 	parser.seek(5);
 	equal(parser.parse('char'), chr(0x00));
-	equal(parser.parse(['string', 2]), chr(0xba) + chr(0x01));
+	equal(parser.parse('string', 2), chr(0xba) + chr(0x01));
 });
 
 test('array', function () {
 	parser.seek(0);
-	deepEqual(parser.parse(['array', 'uint8', 8]),
+	deepEqual(parser.parse('array', 'uint8', 8),
 		[0xff, 0xfe, 0xfd, 0xfc, 0xfa, 0x00, 0xba, 0x01]);
 	parser.seek(0);
-	deepEqual(parser.parse(['array', 'int32', 2]),
+	deepEqual(parser.parse('array', 'int32', 2),
 		[-50462977, 28967162]);
 });
 
@@ -86,6 +85,7 @@ test('seek', function () {
 	equal(parser.tell(), 3);
 });
 
+/*
 test('bitfield', function () {
 	parser.seek(6);
 	deepEqual(parser.parse({
@@ -106,6 +106,7 @@ test('bitfield', function () {
 		}
 	});
 });
+*/
 
 module("Write", {
 	teardown: function () {
@@ -119,13 +120,17 @@ function testWriters(name, writers) {
 		for (var i = 0; i < writers.length; i++) {
 			var writer = writers[i],
 				type = writer[0],
-				value = writer[1],
-				check = writer[2] || equal;
+				value = writer[1];
 
 			parser.seek(0);
-			parser.write(type, value);
-			parser.seek(0);
-			check(parser.parse(type), value);
+			var instance = parser.describe(type);
+			instance.path ? instance.path('**', value) : instance.value(value);
+			var outInstance = instance.flush().seek(0, function () { return this.describe(type) });
+			if (outInstance.path) {
+				deepEqual(outInstance.path('**'), value);
+			} else {
+				equal(outInstance.value(), value);
+			}
 		}
 	});
 }
@@ -155,13 +160,11 @@ testWriters('string', [
 testWriters('array', [
 	[
 		['array', 'uint8', 8],
-		[0x54, 0x17, 0x29, 0x34, 0x5a, 0xfb, 0x00, 0xff],
-		deepEqual
+		[0x54, 0x17, 0x29, 0x34, 0x5a, 0xfb, 0x00, 0xff]
 	],
 	[
 		['array', 'int32', 2],
-		[-59371033, 2021738594],
-		deepEqual
+		[-59371033, 2021738594]
 	]
 ]);
 
@@ -176,11 +179,11 @@ testWriters('object', [
 			a: -7943512,
 			b: -105,
 			c: [17, 94]
-		},
-		deepEqual
+		}
 	]
 ]);
 
+/*
 testWriters('bitfield', [
 	[
 		{
@@ -205,23 +208,4 @@ testWriters('bitfield', [
 		deepEqual
 	]
 ]);
-
-test('modify', function () {
-	var structure = {
-		a: 'int32',
-		b: 'int8',
-		c: ['array', 'uint8', 2]
-	};
-
-	parser.seek(0);
-	parser.modify(structure, function (data) {
-		data.c[0] = 17;
-	});
-
-	parser.seek(0);
-	deepEqual(parser.parse(structure), {
-		a: -50462977,
-		b: -6,
-		c: [17, 186]
-	});
-})
+*/
