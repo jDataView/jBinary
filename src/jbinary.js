@@ -32,7 +32,15 @@ function jBinary(view, types) {
 	this.types = inherit(jBinary.Types, types);
 }
 
-jBinary.Value = {
+jBinary.Value = function (binary, parent) {
+	this.binary = binary;
+	this.parent = parent;
+	this.readPos = binary.tell();
+	this.readSize = this.size();
+	binary.seek(this.readPos + this.readSize);
+};
+
+jBinary.Value.prototype = {
 	paramNames: [],
 
 	atStart: function (action) {
@@ -63,21 +71,6 @@ jBinary.Value = {
 		return this.size();
 	},
 	
-	inherit: function (descriptor) {
-		return descriptor ? inherit(this, descriptor) : this;
-	},
-	
-	create: function (binary, parent) {
-		var instance = this.inherit({
-			parent: parent,
-			binary: binary,
-			readPos: binary.tell()
-		});
-		instance.readSize = instance.size();
-		binary.seek(instance.readPos + instance.readSize);
-		return instance;
-	},
-	
 	notify: function () {
 		this.modified = true;
 		if (this.parent) {
@@ -99,12 +92,22 @@ jBinary.Value = {
 	}
 };
 
+jBinary.Value.inherit = function (descriptor) {
+	var type = this;
+	var subType = function () {
+		type.apply(this, arguments);
+	};
+	subType.prototype = inherit(type.prototype, descriptor);
+	subType.inherit = type.inherit;
+	return subType;
+};
+
 jBinary.Types = {};
 
 jBinary.Types['object'] = jBinary.Value.inherit({
 	paramNames: ['structure'],
 
-	constructor: Object,
+	baseType: Object,
 
 	forEach: function (callback) {
 		for (var name in this.structure) {
@@ -120,7 +123,7 @@ jBinary.Types['object'] = jBinary.Value.inherit({
 	},
 
 	map: function (callback) {
-		var result = new this.constructor;
+		var result = new this.baseType;
 		this.forEach(function (name) {
 			result[name] = callback.call(this, name);
 		});
@@ -145,7 +148,7 @@ jBinary.Types['object'] = jBinary.Value.inherit({
 
 	read: function () {
 		return this.map(function (name) {
-			return this.getType(name).create(this.binary, this);
+			return new (this.getType(name))(this.binary, this);
 		});
 	},
 
@@ -193,7 +196,7 @@ jBinary.Types['object'] = jBinary.Value.inherit({
 jBinary.Types['array'] = jBinary.Types['object'].inherit({
 	paramNames: ['type', 'length'],
 
-	constructor: Array,
+	baseType: Array,
 
 	forEach: function (callback) {
 		for (var i = 0, length = this.length; i < length; i++) {
@@ -269,9 +272,9 @@ jBinary.prototype = {
 		if (typeof type === 'string') {
 			type = this.getType(this.types[type]);
 		} else
-		if (!jBinary.Value.isPrototypeOf(type)) {
-			params = {structure: type};
-			type = jBinary.Types['object'];
+		if (!(type.prototype instanceof jBinary.Value)) {
+			// syntax sugar for structures
+			type = jBinary.Types['object'].inherit({structure: type});
 		}
 
 		if (params) {
@@ -281,10 +284,10 @@ jBinary.prototype = {
 			}
 
 			if (params instanceof Array) {
-				var paramValues = params;
+				var paramNames = type.prototype.paramNames, paramValues = params;
 				params = {};
-				for (var i = 0, length = Math.min(type.paramNames.length, paramValues.length); i < length; i++) {
-					params[type.paramNames[i]] = paramValues[i];
+				for (var i = 0, length = Math.min(paramNames.length, paramValues.length); i < length; i++) {
+					params[paramNames[i]] = paramValues[i];
 				}
 			}
 		}
@@ -317,7 +320,7 @@ jBinary.prototype = {
 	},
 
 	describe: function (descriptor, params) {
-		return this.getType.apply(this, arguments).create(this);
+		return new (this.getType.apply(this, arguments))(this);
 	},
 
 	parse: function (descriptor, params) {
