@@ -55,8 +55,7 @@ jBinary.Value.prototype = {
 		if (this.modified) {
 			this.write(binary);
 		} else {
-			var bytes = this.binary.view.getBytes(this.readSize, this.readPos, true);
-			binary.view.writeBytes(bytes, true);
+			this.binary.copyBytesTo(binary, this.readPos, this.readPos + this.readSize);
 		}
 		return binary;
 	},
@@ -157,10 +156,7 @@ jBinary.Types['object'] = jBinary.Value.inherit({
 		this.forEach(function (name) {
 			var prop = this.cache[name];
 			if (prop.modified) {
-				if (pos > prevPos) {
-					var bytes = this.binary.view.getBytes(pos - prevPos, undefined, true);
-					binary.view.writeBytes(bytes, true);
-				}
+				this.binary.copyBytesTo(binary, prevPos, pos);
 				prop.write(binary);
 				pos += prop.readSize;
 				prevPos = pos;
@@ -168,10 +164,7 @@ jBinary.Types['object'] = jBinary.Value.inherit({
 				pos += prop.readSize;
 			}
 		});
-		if (pos > prevPos) {
-			var bytes = this.binary.view.getBytes(pos - prevPos, undefined, true);
-			binary.view.writeBytes(bytes, true);
-		}
+		this.binary.copyBytesTo(binary, prevPos, pos);
 	},
 
 	size: function () {
@@ -265,6 +258,12 @@ for (var dataType in nativeTypes) {
 }
 
 jBinary.prototype = {
+	copyBytesTo: function (binary, begin, end) {
+		if (end <= begin) return;
+		var bytes = this.inPlace(function () { return this.view.getBytes(end - begin, begin, true) });
+		binary.view.writeBytes(bytes, true);
+	},
+
 	getType: function (type, params) {
 		if (type instanceof Array) {
 			type = this.getType.apply(this, type);
@@ -324,8 +323,31 @@ jBinary.prototype = {
 	},
 
 	parse: function (descriptor, params) {
-		var type = this.describe.apply(this, arguments);
-		return type.path ? type.path('**') : type.value();
+		var instance = this.describe.apply(this, arguments);
+		return instance.path ? instance.path('**') : instance.value();
+	},
+
+	write: function (descriptor, params, value) {
+		value = arguments[arguments.length - 1];
+		var instance = this.describe.apply(this, Array.prototype.slice.call(arguments, 0, -1));
+		instance.path ? instance.path('**', value) : instance.value(value);
+		instance.atStart(function () { this.flush(this.binary) });
+		return value;
+	},
+
+	modify: function (descriptor, params, callback) {
+		callback = arguments[arguments.length - 1];
+		var instance = this.describe.apply(this, Array.prototype.slice.call(arguments, 0, -1));
+		var value = instance.path ? instance.path('**') : instance.value();
+		return instance.atStart(function () {
+			var newValue = callback.call(this.binary, value);
+			if (newValue === undefined) {
+				newValue = value;
+			}
+			this.path ? this.path('**', newValue) : this.value(newValue);
+			this.flush(this.binary);
+			return newValue;
+		});
 	}
 };
 
