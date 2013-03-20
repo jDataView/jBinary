@@ -137,7 +137,11 @@ jBinary.Types['object'] = jBinary.Value.inherit({
 		if (typeof path === 'string') {
 			path = path.split('.');
 		}
-		var name = path[0], subPath = path.slice(1), base = this.value();
+		var base = this.value();
+		if (path.length === 0) {
+			return base;
+		}
+		var name = path[0], subPath = path.slice(1);
 		if (name == '**') {
 			name = '*';
 			subPath = ['**'];
