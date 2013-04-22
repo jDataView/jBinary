@@ -1,10 +1,24 @@
+// https://github.com/davidchambers/Base64.js
+(function(){var t="undefined"!=typeof window?window:exports,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n=function(){try{document.createElement("$")}catch(t){return t}}();t.btoa||(t.btoa=function(t){for(var o,e,a=0,c=r,f="";t.charAt(0|a)||(c="=",a%1);f+=c.charAt(63&o>>8-8*(a%1))){if(e=t.charCodeAt(a+=.75),e>255)throw n;o=o<<8|e}return f}),t.atob||(t.atob=function(t){if(t=t.replace(/=+$/,""),1==t.length%4)throw n;for(var o,e,a=0,c=0,f="";e=t.charAt(c++);~e&&(o=a%4?64*o+e:e,a++%4)?f+=String.fromCharCode(255&o>>(6&-2*a)):0)e=r.indexOf(e);return f})})();
+
 (function (exports) {
 
 if (typeof jDataView === 'undefined' && typeof require !== 'undefined') {
 	jDataView = require('jDataView');
 }
 
-// Extend code from underscorejs (modified for fast inheritance using prototypes)
+function extend(obj) {
+    for (var i = 1; i < arguments.length; ++i) {
+        var source = arguments[i];
+        for (var prop in source) {
+            if (source[prop] !== undefined) {
+                obj[prop] = source[prop];
+            }
+        }
+    }
+    return obj;
+}
+
 function inherit(obj) {
 	if ('create' in Object) {
 		obj = Object.create(obj);
@@ -13,27 +27,29 @@ function inherit(obj) {
 		ClonedObject.prototype = obj;
 		obj = new ClonedObject();
 	}
-	for (var i = 1; i < arguments.length; ++i) {
-		var source = arguments[i];
-		for (var prop in source) {
-			if (source[prop] !== undefined) {
-				obj[prop] = source[prop];
-			}
-		}
-	}
-	return obj;
+	return extend.apply(this, arguments);
 }
 
 function jBinary(view, structure) {
-	if (!(this instanceof arguments.callee)) {
-		throw new Error("Constructor may not be called as a function");
-	}
-	if (!(view instanceof jDataView)) {
-		view = new jDataView(view, undefined, undefined, true);
+    if (!(view instanceof jDataView)) {
+        view = new jDataView(view);
+    }
+    if (!(this instanceof jBinary)) {
+		return new jBinary(view, structure);
 	}
 	this.view = view;
 	this.view.seek(0);
 	this._bitShift = 0;
+    var self = this;
+    this.context = [self];
+    this.context.in = function (newContext, callback) {
+        this.unshift(newContext);
+        var result = callback.apply(self, Array.prototype.slice.call(arguments, 2));
+        this.shift();
+        return result;
+    };
+    this.context.getCurrent = function () { return this[0] };
+    this.context.getParent = function () { return this[1] };
 	this.structure = inherit(jBinary.prototype.structure, structure);
 }
 
@@ -49,16 +65,56 @@ function toInt(val) {
 	return val instanceof Function ? val.call(this) : val;
 }
 
+function calcStringLength() {
+    var begin = this.tell();
+    var end = this.seek(begin, function () {
+        while (this.view.getUint8());
+        return this.tell();
+    }) - 1;
+    return end - begin;
+}
+
 jBinary.prototype.structure = {
-	string: jBinary.Property(
-		function (length) { return this.view.getString(toInt.call(this, length)) },
+    extend: jBinary.Property(
+        function (baseType) {
+            var obj = this.parse(baseType);
+            var parts = arguments;
+            this.context.in(obj, function () {
+                for (var i = 1, length = parts.length; i < length; i++) {
+                    extend(obj, this.parse(parts[i]));
+                }
+            });
+            return obj;
+        },
+        function () {
+            var obj = arguments[arguments.length - 1];
+            var parts = arguments;
+            this.context.in(obj, function () {
+                for (var i = 0, length = parts.length - 1; i < length; i++) {
+                    this.write(parts[i], obj);
+                }
+            });
+        }
+    ),
+    string: jBinary.Property(
+		function (length) {
+            var string = this.view.getString(toInt.call(this, length !== undefined ? length : calcStringLength));
+            if (length === undefined) {
+                this.skip(1);
+            }
+            return string;
+        },
 		function (length, subString) {
-			if (subString.length > length) {
-				subString = subString.slice(0, length);
-			} else
-			if (subString.length < length) {
-				subString += String.fromCharCode.apply(null, new Array(length - subString.length));
-			}
+            if (length !== undefined) {
+                length = toInt.call(this, length);
+                if (subString.length > length) {
+                    subString = subString.slice(0, length);
+                } else
+                if (subString.length < length) {
+                    subString += String.fromCharCode.apply(null, new Array(length - subString.length));
+                }
+            }
+
 			this.view.writeString(subString);
 		}
 	),
@@ -77,6 +133,28 @@ jBinary.prototype.structure = {
 			}
 		}
 	),
+    object: jBinary.Property(
+        function (structure) {
+            var output = {};
+            this.context.in(output, function () {
+                for (var key in structure) {
+                    var value = this.parse(structure[key]);
+                    // skipping undefined call results (useful for 'if' statement)
+                    if (value !== undefined) {
+                        output[key] = value;
+                    }
+                }
+            });
+            return output;
+        },
+        function (structure, data) {
+            this.context.in(data, function () {
+                for (var key in structure) {
+                    this.write(structure[key], data[key]);
+                }
+            });
+        }
+    ),
 	bitfield: jBinary.Property(
 		function (bitSize) {
 			var fieldValue = 0;
@@ -195,94 +273,49 @@ jBinary.prototype.tell = jBinary.prototype.structure.tell;
 jBinary.prototype.skip = jBinary.prototype.structure.skip;
 
 jBinary.prototype.parse = function (structure) {
-	if (typeof structure === 'number') {
-		structure = ['bitfield', structure];
-	}
+    switch (typeof structure) {
+        case 'string':
+            structure = this.structure[structure];
+            return this.parse.apply(this, arguments);
 
-	// f, 1, 2 means f(1, 2)
-	if (structure instanceof Function) {
-		return structure.apply(this, Array.prototype.slice.call(arguments, 1));
-	}
+        case 'function':
+            return structure.apply(this, Array.prototype.slice.call(arguments, 1));
 
-	// 'int32', ... is a shortcut for ['int32', ...]
-	if (typeof structure === 'string') {
-		structure = Array.prototype.slice.call(arguments);
-	}
+        case 'number':
+            structure = ['bitfield', structure];
 
-	// ['string', 256] means structure['string'](256)
-	if (structure instanceof Array) {
-		var key = structure[0];
-		if (!(key in this.structure)) {
-			throw new Error("Missing structure for `" + key + "`");
-		}
-		return this.parse.apply(this, [this.structure[key]].concat(structure.slice(1)));
-	}
+        case 'object':
+            if (!(structure instanceof Array)) {
+                structure = ['object', structure];
+            }
+            return this.parse.apply(this, structure);
 
-	// {key: val} means {key: parse(val)}
-	if (typeof structure === 'object') {
-		var output = {},
-			current = this.current;
-
-		this.current = output;
-
-		for (var key in structure) {
-			var value = this.parse(structure[key]);
-			// skipping undefined call results (useful for 'if' statement)
-			if (value !== undefined) {
-				output[key] = value;
-			}
-		}
-
-		this.current = current;
-
-		return output;
-	}
-
-	throw new Error("Unknown structure type `" + structure + "`");
+        default:
+            throw new Error("Unknown structure type `" + structure + "`");
+    }
 };
 
 jBinary.prototype.write = function (structure, data) {
-	if (typeof structure === 'number') {
-		structure = ['bitfield', structure];
-	}
+    switch (typeof structure) {
+        case 'string':
+            structure = this.structure[structure];
+            return this.write.apply(this, arguments);
 
-	// f, 1, 2, data means f(1, 2, data)
-	if (structure instanceof Function) {
-		(structure.write || structure).apply(this, Array.prototype.slice.call(arguments, 1));
-		return;
-	}
+        case 'function':
+            return (structure.write || structure).apply(this, Array.prototype.slice.call(arguments, 1));
 
-	// 'int32', ..., value is a shortcut for ['int32', ..., value]
-	if (typeof structure === 'string') {
-		structure = Array.prototype.slice.call(arguments);
-	}
+        case 'number':
+            structure = ['bitfield', structure];
 
-	// ['string', 256], data means structure['string'](256, data)
-	if (structure instanceof Array) {
-		var key = structure[0];
-		if (!(key in this.structure)) {
-			throw new Error("Missing structure for `" + key + "`");
-		}
-		this.write.apply(this, [this.structure[key]].concat(structure.slice(1)).concat([data]));
-		return;
-	}
+        case 'object':
+            if (!(structure instanceof Array)) {
+                structure = ['object', structure];
+            }
+            return this.write.apply(this, structure.concat([data]));
 
-	// {key: type}, {key: value} means write(type, value)
-	if (typeof structure === 'object') {
-		var current = this.current;
-
-		this.current = data;
-
-		for (var key in structure) {
-			this.write(structure[key], data[key]);
-		}
-
-		this.current = current;
-
-		return;
-	}
-
-	throw new Error("Unknown structure type `" + structure + "`");
+        default:
+            throw new Error("Unknown structure type `" + structure + "`");
+    }
 };
 
 jBinary.prototype.modify = function (structure, callback) {
@@ -295,6 +328,16 @@ jBinary.prototype.modify = function (structure, callback) {
 	}
 	this.write(structure, newData);
 	return newData;
+};
+
+jBinary.prototype.toURL = function (type) {
+    type = type || 'application/octet-stream';
+    if (!window.URL || !window.URL.createObjectURL) {
+        return 'data:' + type + ';base64,' + btoa(this.seek(0, function () { return this.view.getString() }));
+    } else {
+        var data = this.seek(0, function () { return this.view._getBytes(undefined, undefined, true) });
+        return URL.createObjectURL(new Blob([data], {type: type}));
+    }
 };
 
 if (typeof module !== 'undefined' && exports === module.exports) {
