@@ -41,15 +41,23 @@ function jBinary(view, structure) {
 	this.view.seek(0);
 	this._bitShift = 0;
     var self = this;
-    this.context = [self];
+    this.context = [];
     this.context.in = function (newContext, callback) {
         this.unshift(newContext);
-        var result = callback.apply(self, Array.prototype.slice.call(arguments, 2));
+        var result = callback.call(self);
         this.shift();
         return result;
     };
     this.context.getCurrent = function () { return this[0] };
     this.context.getParent = function () { return this[1] };
+    this.context.findParent = function (filter) {
+        for (var i = 0, length = this.length; i < length; i++) {
+            var context = this[i];
+            if (filter.call(self, context)) {
+                return context;
+            }
+        }
+    };
 	this.structure = inherit(jBinary.prototype.structure, structure);
 }
 
@@ -96,6 +104,25 @@ jBinary.prototype.structure = {
             });
         }
     ),
+    enum: jBinary.Property(
+        function (basicType, matches) {
+            var value = this.parse(basicType);
+            if (value in matches) {
+                value = matches[value];
+            }
+            return value;
+        },
+        function (basicType, matches, value) {
+            for (var name in matches) {
+                if (matches[name] === value) {
+                    value = name;
+                    break;
+                }
+            }
+            this.write(basicType, value);
+        }
+    ),
+    bool: ['enum', false, true],
     string: jBinary.Property(
 		function (length) {
             var string = this.view.getString(toInt.call(this, length !== undefined ? length : calcStringLength));
