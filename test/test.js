@@ -15,7 +15,7 @@ var dataBytes = [
 ];
 var dataStart = 1;
 var view = new jDataView(dataBytes.slice(), dataStart, undefined, true);
-var parser = new jBinary(view);
+var binary = new jBinary(view);
 
 function chr (x) {
 	return String.fromCharCode(x);
@@ -24,44 +24,44 @@ function chr (x) {
 
 module("Parse");
 test('uint', function () {
-	parser.seek(0);
-	equal(parser.parse('uint8'), 255);
-	equal(parser.parse('uint16'), 65022);
-	equal(parser.parse('uint32'), 3120626428);
+	binary.seek(0);
+	equal(binary.read('uint8'), 255);
+	equal(binary.read('uint16'), 65022);
+	equal(binary.read('uint32'), 3120626428);
 });
 
 test('int', function () {
-	parser.seek(0);
-	equal(parser.parse('int8'), -1);
-	equal(parser.parse('int16'), -514);
-	equal(parser.parse('int32'), -1174340868);
+	binary.seek(0);
+	equal(binary.read('int8'), -1);
+	equal(binary.read('int16'), -514);
+	equal(binary.read('int32'), -1174340868);
 });
 
 test('float', function () {
-	parser.seek(0);
-	equal(parser.parse('float32'), -1.055058432344064e+37);
-	parser.seek(0);
-	equal(parser.parse('float64'), 2.426842827241402e-300);
+	binary.seek(0);
+	equal(binary.read('float32'), -1.055058432344064e+37);
+	binary.seek(0);
+	equal(binary.read('float64'), 2.426842827241402e-300);
 });
 
 test('string', function () {
-	parser.seek(5);
-	equal(parser.parse('char'), chr(0x00));
-	equal(parser.parse(['string', 2]), chr(0xba) + chr(0x01));
+	binary.seek(5);
+	equal(binary.read('char'), chr(0x00));
+	equal(binary.read(['string', 2]), chr(0xba) + chr(0x01));
 });
 
 test('array', function () {
-	parser.seek(0);
-	deepEqual(parser.parse(['array', 'uint8', 8]),
+	binary.seek(0);
+	deepEqual(binary.read(['array', 'uint8', 8]),
 		[0xff, 0xfe, 0xfd, 0xfc, 0xfa, 0x00, 0xba, 0x01]);
-	parser.seek(0);
-	deepEqual(parser.parse(['array', 'int32', 2]),
+	binary.seek(0);
+	deepEqual(binary.read(['array', 'int32', 2]),
 		[-50462977, 28967162]);
 });
 
 test('object', function () {
-	parser.seek(0);
-	deepEqual(parser.parse({
+	binary.seek(0);
+	deepEqual(binary.read({
 		a: 'int32',
 		b: 'int8',
 		c: ['array', 'uint8', 2]
@@ -73,26 +73,29 @@ test('object', function () {
 });
 
 test('seek', function () {
-	parser.seek(5);
-	equal(parser.tell(), 5);
-	parser.seek(parser.tell() - 2);
-	equal(parser.tell(), 3);
+	binary.seek(5);
+	equal(binary.tell(), 5);
+	binary.seek(binary.tell() - 2);
+	equal(binary.tell(), 3);
 
-	parser.seek(5, function () {
-		equal(parser.tell(), 5);
-		parser.seek(0);
-		equal(parser.tell(), 0);
+	binary.seek(5, function () {
+		equal(binary.tell(), 5);
+		binary.seek(0);
+		equal(binary.tell(), 0);
 	});
-	equal(parser.tell(), 3);
+	equal(binary.tell(), 3);
 });
 
 test('bitfield', function () {
-	parser.seek(6);
-	deepEqual(parser.parse({
+	binary.seek(6);
+	deepEqual(binary.read({
 		first5: 5,
-		next5: function () {
-			return this.parse(5);
-		},
+		next5: jBinary.Property(
+            null,
+            function () {
+                return this.binary.read(5);
+            }
+        ),
 		last6: {
 			first3: 3,
 			last3: 3
@@ -122,10 +125,10 @@ function testWriters(name, writers) {
 				value = writer[1],
 				check = writer[2] || equal;
 
-			parser.seek(0);
-			parser.write(type, value);
-			parser.seek(0);
-			check(parser.parse(type), value);
+			binary.seek(0);
+			binary.write(type, value);
+			binary.seek(0);
+			check(binary.read(type), value);
 		}
 	});
 }
@@ -186,8 +189,9 @@ testWriters('bitfield', [
 		{
 			first5: 5,
 			next5: jBinary.Property(
-				function () { return this.parse(5) },
-				function (value) { this.write(5, value) }
+                null,
+				function () { return this.binary.read(5) },
+				function (value) { this.binary.write(5, value) }
 			),
 			last6: {
 				first3: 3,
@@ -213,13 +217,13 @@ test('modify', function () {
 		c: ['array', 'uint8', 2]
 	};
 
-	parser.seek(0);
-	parser.modify(structure, function (data) {
+	binary.seek(0);
+	binary.modify(structure, function (data) {
 		data.c[0] = 17;
 	});
 
-	parser.seek(0);
-	deepEqual(parser.parse(structure), {
+	binary.seek(0);
+	deepEqual(binary.read(structure), {
 		a: -50462977,
 		b: -6,
 		c: [17, 186]

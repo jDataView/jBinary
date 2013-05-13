@@ -61,111 +61,126 @@ function jBinary(view, structure) {
 	this.structure = inherit(jBinary.prototype.structure, structure);
 }
 
-jBinary.Property = function (reader, writer, forceNew) {
-	var property = forceNew ? function () { return reader.apply(this, arguments) } : reader;
-	if (writer) {
-		property.write = writer;
-	}
+jBinary.Property = function (init, read, write) {
+    var property = function (binary, args) {
+        this.binary = binary;
+        if (init instanceof Function) {
+            init.apply(this, args);
+        } else
+        if (init instanceof Array) {
+            for (var i = 0, length = init.length; i < length; i++) {
+                this[init[i]] = args[i];
+            }
+        }
+    };
+    property.prototype = inherit(jBinary.Property.prototype);
+	property.prototype.read = read;
+    property.prototype.write = write;
 	return property;
 };
 
-function toInt(val) {
-	return val instanceof Function ? val.call(this) : val;
-}
-
-function calcStringLength() {
-    var begin = this.tell();
-    var end = this.seek(begin, function () {
-        while (this.view.getUint8());
-        return this.tell();
-    }) - 1;
-    return end - begin;
+function toValue(prop, val) {
+	return val instanceof Function ? val.call(prop) : val;
 }
 
 jBinary.prototype.structure = {
     extend: jBinary.Property(
-        function (baseType) {
-            var obj = this.parse(baseType);
-            var parts = arguments;
-            this.context.in(obj, function () {
+        function () {
+            this.parts = arguments;
+        },
+        function () {
+            var parts = this.parts, obj = this.binary.read(parts[0]);
+            this.binary.context.in(obj, function () {
                 for (var i = 1, length = parts.length; i < length; i++) {
-                    extend(obj, this.parse(parts[i]));
+                    extend(obj, this.read(parts[i]));
                 }
             });
             return obj;
         },
-        function () {
-            var obj = arguments[arguments.length - 1];
-            var parts = arguments;
-            this.context.in(obj, function () {
-                for (var i = 0, length = parts.length - 1; i < length; i++) {
+        function (obj) {
+            var parts = this.parts;
+            this.binary.context.in(obj, function () {
+                for (var i = 0, length = parts.length; i < length; i++) {
                     this.write(parts[i], obj);
                 }
             });
         }
     ),
     enum: jBinary.Property(
-        function (basicType, matches) {
-            var value = this.parse(basicType);
-            if (value in matches) {
-                value = matches[value];
+        ['basicType', 'matches'],
+        function () {
+            var value = this.binary.read(this.basicType);
+            if (value in this.matches) {
+                value = this.matches[value];
             }
             return value;
         },
-        function (basicType, matches, value) {
-            for (var name in matches) {
-                if (matches[name] === value) {
+        function (value) {
+            for (var index in this.matches) {
+                if (this.matches[index] === value) {
                     value = name;
                     break;
                 }
             }
-            this.write(basicType, value);
+            this.binary.write(basicType, value);
         }
     ),
-    bool: ['enum', false, true],
     string: jBinary.Property(
-		function (length) {
-            var string = this.view.getString(toInt.call(this, length !== undefined ? length : calcStringLength));
-            if (length === undefined) {
-                this.skip(1);
+        ['length'],
+		function () {
+            var string;
+            if (this.length !== undefined) {
+                string = this.binary.view.getString(toValue(this, this.length));
+            } else {
+                var begin = this.binary.tell();
+                var end = this.binary.seek(begin, function () {
+                    while (this.view.getUint8());
+                    return this.tell();
+                }) - 1;
+                string = this.binary.view.getString(end - begin);
+                this.binary.skip(1);
             }
             return string;
         },
-		function (length, subString) {
-            if (length !== undefined) {
-                length = toInt.call(this, length);
+		function (subString) {
+            if (this.length !== undefined) {
+                var length = toValue(this, this.length);
                 if (subString.length > length) {
                     subString = subString.slice(0, length);
                 } else
                 if (subString.length < length) {
                     subString += String.fromCharCode.apply(null, new Array(length - subString.length));
                 }
+                this.binary.view.writeString(subString);
+            } else {
+                this.binary.view.writeString(subString);
+                this.binary.view.writeUint8(0);
             }
-
-			this.view.writeString(subString);
 		}
 	),
 	array: jBinary.Property(
-		function (type, length) {
-			length = toInt.call(this, length);
+        ['type', 'length'],
+		function () {
+			var length = toValue(this, this.length);
 			var results = new Array(length);
-			for (var i = 0; i < length; ++i) {
-				results[i] = this.parse(type);
+			for (var i = 0; i < length; i++) {
+				results[i] = this.binary.read(this.type);
 			}
 			return results;
 		},
-		function (type, length, values) {
-			for (var i = 0; i < length; i++) {
-				this.write(type, values[i]);
+		function (values) {
+            for (var i = 0, length = values.length; i < length; i++) {
+				this.binary.write(this.type, values[i]);
 			}
 		}
 	),
     object: jBinary.Property(
-        function (structure) {
-            var output = {};
-            this.context.in(output, function () {
+        ['structure'],
+        function () {
+            var structure = this.structure, output = {};
+            this.binary.context.in(output, function () {
                 for (var key in structure) {
-                    var value = this.parse(structure[key]);
+                    var value = this.read(structure[key]);
                     // skipping undefined call results (useful for 'if' statement)
                     if (value !== undefined) {
                         output[key] = value;
@@ -174,8 +189,9 @@ jBinary.prototype.structure = {
             });
             return output;
         },
-        function (structure, data) {
-            this.context.in(data, function () {
+        function (data) {
+            var structure = this.structure;
+            this.binary.context.in(data, function () {
                 for (var key in structure) {
                     this.write(structure[key], data[key]);
                 }
@@ -183,91 +199,97 @@ jBinary.prototype.structure = {
         }
     ),
 	bitfield: jBinary.Property(
-		function (bitSize) {
-			var fieldValue = 0;
+        ['bitSize'],
+		function () {
+            var bitSize = this.bitSize,
+                binary = this.binary,
+                fieldValue = 0;
 
-			if (this._bitShift < 0 || this._bitShift >= 8) {
-				var byteShift = this._bitShift >> 3; // Math.floor(_bitShift / 8)
-				this.skip(byteShift);
-				this._bitShift &= 7; // _bitShift + 8 * Math.floor(_bitShift / 8)
+			if (binary._bitShift < 0 || binary._bitShift >= 8) {
+				var byteShift = binary._bitShift >> 3; // Math.floor(_bitShift / 8)
+				binary.skip(byteShift);
+				binary._bitShift &= 7; // _bitShift + 8 * Math.floor(_bitShift / 8)
 			}
-			if (this._bitShift > 0 && bitSize >= 8 - this._bitShift) {
-				fieldValue = this.view.getUint8() & ~(-1 << (8 - this._bitShift));
-				bitSize -= 8 - this._bitShift;
-				this._bitShift = 0;
+			if (binary._bitShift > 0 && bitSize >= 8 - binary._bitShift) {
+				fieldValue = binary.view.getUint8() & ~(-1 << (8 - binary._bitShift));
+				bitSize -= 8 - binary._bitShift;
+				binary._bitShift = 0;
 			}
 			while (bitSize >= 8) {
-				fieldValue = this.view.getUint8() | (fieldValue << 8);
+				fieldValue = binary.view.getUint8() | (fieldValue << 8);
 				bitSize -= 8;
 			}
 			if (bitSize > 0) {
-				fieldValue = ((this.view.getUint8() >>> (8 - (this._bitShift + bitSize))) & ~(-1 << bitSize)) | (fieldValue << bitSize);
-				this._bitShift += bitSize - 8; // passing negative value for next pass
+				fieldValue = ((binary.view.getUint8() >>> (8 - (binary._bitShift + bitSize))) & ~(-1 << bitSize)) | (fieldValue << bitSize);
+				binary._bitShift += bitSize - 8; // passing negative value for next pass
 			}
 
 			return fieldValue;
 		},
-		function (bitSize, value) {
-			if (this._bitShift < 0 || this._bitShift >= 8) {
-				var byteShift = this._bitShift >> 3; // Math.floor(_bitShift / 8)
-				this.skip(byteShift);
-				this._bitShift &= 7; // _bitShift + 8 * Math.floor(_bitShift / 8)
+		function (value) {
+            var bitSize = this.bitSize,
+                binary = this.binary;
+
+			if (binary._bitShift < 0 || binary._bitShift >= 8) {
+				var byteShift = binary._bitShift >> 3; // Math.floor(_bitShift / 8)
+				binary.skip(byteShift);
+				binary._bitShift &= 7; // _bitShift + 8 * Math.floor(_bitShift / 8)
 			}
-			if (this._bitShift > 0 && bitSize >= 8 - this._bitShift) {
-				var pos = this.tell();
-				var byte = this.view.getUint8(pos) & (-1 << (8 - this._bitShift));
-				byte |= value >>> (bitSize - (8 - this._bitShift));
-				this.view.setUint8(pos, byte);
-				bitSize -= 8 - this._bitShift;
-				this._bitShift = 0;
+			if (binary._bitShift > 0 && bitSize >= 8 - binary._bitShift) {
+				var pos = binary.tell();
+				var byte = binary.view.getUint8(pos) & (-1 << (8 - binary._bitShift));
+				byte |= value >>> (bitSize - (8 - binary._bitShift));
+				binary.view.setUint8(pos, byte);
+				bitSize -= 8 - binary._bitShift;
+				binary._bitShift = 0;
 			}
 			while (bitSize >= 8) {
-				this.view.writeUint8((value >>> (bitSize - 8)) & 0xff);
+				binary.view.writeUint8((value >>> (bitSize - 8)) & 0xff);
 				bitSize -= 8;
 			}
 			if (bitSize > 0) {
-				var pos = this.tell();
-				var byte = this.view.getUint8(pos) & ~(~(-1 << bitSize) << (8 - (this._bitShift + bitSize)));
-				byte |= (value & ~(-1 << bitSize)) << (8 - (this._bitShift + bitSize));
-				this.view.setUint8(pos, byte);
-				this._bitShift += bitSize - 8; // passing negative value for next pass
+				var pos = binary.tell();
+				var byte = binary.view.getUint8(pos) & ~(~(-1 << bitSize) << (8 - (binary._bitShift + bitSize)));
+				byte |= (value & ~(-1 << bitSize)) << (8 - (binary._bitShift + bitSize));
+				binary.view.setUint8(pos, byte);
+				binary._bitShift += bitSize - 8; // passing negative value for next pass
 			}
 		}
 	),
-	seek: function (position, block) {
-		position = toInt.call(this, position);
-		if (block instanceof Function) {
-			var old_position = this.view.tell();
-			this.view.seek(position);
-			var result = block.call(this);
-			this.view.seek(old_position);
-			return result;
-		} else {
-			return this.view.seek(position);
-		}
-	},
-	tell: function () {
-		return this.view.tell();
-	},
-	skip: function (offset) {
-		offset = toInt.call(this, offset);
-		this.view.seek(this.view.tell() + offset);
-		return offset;
-	}
+    if: jBinary.Property(
+        ['condition', 'type'],
+        function () {
+            if (toValue(this, this.condition)) return this.binary.read(type);
+        },
+        function (value) {
+            if (toValue(this, this.condition)) return this.binary.write(type, value);
+        }
+    ),
+    const: jBinary.Property(
+        ['type', 'value', 'strict'],
+        function () {
+            var value = this.binary.read(this.type);
+            if (this.strict && value != toValue(this, this.value)) throw new TypeError('Unexpected value.');
+            return value;
+        },
+        function (value) {
+            if (this.strict && value != toValue(this, this.value)) throw new TypeError('Trying to write unexpected value.');
+            this.binary.write(value);
+        }
+    ),
+    skip: jBinary.Property(
+        ['length'],
+        function () {
+            this.binary.skip(toValue(this, toValue(this, this.length)));
+        },
+        function (value) {
+            var length = toValue(this, this.length);
+            while (length--) {
+                this.binary.view.writeUint8(0);
+            }
+        }
+    )
 };
-
-function conditionalMethod(method) {
-	return function (predicate) {
-		if (predicate instanceof Function ? predicate.call(this) : predicate) {
-			return this[method].apply(this, Array.prototype.slice.call(arguments, 1));
-		}
-	};
-}
-
-jBinary.prototype.structure.if = jBinary.Property(
-	conditionalMethod('parse'),
-	conditionalMethod('write')
-);
 
 var dataTypes = [
 	'Uint8',
@@ -281,32 +303,54 @@ var dataTypes = [
 	'Char'
 ];
 
-function dataMethod(method, type) {
-	return function (value) {
-		return this.view[method + type](value);
-	};
-}
-
 for (var i = 0; i < dataTypes.length; i++) {
-	var dataType = dataTypes[i];
-	jBinary.prototype.structure[dataType.toLowerCase()] = jBinary.Property(
-		dataMethod('get', dataType),
-		dataMethod('write', dataType)
-	);
+    (function (dataType) {
+        jBinary.prototype.structure[dataType.toLowerCase()] = jBinary.Property(
+            function () {
+                this.dataType = dataType;
+            },
+            function () {
+                return this.binary.view['get' + this.dataType]();
+            },
+            function (value) {
+                this.binary.view['write' + this.dataType](value);
+            }
+        );
+    })(dataTypes[i]);
 }
 
-jBinary.prototype.seek = jBinary.prototype.structure.seek;
-jBinary.prototype.tell = jBinary.prototype.structure.tell;
-jBinary.prototype.skip = jBinary.prototype.structure.skip;
+jBinary.prototype.seek = function (position, block) {
+    position = toValue(this, position);
+    if (block instanceof Function) {
+        var old_position = this.view.tell();
+        this.view.seek(position);
+        var result = block.call(this);
+        this.view.seek(old_position);
+        return result;
+    } else {
+        return this.view.seek(position);
+    }
+};
 
-jBinary.prototype.parse = function (structure) {
+jBinary.prototype.tell = function () {
+    return this.view.tell();
+};
+
+jBinary.prototype.skip = function (offset) {
+    offset = toValue(this, offset);
+    this.view.seek(this.view.tell() + offset);
+    return offset;
+};
+
+jBinary.prototype.getType = function (structure) {
     switch (typeof structure) {
         case 'string':
             structure = this.structure[structure];
-            return this.parse.apply(this, arguments);
+            return this.getType.apply(this, arguments);
 
         case 'function':
-            return structure.apply(this, Array.prototype.slice.call(arguments, 1));
+            console.log(Object.create(structure));
+            return new structure(this, Array.prototype.slice.call(arguments, 1));
 
         case 'number':
             structure = ['bitfield', structure];
@@ -315,39 +359,24 @@ jBinary.prototype.parse = function (structure) {
             if (!(structure instanceof Array)) {
                 structure = ['object', structure];
             }
-            return this.parse.apply(this, structure);
+            return this.getType.apply(this, structure);
 
         default:
             throw new Error("Unknown structure type `" + structure + "`");
     }
 };
 
+jBinary.prototype.read = function (structure) {
+    return this.getType(structure).read();
+};
+
 jBinary.prototype.write = function (structure, data) {
-    switch (typeof structure) {
-        case 'string':
-            structure = this.structure[structure];
-            return this.write.apply(this, arguments);
-
-        case 'function':
-            return (structure.write || structure).apply(this, Array.prototype.slice.call(arguments, 1));
-
-        case 'number':
-            structure = ['bitfield', structure];
-
-        case 'object':
-            if (!(structure instanceof Array)) {
-                structure = ['object', structure];
-            }
-            return this.write.apply(this, structure.concat([data]));
-
-        default:
-            throw new Error("Unknown structure type `" + structure + "`");
-    }
+    this.getType(structure).write(data);
 };
 
 jBinary.prototype.modify = function (structure, callback) {
 	var data = this.seek(this.tell(), function () {
-		return this.parse(structure);
+		return this.read(structure);
 	});
 	var newData = callback(data);
 	if (newData === undefined) {
