@@ -83,6 +83,20 @@ function toValue(prop, val) {
 	return val instanceof Function ? val.call(prop) : val;
 }
 
+function uint64(lo, hi) {
+	this.lo = lo;
+	this.hi = hi;
+}
+
+uint64.prototype = {
+	valueOf: function () {
+		return this.lo + Math.pow(2, 32) * this.hi;
+	},
+	toString: function () {
+		return Number.prototype.toString.apply(this.valueOf(), arguments);
+	}
+};
+
 jBinary.prototype.structure = {
     extend: jBinary.Property(
         function () {
@@ -288,6 +302,24 @@ jBinary.prototype.structure = {
                 this.binary.view.writeUint8(0);
             }
         }
+    ),
+    lazy: jBinary.Property(
+        ['type', 'size'],
+        function () {
+            var offset = this.parser.tell(), self = this;
+            this.size !== undefined ? this.parser.skip(this.size) : this.parser.read(this.type);
+            return function () {
+                if (!('value' in self)) {
+                    self.value = self.parser.seek(offset, function () {
+                        return this.read(self.type);
+                    });
+                }
+                return self.value;
+            };
+        },
+        function (getValue) {
+            this.parser.write(this.type, getValue());
+        }
     )
 };
 
@@ -295,9 +327,11 @@ var dataTypes = [
 	'Uint8',
 	'Uint16',
 	'Uint32',
+	'Uint64',
 	'Int8',
 	'Int16',
 	'Int32',
+	'Int64',
 	'Float32',
 	'Float64',
 	'Char'
@@ -349,7 +383,6 @@ jBinary.prototype.getType = function (structure) {
             return this.getType.apply(this, arguments);
 
         case 'function':
-            console.log(Object.create(structure));
             return new structure(this, Array.prototype.slice.call(arguments, 1));
 
         case 'number':
