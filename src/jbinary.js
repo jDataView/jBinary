@@ -140,7 +140,7 @@ jBinary.FileFormat = function (structures, fileStructure) {
 				}
 				// emulating response field for IE9
 				if (!('response' in this)) {
-					this.response = new VBArray(this.responseBody).toArray().map(String.fromCharCode).join('');
+					this.response = String.fromCharCode.apply(String, new VBArray(this.responseBody).toArray()).join('');
 				}
 				callbackWrapper(this.response);
 			};
