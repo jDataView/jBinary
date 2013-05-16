@@ -23,7 +23,7 @@ function inherit(obj) {
 	if ('create' in Object) {
 		obj = Object.create(obj);
 	} else {
-		function ClonedObject() {}
+		var ClonedObject = function () {};
 		ClonedObject.prototype = obj;
 		obj = new ClonedObject();
 	}
@@ -40,24 +40,34 @@ function jBinary(view, structure) {
 	this.view = view;
 	this.view.seek(0);
 	this._bitShift = 0;
-    var self = this;
-    this.context = [];
-    this.context.in = function (newContext, callback) {
-        this.unshift(newContext);
-        var result = callback.call(self);
-        this.shift();
+    var contexts = [];
+    this.inContext = function (newContext, callback) {
+	    contexts.unshift(newContext);
+        var result = callback.call(this);
+	    contexts.shift();
         return result;
     };
-    this.context.getCurrent = function () { return this[0] };
-    this.context.getParent = function () { return this[1] };
-    this.context.findParent = function (filter) {
-        for (var i = 0, length = this.length; i < length; i++) {
-            var context = this[i];
-            if (filter.call(self, context)) {
-                return context;
-            }
-        }
-    };
+	this.getContext = function (filter) {
+		switch (typeof filter) {
+			case 'function':
+				for (var i = 0, length = contexts.length; i < length; i++) {
+					var context = contexts[i];
+					if (filter.call(this, context)) {
+						return context;
+					}
+				}
+				return;
+
+			case 'string':
+				return this.getContext(function (context) { return filter in context });
+
+			case 'number':
+				return contexts[filter];
+
+			default:
+				return contexts[0];
+		}
+	};
 	this.structure = inherit(jBinary.prototype.structure, structure);
 }
 
@@ -68,34 +78,85 @@ jBinary.Property = function (init, read, write) {
             init.apply(this, args);
         } else
         if (init instanceof Array) {
-            for (var i = 0, length = init.length; i < length; i++) {
+            for (var i = 0, length = Math.min(init.length, args.length); i < length; i++) {
                 this[init[i]] = args[i];
             }
         }
     };
-    property.prototype = inherit(jBinary.Property.prototype);
-	property.prototype.read = read;
-    property.prototype.write = write;
+    property.prototype = inherit(jBinary.Property.prototype, {
+	    read: read,
+	    write: write || function () {}
+    });
 	return property;
+};
+
+jBinary.Template = function (init, getType) {
+	var property = jBinary.Property(
+		init,
+		function () {
+			var type = this.getType();
+			if (type) return this.binary.read(type);
+		},
+		function (value) {
+			var type = this.getType();
+			if (type) this.binary.write(type, value);
+		}
+	);
+	property.prototype.getType = getType || function () { return this.baseType };
+	return property;
+};
+
+jBinary.FileFormat = function (structures, fileStructure) {
+	var fileConstructor = function (buffer) {
+		return new (jBinary.Template(['baseType']))(new jBinary(buffer, structures), [fileStructure]);
+	};
+	fileConstructor.loadFrom = function (source, callback) {
+		function callbackWrapper(data) { callback.call(new fileConstructor(data)) }
+
+		if (typeof File !== 'undefined' && source instanceof File) {
+			var reader = new FileReader;
+			reader.onload = function() { callbackWrapper(this.result) };
+			reader.readAsArrayBuffer(source);
+		} else {
+			var xhr = new XMLHttpRequest;
+			xhr.open('GET', source, true);
+
+			// new browsers (XMLHttpRequest2-compliant)
+			if ('responseType' in xhr) {
+				xhr.responseType = 'arraybuffer';
+			}
+			// old browsers (XMLHttpRequest-compliant)
+			else if ('overrideMimeType' in xhr) {
+				xhr.overrideMimeType('text/plain; charset=x-user-defined');
+			}
+			// IE9 (Microsoft.XMLHTTP-compliant)
+			else {
+				xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
+			}
+
+			xhr.onload = function() {
+				if (this.status != 200) {
+					throw new Error(this.statusText);
+				}
+				// emulating response field for IE9
+				if (!('response' in this)) {
+					this.response = new VBArray(this.responseBody).toArray().map(String.fromCharCode).join('');
+				}
+				callbackWrapper(this.response);
+			};
+
+			xhr.send();
+		}
+	};
+	fileConstructor.toURL = function (type) {
+		return this.binary.toURL(type);
+	};
+	return fileConstructor;
 };
 
 function toValue(prop, val) {
 	return val instanceof Function ? val.call(prop) : val;
 }
-
-function uint64(lo, hi) {
-	this.lo = lo;
-	this.hi = hi;
-}
-
-uint64.prototype = {
-	valueOf: function () {
-		return this.lo + Math.pow(2, 32) * this.hi;
-	},
-	toString: function () {
-		return Number.prototype.toString.apply(this.valueOf(), arguments);
-	}
-};
 
 jBinary.prototype.structure = {
     extend: jBinary.Property(
@@ -104,7 +165,7 @@ jBinary.prototype.structure = {
         },
         function () {
             var parts = this.parts, obj = this.binary.read(parts[0]);
-            this.binary.context.in(obj, function () {
+            this.binary.inContext(obj, function () {
                 for (var i = 1, length = parts.length; i < length; i++) {
                     extend(obj, this.read(parts[i]));
                 }
@@ -113,7 +174,7 @@ jBinary.prototype.structure = {
         },
         function (obj) {
             var parts = this.parts;
-            this.binary.context.in(obj, function () {
+            this.binary.inContext(obj, function () {
                 for (var i = 0, length = parts.length; i < length; i++) {
                     this.write(parts[i], obj);
                 }
@@ -121,9 +182,9 @@ jBinary.prototype.structure = {
         }
     ),
     enum: jBinary.Property(
-        ['basicType', 'matches'],
+        ['baseType', 'matches'],
         function () {
-            var value = this.binary.read(this.basicType);
+            var value = this.binary.read(this.baseType);
             if (value in this.matches) {
                 value = this.matches[value];
             }
@@ -136,7 +197,7 @@ jBinary.prototype.structure = {
                     break;
                 }
             }
-            this.binary.write(basicType, value);
+            this.binary.write(this.baseType, value);
         }
     ),
     string: jBinary.Property(
@@ -156,18 +217,9 @@ jBinary.prototype.structure = {
             }
             return string;
         },
-		function (subString) {
-            if (this.length !== undefined) {
-                var length = toValue(this, this.length);
-                if (subString.length > length) {
-                    subString = subString.slice(0, length);
-                } else
-                if (subString.length < length) {
-                    subString += String.fromCharCode.apply(null, new Array(length - subString.length));
-                }
-                this.binary.view.writeString(subString);
-            } else {
-                this.binary.view.writeString(subString);
+		function (value) {
+            this.binary.view.writeString(value);
+			if (this.length === undefined) {
                 this.binary.view.writeUint8(0);
             }
 		}
@@ -192,9 +244,11 @@ jBinary.prototype.structure = {
         ['structure'],
         function () {
             var structure = this.structure, output = {};
-            this.binary.context.in(output, function () {
+            this.binary.inContext(output, function () {
                 for (var key in structure) {
-                    var value = this.read(structure[key]);
+                    var value = (!(structure[key] instanceof Function) || structure[key].prototype instanceof jBinary.Property)
+	                            ? this.read(structure[key])
+	                            : structure[key].call(this, output);
                     // skipping undefined call results (useful for 'if' statement)
                     if (value !== undefined) {
                         output[key] = value;
@@ -205,9 +259,13 @@ jBinary.prototype.structure = {
         },
         function (data) {
             var structure = this.structure;
-            this.binary.context.in(data, function () {
+            this.binary.inContext(data, function () {
                 for (var key in structure) {
-                    this.write(structure[key], data[key]);
+	                if (!(structure[key] instanceof Function) || structure[key].prototype instanceof jBinary.Property) {
+		                this.write(structure[key], data[key]);
+	                } else {
+		                data[key] = structure[key].call(this, data);
+	                }
                 }
             });
         }
@@ -270,57 +328,38 @@ jBinary.prototype.structure = {
 			}
 		}
 	),
-    if: jBinary.Property(
-        ['condition', 'type'],
-        function () {
-            if (toValue(this, this.condition)) return this.binary.read(type);
-        },
-        function (value) {
-            if (toValue(this, this.condition)) return this.binary.write(type, value);
-        }
+    if: jBinary.Template(
+        ['condition', 'baseType'],
+	    function () {
+		    if (toValue(this, this.condition)) return this.baseType;
+	    }
     ),
     const: jBinary.Property(
         ['type', 'value', 'strict'],
         function () {
             var value = this.binary.read(this.type);
-            if (this.strict && value != toValue(this, this.value)) throw new TypeError('Unexpected value.');
+            if (this.strict && value != this.value) throw new TypeError('Unexpected value.');
             return value;
         },
-        function (value) {
-            if (this.strict && value != toValue(this, this.value)) throw new TypeError('Trying to write unexpected value.');
-            this.binary.write(value);
+        function () {
+            this.binary.write(this.type, this.value);
         }
     ),
-    skip: jBinary.Property(
+    skip: jBinary.Template(
         ['length'],
         function () {
-            this.binary.skip(toValue(this, toValue(this, this.length)));
-        },
-        function (value) {
-            var length = toValue(this, this.length);
-            while (length--) {
-                this.binary.view.writeUint8(0);
-            }
+            this.binary.skip(toValue(this, this.length));
         }
     ),
-    lazy: jBinary.Property(
-        ['type', 'size'],
-        function () {
-            var offset = this.parser.tell(), self = this;
-            this.size !== undefined ? this.parser.skip(this.size) : this.parser.read(this.type);
-            return function () {
-                if (!('value' in self)) {
-                    self.value = self.parser.seek(offset, function () {
-                        return this.read(self.type);
-                    });
-                }
-                return self.value;
-            };
-        },
-        function (getValue) {
-            this.parser.write(this.type, getValue());
-        }
-    )
+	blob: jBinary.Property(
+		['length'],
+		function () {
+			return this.binary.view.getBytes(toValue(this, this.length), undefined, true);
+		},
+		function (bytes) {
+			this.binary.view.writeBytes(bytes, true);
+		}
+	)
 };
 
 var dataTypes = [
@@ -370,20 +409,17 @@ jBinary.prototype.tell = function () {
     return this.view.tell();
 };
 
-jBinary.prototype.skip = function (offset) {
-    offset = toValue(this, offset);
-    this.view.seek(this.view.tell() + offset);
-    return offset;
+jBinary.prototype.skip = function (offset, block) {
+	return this.seek(this.tell() + toValue(this, offset), block);
 };
 
-jBinary.prototype.getType = function (structure) {
+jBinary.prototype.getType = function (structure, args) {
     switch (typeof structure) {
         case 'string':
-            structure = this.structure[structure];
-            return this.getType.apply(this, arguments);
+            return this.getType(this.structure[structure], args);
 
         case 'function':
-            return new structure(this, Array.prototype.slice.call(arguments, 1));
+            return new structure(this, args || []);
 
         case 'number':
             structure = ['bitfield', structure];
@@ -392,7 +428,7 @@ jBinary.prototype.getType = function (structure) {
             if (!(structure instanceof Array)) {
                 structure = ['object', structure];
             }
-            return this.getType.apply(this, structure);
+            return this.getType(structure[0], structure.slice(1));
 
         default:
             throw new Error("Unknown structure type `" + structure + "`");
