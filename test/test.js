@@ -91,11 +91,11 @@ test('bitfield', function () {
 	deepEqual(binary.read({
 		first5: 5,
 		next5: jBinary.Property(
-            null,
-            function () {
-                return this.binary.read(5);
-            }
-        ),
+			null,
+			function () {
+				return this.binary.read(5);
+			}
+		),
 		last6: {
 			first3: 3,
 			last3: 3
@@ -189,7 +189,7 @@ testWriters('bitfield', [
 		{
 			first5: 5,
 			next5: jBinary.Property(
-                null,
+				null,
 				function () { return this.binary.read(5) },
 				function (value) { this.binary.write(5, value) }
 			),
