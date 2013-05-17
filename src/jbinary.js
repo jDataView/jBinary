@@ -42,9 +42,6 @@ function jBinary(view, structure) {
 	this._bitShift = 0;
 	this.contexts = [];
 	this.structure = inherit(jBinary.prototype.structure, structure);
-	for (var key in this.structure) {
-		this.structure[key] = this.getType(this.structure[key]);
-	}
 }
 
 jBinary.prototype.getContext = function (filter) {
@@ -423,7 +420,15 @@ jBinary.prototype.skip = function (offset, block) {
 jBinary.prototype.getType = function (structure, args) {
 	switch (typeof structure) {
 		case 'string':
-			return this.getType(this.structure[structure], args);
+			structure = this.structure[structure];
+			if (!(structure instanceof jBinary.Property)) {
+				structure = this.structure[structure] = this.getType(structure, args);
+			}
+			if (args) {
+				structure = inherit(structure);
+				structure.constructor.call(structure, this, args);
+			}
+			return structure;
 
 		case 'function':
 			return new structure(this, args || []);
@@ -432,17 +437,7 @@ jBinary.prototype.getType = function (structure, args) {
 			structure = ['bitfield', structure];
 
 		case 'object':
-			if (structure instanceof jBinary.Property) {
-				if (args) {
-					structure = inherit(structure);
-					structure.constructor.call(structure, this, args);
-				}
-				return structure;
-			}
 			return structure instanceof Array ? this.getType(structure[0], structure.slice(1)) : this.getType('object', [structure]);
-
-		default:
-			throw new Error("Unknown structure type `" + structure + "`");
 	}
 };
 
