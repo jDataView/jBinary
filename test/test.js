@@ -209,23 +209,3 @@ testWriters('bitfield', [
 		deepEqual
 	]
 ]);
-
-test('modify', function () {
-	var structure = {
-		a: 'int32',
-		b: 'int8',
-		c: ['array', 'uint8', 2]
-	};
-
-	binary.seek(0);
-	binary.modify(structure, function (data) {
-		data.c[0] = 17;
-	});
-
-	binary.seek(0);
-	deepEqual(binary.read(structure), {
-		a: -50462977,
-		b: -6,
-		c: [17, 186]
-	});
-})

@@ -40,50 +40,57 @@ function jBinary(view, structure) {
 	this.view = view;
 	this.view.seek(0);
 	this._bitShift = 0;
-	var contexts = [];
-	this.inContext = function (newContext, callback) {
-		contexts.unshift(newContext);
-		var result = callback.call(this);
-		contexts.shift();
-		return result;
-	};
-	this.getContext = function (filter) {
-		switch (typeof filter) {
-			case 'function':
-				for (var i = 0, length = contexts.length; i < length; i++) {
-					var context = contexts[i];
-					if (filter.call(this, context)) {
-						return context;
-					}
-				}
-				return;
-
-			case 'string':
-				return this.getContext(function (context) { return filter in context });
-
-			case 'number':
-				return contexts[filter];
-
-			default:
-				return contexts[0];
-		}
-	};
+	this.contexts = [];
 	this.structure = inherit(jBinary.prototype.structure, structure);
+	for (var key in this.structure) {
+		this.structure[key] = this.getType(this.structure[key]);
+	}
 }
+
+jBinary.prototype.getContext = function (filter) {
+	switch (typeof filter) {
+		case 'function':
+			for (var i = 0, length = this.contexts.length; i < length; i++) {
+				var context = this.contexts[i];
+				if (filter.call(this, context)) {
+					return context;
+				}
+			}
+			return;
+
+		case 'string':
+			return this.getContext(function (context) { return filter in context });
+
+		case 'number':
+			return this.contexts[filter];
+
+		default:
+			return this.contexts[0];
+	}
+};
+
+jBinary.prototype.inContext = function (newContext, callback) {
+	this.contexts.unshift(newContext);
+	var result = callback.call(this);
+	this.contexts.shift();
+	return result;
+};
 
 jBinary.Property = function (init, read, write) {
 	var property = function (binary, args) {
 		this.binary = binary;
-		if (init instanceof Function) {
-			init.apply(this, args);
+		if (this.init instanceof Function) {
+			this.init.apply(this, args);
 		} else
-		if (init instanceof Array) {
-			for (var i = 0, length = Math.min(init.length, args.length); i < length; i++) {
-				this[init[i]] = args[i];
+		if (this.init instanceof Array) {
+			for (var i = 0, length = Math.min(this.init.length, args.length); i < length; i++) {
+				this[this.init[i]] = args[i];
 			}
 		}
 	};
 	property.prototype = inherit(jBinary.Property.prototype, {
+		constructor: property,
+		init: init,
 		read: read,
 		write: write || function () {}
 	});
@@ -329,9 +336,9 @@ jBinary.prototype.structure = {
 		}
 	),
 	if: jBinary.Template(
-		['condition', 'baseType'],
+		['condition', 'trueType', 'falseType'],
 		function () {
-			if (toValue(this, this.condition)) return this.baseType;
+			return toValue(this, this.condition) ? this.trueType : this.falseType;
 		}
 	),
 	const: jBinary.Property(
@@ -425,10 +432,14 @@ jBinary.prototype.getType = function (structure, args) {
 			structure = ['bitfield', structure];
 
 		case 'object':
-			if (!(structure instanceof Array)) {
-				structure = ['object', structure];
+			if (structure instanceof jBinary.Property) {
+				if (args) {
+					structure = inherit(structure);
+					structure.constructor.call(structure, this, args);
+				}
+				return structure;
 			}
-			return this.getType(structure[0], structure.slice(1));
+			return structure instanceof Array ? this.getType(structure[0], structure.slice(1)) : this.getType('object', [structure]);
 
 		default:
 			throw new Error("Unknown structure type `" + structure + "`");
@@ -441,18 +452,6 @@ jBinary.prototype.read = function (structure) {
 
 jBinary.prototype.write = function (structure, data) {
 	this.getType(structure).write(data);
-};
-
-jBinary.prototype.modify = function (structure, callback) {
-	var data = this.seek(this.tell(), function () {
-		return this.read(structure);
-	});
-	var newData = callback(data);
-	if (newData === undefined) {
-		newData = data;
-	}
-	this.write(structure, newData);
-	return newData;
 };
 
 jBinary.prototype.toURL = function (type) {
