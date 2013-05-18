@@ -254,12 +254,12 @@ jBinary.prototype.structure = {
 	object: jBinary.Property(
 		['structure'],
 		function () {
-			var structure = this.structure, output = {};
+			var self = this, structure = this.structure, output = {};
 			this.binary.inContext(output, function () {
 				for (var key in structure) {
 					var value = (!(structure[key] instanceof Function) || structure[key].prototype instanceof jBinary.Property)
 								? this.read(structure[key])
-								: structure[key].call(this, output);
+								: structure[key].call(self);
 					// skipping undefined call results (useful for 'if' statement)
 					if (value !== undefined) {
 						output[key] = value;
@@ -269,13 +269,13 @@ jBinary.prototype.structure = {
 			return output;
 		},
 		function (data) {
-			var structure = this.structure;
+			var self = this, structure = this.structure;
 			this.binary.inContext(data, function () {
 				for (var key in structure) {
 					if (!(structure[key] instanceof Function) || structure[key].prototype instanceof jBinary.Property) {
 						this.write(structure[key], data[key]);
 					} else {
-						data[key] = structure[key].call(this, data);
+						data[key] = structure[key].call(self);
 					}
 				}
 			});
