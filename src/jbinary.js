@@ -216,20 +216,20 @@ jBinary.prototype.structure = {
 		function () {
 			var string;
 			if (this.length !== undefined) {
-				string = this.binary.view.getString(toValue(this, this.length));
+				string = this.binary.view.getString(toValue(this, this.length), undefined, true);
 			} else {
 				var begin = this.binary.tell();
 				var end = this.binary.seek(begin, function () {
 					while (this.view.getUint8());
 					return this.tell();
 				}) - 1;
-				string = this.binary.view.getString(end - begin);
+				string = this.binary.view.getString(end - begin, undefined, true);
 				this.binary.skip(1);
 			}
 			return string;
 		},
 		function (value) {
-			this.binary.view.writeString(value);
+			this.binary.view.writeString(value, undefined, true);
 			if (this.length === undefined) {
 				this.binary.view.writeUint8(0);
 			}
