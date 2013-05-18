@@ -74,20 +74,27 @@ jBinary.prototype.inContext = function (newContext, callback) {
 };
 
 jBinary.Property = function (init, read, write) {
+	var initFunc;
+	if (init instanceof Function) {
+		initFunc = init;
+	} else
+	if (init instanceof Array) {
+		initFunc = function () {
+			for (var i = 0, length = Math.min(init.length, arguments.length); i < length; i++) {
+				this[init[i]] = arguments[i];
+			}
+		};
+	} else {
+		initFunc = function () {};
+	}
+
 	var property = function (binary, args) {
 		this.binary = binary;
-		if (this.init instanceof Function) {
-			this.init.apply(this, args);
-		} else
-		if (this.init instanceof Array) {
-			for (var i = 0, length = Math.min(this.init.length, args.length); i < length; i++) {
-				this[this.init[i]] = args[i];
-			}
-		}
+		this.init.apply(this, args);
 	};
 	property.prototype = inherit(jBinary.Property.prototype, {
 		constructor: property,
-		init: init,
+		init: initFunc,
 		read: read,
 		write: write || function () {}
 	});
@@ -420,24 +427,17 @@ jBinary.prototype.skip = function (offset, block) {
 jBinary.prototype.getType = function (structure, args) {
 	switch (typeof structure) {
 		case 'string':
-			structure = this.structure[structure];
-			if (!(structure instanceof jBinary.Property)) {
-				structure = this.structure[structure] = this.getType(structure, args);
-			}
-			if (args) {
-				structure = inherit(structure);
-				structure.constructor.call(structure, this, args);
-			}
-			return structure;
+			return this.getType(this.structure[structure], args);
 
 		case 'function':
-			return new structure(this, args || []);
+			return new structure(this, args);
 
 		case 'number':
-			structure = ['bitfield', structure];
+			return this.getType('bitfield', [structure]);
 
 		case 'object':
 			return structure instanceof Array ? this.getType(structure[0], structure.slice(1)) : this.getType('object', [structure]);
+
 	}
 };
 
