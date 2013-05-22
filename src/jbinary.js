@@ -238,6 +238,9 @@ jBinary.prototype.structure = {
 	array: jBinary.Property(
 		['type', 'length'],
 		function () {
+			if (this.type === 'uint8') {
+				return this.binary.read(['blob', this.length]);
+			}
 			var length = toValue(this, this.length);
 			var results = new Array(length);
 			for (var i = 0; i < length; i++) {
@@ -246,6 +249,9 @@ jBinary.prototype.structure = {
 			return results;
 		},
 		function (values) {
+			if (this.type === 'uint8') {
+				return this.binary.write('blob', values);
+			}
 			for (var i = 0, length = values.length; i < length; i++) {
 				this.binary.write(this.type, values[i]);
 			}
