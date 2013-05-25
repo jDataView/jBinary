@@ -117,9 +117,11 @@ jBinary.Template = function (init, getType) {
 	return property;
 };
 
-jBinary.FileFormat = function (structures, fileStructure) {
+jBinary.FileFormat = function (structures, fileStructure, mimeType) {
 	var fileConstructor = function (buffer) {
-		return new (jBinary.Template(['baseType']))(new jBinary(buffer, structures), [fileStructure]);
+		var file = new (jBinary.Template(['baseType']))(new jBinary(buffer, structures), [fileStructure]);
+		file.toURL = function (type) { return this.binary.toURL(mimeType || type) };
+		return file;
 	};
 	fileConstructor.loadFrom = function (source, callback) {
 		function callbackWrapper(data) { callback.call(new fileConstructor(data)) }
@@ -158,9 +160,6 @@ jBinary.FileFormat = function (structures, fileStructure) {
 
 			xhr.send();
 		}
-	};
-	fileConstructor.toURL = function (type) {
-		return this.binary.toURL(type);
 	};
 	return fileConstructor;
 };
