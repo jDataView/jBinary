@@ -346,9 +346,29 @@ jBinary.prototype.structure = {
 		}
 	),
 	if: jBinary.Template(
-		['condition', 'trueType', 'falseType'],
+		function (condition, trueType, falseType) {
+			if (typeof condition === 'string') {
+				condition = [condition, condition];
+			}
+
+			if (condition instanceof Array) {
+				this.condition = function () {
+					return this.binary.getContext(condition[1])[condition[0]];
+				};
+			} else {
+				this.condition = condition;
+			}
+
+			this.trueType = trueType;
+			this.falseType = falseType;
+		},
 		function () {
-			return toValue(this, this.condition) ? this.trueType : this.falseType;
+			return this.condition() ? this.trueType : this.falseType;
+		}
+	),
+	if_not: jBinary.Template(
+		function (condition, falseType, trueType) {
+			this.baseType = ['if', condition, trueType, falseType];
 		}
 	),
 	const: jBinary.Property(
