@@ -390,7 +390,7 @@ jBinary.prototype.structure = {
 	blob: jBinary.Property(
 		['length'],
 		function () {
-			return this.binary.view.getBytes(toValue(this, this.length), undefined, true);
+			return this.binary.view.getBytes(toValue(this, this.length));
 		},
 		function (bytes) {
 			this.binary.view.writeBytes(bytes, true);
@@ -479,7 +479,7 @@ jBinary.prototype.toURL = function (type) {
 	if (!window.URL || !window.URL.createObjectURL) {
 		return 'data:' + type + ';base64,' + btoa(this.seek(0, function () { return this.view.getString() }));
 	} else {
-		var data = this.seek(0, function () { return this.view._getBytes(undefined, undefined, true) });
+		var data = this.seek(0, function () { return this.view.getBytes() });
 		return URL.createObjectURL(new Blob([data], {type: type}));
 	}
 };
