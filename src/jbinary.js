@@ -211,24 +211,24 @@ jBinary.prototype.structure = {
 		}
 	),
 	string: jBinary.Property(
-		['length'],
+		['length', 'isUTF8'],
 		function () {
 			var string;
 			if (this.length !== undefined) {
-				string = this.binary.view.getString(toValue(this, this.length), undefined, true);
+				string = this.binary.view.getString(toValue(this, this.length), undefined, this.isUTF8);
 			} else {
 				var begin = this.binary.tell();
 				var end = this.binary.seek(begin, function () {
 					while (this.view.getUint8());
 					return this.tell();
 				}) - 1;
-				string = this.binary.view.getString(end - begin, undefined, true);
+				string = this.binary.view.getString(end - begin, undefined, this.isUTF8);
 				this.binary.skip(1);
 			}
 			return string;
 		},
 		function (value) {
-			this.binary.view.writeString(value, undefined, true);
+			this.binary.view.writeString(value, undefined, this.isUTF8);
 			if (this.length === undefined) {
 				this.binary.view.writeUint8(0);
 			}
@@ -237,10 +237,10 @@ jBinary.prototype.structure = {
 	array: jBinary.Property(
 		['type', 'length'],
 		function () {
-			if (this.type === 'uint8') {
-				return this.binary.read(['blob', this.length]);
-			}
 			var length = toValue(this, this.length);
+			if (this.type === 'uint8') {
+				return this.binary.view.getBytes(length, undefined, true, true);
+			}
 			var results = new Array(length);
 			for (var i = 0; i < length; i++) {
 				results[i] = this.binary.read(this.type);
@@ -249,7 +249,7 @@ jBinary.prototype.structure = {
 		},
 		function (values) {
 			if (this.type === 'uint8') {
-				return this.binary.write('blob', values);
+				return this.binary.view.writeBytes(values);
 			}
 			for (var i = 0, length = values.length; i < length; i++) {
 				this.binary.write(this.type, values[i]);
