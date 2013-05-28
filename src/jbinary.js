@@ -118,9 +118,11 @@ jBinary.Template = function (init, getType) {
 	return property;
 };
 
-jBinary.FileFormat = function (structures, fileStructure) {
+jBinary.FileFormat = function (structures, fileStructure, mimeType) {
 	var fileConstructor = function (buffer) {
-		return new (jBinary.Template(['baseType']))(new jBinary(buffer, structures), [fileStructure]);
+		var file = new (jBinary.Template(['baseType']))(new jBinary(buffer, structures), [fileStructure]);
+		file.toURL = function (type) { return this.binary.toURL(mimeType || type) };
+		return file;
 	};
 	fileConstructor.loadFrom = function (source, callback) {
 		function callbackWrapper(data) { callback.call(new fileConstructor(data)) }
@@ -159,9 +161,6 @@ jBinary.FileFormat = function (structures, fileStructure) {
 
 			xhr.send();
 		}
-	};
-	fileConstructor.toURL = function (type) {
-		return this.binary.toURL(type);
 	};
 	return fileConstructor;
 };
@@ -213,24 +212,24 @@ jBinary.prototype.structure = {
 		}
 	),
 	string: jBinary.Property(
-		['length'],
+		['length', 'isUTF8'],
 		function () {
 			var string;
 			if (this.length !== undefined) {
-				string = this.binary.view.getString(toValue(this, this.length), undefined, true);
+				string = this.binary.view.getString(toValue(this, this.length), undefined, this.isUTF8);
 			} else {
 				var begin = this.binary.tell();
 				var end = this.binary.seek(begin, function () {
 					while (this.view.getUint8());
 					return this.tell();
 				}) - 1;
-				string = this.binary.view.getString(end - begin, undefined, true);
+				string = this.binary.view.getString(end - begin, undefined, this.isUTF8);
 				this.binary.skip(1);
 			}
 			return string;
 		},
 		function (value) {
-			this.binary.view.writeString(value, undefined, true);
+			this.binary.view.writeString(value, undefined, this.isUTF8);
 			if (this.length === undefined) {
 				this.binary.view.writeUint8(0);
 			}
@@ -239,10 +238,10 @@ jBinary.prototype.structure = {
 	array: jBinary.Property(
 		['type', 'length'],
 		function () {
-			if (this.type === 'uint8') {
-				return this.binary.read(['blob', this.length]);
-			}
 			var length = toValue(this, this.length);
+			if (this.type === 'uint8') {
+				return this.binary.view.getBytes(length, undefined, true, true);
+			}
 			var results = new Array(length);
 			for (var i = 0; i < length; i++) {
 				results[i] = this.binary.read(this.type);
@@ -251,7 +250,7 @@ jBinary.prototype.structure = {
 		},
 		function (values) {
 			if (this.type === 'uint8') {
-				return this.binary.write('blob', values);
+				return this.binary.view.writeBytes(values);
 			}
 			for (var i = 0, length = values.length; i < length; i++) {
 				this.binary.write(this.type, values[i]);
@@ -347,9 +346,29 @@ jBinary.prototype.structure = {
 		}
 	),
 	if: jBinary.Template(
-		['condition', 'trueType', 'falseType'],
+		function (condition, trueType, falseType) {
+			if (typeof condition === 'string') {
+				condition = [condition, condition];
+			}
+
+			if (condition instanceof Array) {
+				this.condition = function () {
+					return this.binary.getContext(condition[1])[condition[0]];
+				};
+			} else {
+				this.condition = condition;
+			}
+
+			this.trueType = trueType;
+			this.falseType = falseType;
+		},
 		function () {
-			return toValue(this, this.condition) ? this.trueType : this.falseType;
+			return this.condition() ? this.trueType : this.falseType;
+		}
+	),
+	if_not: jBinary.Template(
+		function (condition, falseType, trueType) {
+			this.baseType = ['if', condition, trueType, falseType];
 		}
 	),
 	const: jBinary.Property(
@@ -372,7 +391,7 @@ jBinary.prototype.structure = {
 	blob: jBinary.Property(
 		['length'],
 		function () {
-			return this.binary.view.getBytes(toValue(this, this.length), undefined, true);
+			return this.binary.view.getBytes(toValue(this, this.length));
 		},
 		function (bytes) {
 			this.binary.view.writeBytes(bytes, true);
@@ -461,7 +480,7 @@ jBinary.prototype.toURL = function (type) {
 	if (!window.URL || !window.URL.createObjectURL) {
 		return 'data:' + type + ';base64,' + btoa(this.seek(0, function () { return this.view.getString() }));
 	} else {
-		var data = this.seek(0, function () { return this.view._getBytes(undefined, undefined, true) });
+		var data = this.seek(0, function () { return this.view.getBytes() });
 		return URL.createObjectURL(new Blob([data], {type: type}));
 	}
 };
