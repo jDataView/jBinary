@@ -154,7 +154,11 @@ jBinary.FileFormat = function (structures, fileStructure, mimeType) {
 				}
 				// emulating response field for IE9
 				if (!('response' in this)) {
-					this.response = String.fromCharCode.apply(String, new VBArray(this.responseBody).toArray()).join('');
+					this.response = '';
+					var bytes = new VBArray(this.responseBody).toArray();
+					for (var i = 0, length = bytes.length; i < length; i++) {
+						this.response += String.fromCharCode(bytes[i]);
+					}
 				}
 				callbackWrapper(this.response);
 			};
@@ -170,7 +174,7 @@ function toValue(prop, val) {
 }
 
 jBinary.prototype.structure = {
-	extend: jBinary.Property(
+	'extend': jBinary.Property(
 		function () {
 			this.parts = arguments;
 		},
@@ -192,7 +196,7 @@ jBinary.prototype.structure = {
 			});
 		}
 	),
-	enum: jBinary.Property(
+	'enum': jBinary.Property(
 		['baseType', 'matches'],
 		function () {
 			var value = this.binary.read(this.baseType);
@@ -211,7 +215,7 @@ jBinary.prototype.structure = {
 			this.binary.write(this.baseType, value);
 		}
 	),
-	string: jBinary.Property(
+	'string': jBinary.Property(
 		['length', 'isUTF8'],
 		function () {
 			var string;
@@ -235,7 +239,7 @@ jBinary.prototype.structure = {
 			}
 		}
 	),
-	array: jBinary.Property(
+	'array': jBinary.Property(
 		['type', 'length'],
 		function () {
 			var length = toValue(this, this.length);
@@ -257,7 +261,7 @@ jBinary.prototype.structure = {
 			}
 		}
 	),
-	object: jBinary.Property(
+	'object': jBinary.Property(
 		['structure'],
 		function () {
 			var self = this, structure = this.structure, output = {};
@@ -287,7 +291,7 @@ jBinary.prototype.structure = {
 			});
 		}
 	),
-	bitfield: jBinary.Property(
+	'bitfield': jBinary.Property(
 		['bitSize'],
 		function () {
 			var bitSize = this.bitSize,
@@ -345,7 +349,7 @@ jBinary.prototype.structure = {
 			}
 		}
 	),
-	if: jBinary.Template(
+	'if': jBinary.Template(
 		function (condition, trueType, falseType) {
 			if (typeof condition === 'string') {
 				condition = [condition, condition];
@@ -366,12 +370,12 @@ jBinary.prototype.structure = {
 			return this.condition() ? this.trueType : this.falseType;
 		}
 	),
-	if_not: jBinary.Template(
+	'if_not': jBinary.Template(
 		function (condition, falseType, trueType) {
 			this.baseType = ['if', condition, trueType, falseType];
 		}
 	),
-	const: jBinary.Property(
+	'const': jBinary.Property(
 		['type', 'value', 'strict'],
 		function () {
 			var value = this.binary.read(this.type);
@@ -382,13 +386,13 @@ jBinary.prototype.structure = {
 			this.binary.write(this.type, this.value);
 		}
 	),
-	skip: jBinary.Template(
+	'skip': jBinary.Template(
 		['length'],
 		function () {
 			this.binary.skip(toValue(this, this.length));
 		}
 	),
-	blob: jBinary.Property(
+	'blob': jBinary.Property(
 		['length'],
 		function () {
 			return this.binary.view.getBytes(toValue(this, this.length));
