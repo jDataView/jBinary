@@ -366,8 +366,8 @@ jBinary.prototype.structure = {
 			this.trueType = trueType;
 			this.falseType = falseType;
 		},
-		function () {
-			return this.condition() ? this.trueType : this.falseType;
+		function (context) {
+			return this.condition(context) ? this.trueType : this.falseType;
 		}
 	),
 	'if_not': jBinary.Template(
