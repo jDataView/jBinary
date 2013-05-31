@@ -170,7 +170,7 @@ jBinary.FileFormat = function (structures, fileStructure, mimeType) {
 };
 
 function toValue(prop, val) {
-	return val instanceof Function ? val.call(prop) : val;
+	return val instanceof Function ? val.call(prop, prop.binary.contexts[0]) : val;
 }
 
 jBinary.prototype.structure = {
