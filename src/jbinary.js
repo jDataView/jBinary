@@ -501,4 +501,8 @@ if (typeof module !== 'undefined' && exports === module.exports) {
 	exports.jBinary = jBinary;
 }
 
+jDataView.prototype.toBinary = function (structure) {
+	return new jBinary(this, structure);
+};
+
 })(this);
