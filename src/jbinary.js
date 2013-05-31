@@ -471,12 +471,14 @@ jBinary.prototype.getType = function (structure, args) {
 	}
 };
 
-jBinary.prototype.read = function (structure) {
-	return this.getType(structure).read();
+jBinary.prototype.read = function (structure, offset) {
+	var read = function () { return this.getType(structure).read() };
+	return offset !== undefined ? this.binary.seek(offset, read) : read();
 };
 
-jBinary.prototype.write = function (structure, data) {
-	this.getType(structure).write(data);
+jBinary.prototype.write = function (structure, data, offset) {
+	var write = function () { this.getType(structure).write(data) };
+	offset !== undefined ? this.binary.seek(offset, write) : write();
 };
 
 jBinary.prototype.toURL = function (type) {
@@ -487,6 +489,10 @@ jBinary.prototype.toURL = function (type) {
 		var data = this.seek(0, function () { return this.view.getBytes() });
 		return URL.createObjectURL(new Blob([data], {type: type}));
 	}
+};
+
+jBinary.prototype.slice = function (start, end, forceCopy) {
+	return new jBinary(this.view.slice(start, end, forceCopy), this.structure);
 };
 
 if (typeof module !== 'undefined' && exports === module.exports) {
