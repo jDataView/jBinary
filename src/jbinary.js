@@ -106,11 +106,11 @@ jBinary.Template = function (init, getType) {
 	var property = jBinary.Property(
 		init,
 		function () {
-			var type = this.getType();
+			var type = this.getType(this.binary.contexts[0]);
 			if (type) return this.binary.read(type);
 		},
 		function (value) {
-			var type = this.getType();
+			var type = this.getType(this.binary.contexts[0]);
 			if (type) this.binary.write(type, value);
 		}
 	);
