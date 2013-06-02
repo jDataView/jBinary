@@ -62,7 +62,7 @@ jBinary.prototype.getContext = function (filter) {
 		case 'number':
 			return this.contexts[filter];
 
-		default:
+		case 'undefined':
 			return this.contexts[0];
 	}
 };
