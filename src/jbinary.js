@@ -216,24 +216,24 @@ jBinary.prototype.structure = {
 		}
 	),
 	'string': jBinary.Property(
-		['length', 'isUTF8'],
+		['length', 'encoding'],
 		function () {
 			var string;
 			if (this.length !== undefined) {
-				string = this.binary.view.getString(toValue(this, this.length), undefined, this.isUTF8);
+				string = this.binary.view.getString(toValue(this, this.length), undefined, this.encoding);
 			} else {
 				var begin = this.binary.tell();
 				var end = this.binary.seek(begin, function () {
 					while (this.view.getUint8());
 					return this.tell();
 				}) - 1;
-				string = this.binary.view.getString(end - begin, undefined, this.isUTF8);
+				string = this.binary.view.getString(end - begin, undefined, this.encoding);
 				this.binary.skip(1);
 			}
 			return string;
 		},
 		function (value) {
-			this.binary.view.writeString(value, undefined, this.isUTF8);
+			this.binary.view.writeString(value, undefined, this.encoding);
 			if (this.length === undefined) {
 				this.binary.view.writeUint8(0);
 			}
