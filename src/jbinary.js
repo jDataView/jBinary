@@ -473,12 +473,12 @@ jBinary.prototype.getType = function (structure, args) {
 
 jBinary.prototype.read = function (structure, offset) {
 	var read = function () { return this.getType(structure).read(this.contexts[0]) };
-	return offset !== undefined ? this.binary.seek(offset, read) : read.call(this);
+	return offset !== undefined ? this.seek(offset, read) : read.call(this);
 };
 
 jBinary.prototype.write = function (structure, data, offset) {
 	var write = function () { this.getType(structure).write(data, this.contexts[0]) };
-	offset !== undefined ? this.binary.seek(offset, write) : write.call(this);
+	offset !== undefined ? this.seek(offset, write) : write.call(this);
 };
 
 jBinary.prototype.toURL = function (type) {
