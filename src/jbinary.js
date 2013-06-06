@@ -208,7 +208,7 @@ jBinary.prototype.structure = {
 		function (value) {
 			for (var index in this.matches) {
 				if (this.matches[index] === value) {
-					value = name;
+					value = index;
 					break;
 				}
 			}
