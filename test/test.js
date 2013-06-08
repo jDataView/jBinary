@@ -1,4 +1,3 @@
-
 if (typeof jDataView === 'undefined') {
 	jDataView = require('jDataView');
 }
@@ -90,12 +89,11 @@ test('bitfield', function () {
 	binary.seek(6);
 	deepEqual(binary.read({
 		first5: 5,
-		next5: jBinary.Property(
-			null,
-			function () {
+		next5: new jBinary.Type({
+			read: function () {
 				return this.binary.read(5);
 			}
-		),
+		}),
 		last6: {
 			first3: 3,
 			last3: 3
@@ -188,11 +186,14 @@ testWriters('bitfield', [
 	[
 		{
 			first5: 5,
-			next5: jBinary.Property(
-				null,
-				function () { return this.binary.read(5) },
-				function (value) { this.binary.write(5, value) }
-			),
+			next5: new jBinary.Type({
+				read: function () {
+					return this.binary.read(5);
+				},
+				write: function (value) {
+					this.binary.write(5, value);
+				}
+			}),
 			last6: {
 				first3: 3,
 				last3: 3
