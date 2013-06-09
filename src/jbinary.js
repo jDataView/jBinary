@@ -120,57 +120,6 @@ jBinary.Template = function (config) {
 
 jBinary.Template.prototype = inherit(jBinary.Type.prototype);
 
-jBinary.FileFormat = function (structures, fileStructure, mimeType) {
-	var fileConstructor = function (buffer) {
-		var file = new (jBinary.Template(['baseType']))(new jBinary(buffer, structures), [fileStructure]);
-		file.toURL = function (type) { return this.binary.toURL(mimeType || type) };
-		return file;
-	};
-	fileConstructor.loadFrom = function (source, callback) {
-		function callbackWrapper(data) { callback.call(new fileConstructor(data)) }
-
-		if (typeof File !== 'undefined' && source instanceof File) {
-			var reader = new FileReader;
-			reader.onload = function() { callbackWrapper(this.result) };
-			reader.readAsArrayBuffer(source);
-		} else {
-			var xhr = new XMLHttpRequest;
-			xhr.open('GET', source, true);
-
-			// new browsers (XMLHttpRequest2-compliant)
-			if ('responseType' in xhr) {
-				xhr.responseType = 'arraybuffer';
-			}
-			// old browsers (XMLHttpRequest-compliant)
-			else if ('overrideMimeType' in xhr) {
-				xhr.overrideMimeType('text/plain; charset=x-user-defined');
-			}
-			// IE9 (Microsoft.XMLHTTP-compliant)
-			else {
-				xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
-			}
-
-			xhr.onload = function() {
-				if (this.status != 200) {
-					throw new Error(this.statusText);
-				}
-				// emulating response field for IE9
-				if (!('response' in this)) {
-					this.response = '';
-					var bytes = new VBArray(this.responseBody).toArray();
-					for (var i = 0, length = bytes.length; i < length; i++) {
-						this.response += String.fromCharCode(bytes[i]);
-					}
-				}
-				callbackWrapper(this.response);
-			};
-
-			xhr.send();
-		}
-	};
-	return fileConstructor;
-};
-
 function toValue(prop, val) {
 	return val instanceof Function ? val.call(prop, prop.binary.contexts[0]) : val;
 }
@@ -497,6 +446,47 @@ jBinary.prototype.toURL = function (type) {
 
 jBinary.prototype.slice = function (start, end, forceCopy) {
 	return new jBinary(this.view.slice(start, end, forceCopy), this.structure);
+};
+
+jBinary.loadData = function (source, callback) {
+	if (typeof File !== 'undefined' && source instanceof File) {
+		var reader = new FileReader;
+		reader.onload = function() { callback(this.result) };
+		reader.readAsArrayBuffer(source);
+	} else {
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', source, true);
+
+		// new browsers (XMLHttpRequest2-compliant)
+		if ('responseType' in xhr) {
+			xhr.responseType = 'arraybuffer';
+		}
+		// old browsers (XMLHttpRequest-compliant)
+		else if ('overrideMimeType' in xhr) {
+			xhr.overrideMimeType('text/plain; charset=x-user-defined');
+		}
+		// IE9 (Microsoft.XMLHTTP-compliant)
+		else {
+			xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
+		}
+
+		xhr.onload = function() {
+			if (this.status != 200) {
+				throw new Error(this.statusText);
+			}
+			// emulating response field for IE9
+			if (!('response' in this)) {
+				this.response = '';
+				var bytes = new VBArray(this.responseBody).toArray();
+				for (var i = 0, length = bytes.length; i < length; i++) {
+					this.response += String.fromCharCode(bytes[i]);
+				}
+			}
+			callback(this.response);
+		};
+
+		xhr.send();
+	}
 };
 
 if (typeof module !== 'undefined' && exports === module.exports) {
