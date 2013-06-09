@@ -76,7 +76,7 @@ jBinary.prototype.inContext = function (newContext, callback) {
 
 jBinary.Type = function (config) {
 	if (!(this instanceof jBinary.Type)) {
-		return jBinary.Type(config);
+		return new jBinary.Type(config);
 	}
 	for (var paramName in config) {
 		this[paramName] = config[paramName];
