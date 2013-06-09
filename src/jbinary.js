@@ -94,9 +94,10 @@ jBinary.Property = function (type, binary, args) {
 	this.binary = binary;
 	this.read = type.read || notImplemented;
 	this.write = type.write || notImplemented;
+	args = args || [];
 	if (type.params) {
 		if (type.params instanceof Array) {
-			args = args || [];
+			args = args;
 			for (var i = 0, length = type.params.length; i < length; i++) {
 				this[type.params[i]] = args[i];
 			}
@@ -479,17 +480,20 @@ jBinary.loadData = function (source, callback) {
 			xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
 		}
 
+		// shim for onload for old IE
+		if (!('onload' in xhr)) {
+			xhr.onreadystatechange = function () {
+				if (this.readyState === 4) this.onload();
+			}
+		}
+
 		xhr.onload = function() {
 			if (this.status != 200) {
 				throw new Error(this.statusText);
 			}
 			// emulating response field for IE9
 			if (!('response' in this)) {
-				this.response = '';
-				var bytes = new VBArray(this.responseBody).toArray();
-				for (var i = 0, length = bytes.length; i < length; i++) {
-					this.response += String.fromCharCode(bytes[i]);
-				}
+				this.response = new VBArray(this.responseBody).toArray();
 			}
 			callback(this.response);
 		};
