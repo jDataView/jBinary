@@ -342,9 +342,10 @@ jBinary.prototype.structure = {
 		}
 	}),
 	'skip': jBinary.Type({
-		params: ['length'],
-		init: function () {
-			this.binary.skip(toValue(this, this.length));
+		init: function (length) {
+			this.read = this.write = function () {
+				this.binary.skip(toValue(this, length));
+			};
 		}
 	}),
 	'blob': jBinary.Type({
