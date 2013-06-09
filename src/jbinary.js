@@ -202,9 +202,18 @@ jBinary.prototype.structure = {
 			if (this.type === 'uint8') {
 				return this.binary.view.getBytes(length, undefined, true, true);
 			}
-			var results = new Array(length);
-			for (var i = 0; i < length; i++) {
-				results[i] = this.binary.read(this.type);
+			var results;
+			if (length !== undefined) {
+				results = new Array(length);
+				for (var i = 0; i < length; i++) {
+					results[i] = this.binary.read(this.type);
+				}
+			} else {
+				var end = this.binary.view.byteLength;
+				results = [];
+				while (this.binary.tell() < end) {
+					results.push(this.binary.read(this.type));
+				}
 			}
 			return results;
 		},
