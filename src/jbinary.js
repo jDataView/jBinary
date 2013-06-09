@@ -1,10 +1,10 @@
+(function (exports, global) {
+
 // https://github.com/davidchambers/Base64.js
-if (typeof atob==='undefined'||typeof btoa==='undefined')
+if (!('atob' in global) || !('btoa' in global))
 (function(){var t="undefined"!=typeof window?window:exports,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n=function(){try{document.createElement("$")}catch(t){return t}}();t.btoa||(t.btoa=function(t){for(var o,e,a=0,c=r,f="";t.charAt(0|a)||(c="=",a%1);f+=c.charAt(63&o>>8-8*(a%1))){if(e=t.charCodeAt(a+=.75),e>255)throw n;o=o<<8|e}return f}),t.atob||(t.atob=function(t){if(t=t.replace(/=+$/,""),1==t.length%4)throw n;for(var o,e,a=0,c=0,f="";e=t.charAt(c++);~e&&(o=a%4?64*o+e:e,a++%4)?f+=String.fromCharCode(255&o>>(6&-2*a)):0)e=r.indexOf(e);return f})})();
 
-(function (exports) {
-
-if (typeof jDataView === 'undefined' && typeof require !== 'undefined') {
+if (!('jDataView' in global) && 'require' in global) {
 	jDataView = require('jDataView');
 }
 
@@ -455,11 +455,11 @@ jBinary.prototype.write = function (structure, data, offset) {
 
 jBinary.prototype.toURL = function (type) {
 	type = type || 'application/octet-stream';
-	if (!window.URL || !window.URL.createObjectURL) {
-		return 'data:' + type + ';base64,' + btoa(this.seek(0, function () { return this.view.getString() }));
-	} else {
+	if ('URL' in global && 'createObjectURL' in URL) {
 		var data = this.seek(0, function () { return this.view.getBytes() });
 		return URL.createObjectURL(new Blob([data], {type: type}));
+	} else {
+		return 'data:' + type + ';base64,' + btoa(this.seek(0, function () { return this.view.getString() }));
 	}
 };
 
@@ -468,7 +468,7 @@ jBinary.prototype.slice = function (start, end, forceCopy) {
 };
 
 jBinary.loadData = function (source, callback) {
-	if (typeof File !== 'undefined' && source instanceof File) {
+	if ('File' in global && source instanceof File) {
 		var reader = new FileReader;
 		reader.onload = function() { callback(this.result) };
 		reader.readAsArrayBuffer(source);
@@ -511,7 +511,7 @@ jBinary.loadData = function (source, callback) {
 	}
 };
 
-if (typeof module !== 'undefined' && exports === module.exports) {
+if ('module' in global && exports === module.exports) {
 	module.exports = jBinary;
 } else {
 	exports.jBinary = jBinary;
@@ -521,4 +521,4 @@ jDataView.prototype.toBinary = function (structure) {
 	return new jBinary(this, structure);
 };
 
-})(this);
+})(this, (function () { return this })());
