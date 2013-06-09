@@ -75,6 +75,9 @@ jBinary.prototype.inContext = function (newContext, callback) {
 };
 
 jBinary.Type = function (config) {
+	if (!(this instanceof jBinary.Type)) {
+		return jBinary.Type(config);
+	}
 	for (var paramName in config) {
 		this[paramName] = config[paramName];
 	}
@@ -85,6 +88,9 @@ function notImplemented() {
 }
 
 jBinary.Property = function (type, binary, args) {
+	if (!(this instanceof jBinary.Property)) {
+		return new jBinary.Property(type, binary, args);
+	}
 	this.binary = binary;
 	this.read = type.read || notImplemented;
 	this.write = type.write || notImplemented;
@@ -104,7 +110,7 @@ jBinary.Property = function (type, binary, args) {
 };
 
 jBinary.Template = function (config) {
-	jBinary.Type.call(this, inherit(config, {
+	return jBinary.Type.call(this, inherit(config, {
 		read: config.read || (config.getBaseType ? function (context) {
 			return this.binary.read(config.getBaseType.call(this, context));
 		} : function (context) {
@@ -125,7 +131,7 @@ function toValue(prop, val) {
 }
 
 jBinary.prototype.structure = {
-	'extend': new jBinary.Type({
+	'extend': jBinary.Type({
 		params: 'parts',
 		read: function () {
 			var parts = this.parts, obj = this.binary.read(parts[0]);
@@ -145,7 +151,7 @@ jBinary.prototype.structure = {
 			});
 		}
 	}),
-	'enum': new jBinary.Type({
+	'enum': jBinary.Type({
 		params: ['baseType', 'matches'],
 		read: function () {
 			var value = this.binary.read(this.baseType);
@@ -164,7 +170,7 @@ jBinary.prototype.structure = {
 			this.binary.write(this.baseType, value);
 		}
 	}),
-	'string': new jBinary.Type({
+	'string': jBinary.Type({
 		params: ['length', 'encoding'],
 		read: function () {
 			var string;
@@ -188,7 +194,7 @@ jBinary.prototype.structure = {
 			}
 		}
 	}),
-	'array': new jBinary.Type({
+	'array': jBinary.Type({
 		params: ['type', 'length'],
 		read: function () {
 			var length = toValue(this, this.length);
@@ -210,7 +216,7 @@ jBinary.prototype.structure = {
 			}
 		}
 	}),
-	'object': new jBinary.Type({
+	'object': jBinary.Type({
 		params: ['structure'],
 		read: function () {
 			var self = this, structure = this.structure, output = {};
@@ -240,7 +246,7 @@ jBinary.prototype.structure = {
 			});
 		}
 	}),
-	'bitfield': new jBinary.Type({
+	'bitfield': jBinary.Type({
 		params: ['bitSize'],
 		read: function () {
 			var bitSize = this.bitSize,
@@ -298,7 +304,7 @@ jBinary.prototype.structure = {
 			}
 		}
 	}),
-	'if': new jBinary.Template({
+	'if': jBinary.Template({
 		init: function (condition, trueType, falseType) {
 			if (typeof condition === 'string') {
 				condition = [condition, condition];
@@ -319,12 +325,12 @@ jBinary.prototype.structure = {
 			return this.condition(context) ? this.trueType : this.falseType;
 		}
 	}),
-	'if_not': new jBinary.Template({
+	'if_not': jBinary.Template({
 		init: function (condition, falseType, trueType) {
 			this.baseType = ['if', condition, trueType, falseType];
 		}
 	}),
-	'const': new jBinary.Type({
+	'const': jBinary.Type({
 		params: ['type', 'value', 'strict'],
 		read: function () {
 			var value = this.binary.read(this.type);
@@ -335,13 +341,13 @@ jBinary.prototype.structure = {
 			this.binary.write(this.type, this.value);
 		}
 	}),
-	'skip': new jBinary.Type({
+	'skip': jBinary.Type({
 		params: ['length'],
 		init: function () {
 			this.binary.skip(toValue(this, this.length));
 		}
 	}),
-	'blob': new jBinary.Type({
+	'blob': jBinary.Type({
 		params: ['length'],
 		read: function () {
 			return this.binary.view.getBytes(toValue(this, this.length));
@@ -368,7 +374,7 @@ var dataTypes = [
 
 for (var i = 0; i < dataTypes.length; i++) {
 	(function (dataType) {
-		jBinary.prototype.structure[dataType.toLowerCase()] = new jBinary.Type({
+		jBinary.prototype.structure[dataType.toLowerCase()] = jBinary.Type({
 			params: ['littleEndian'],
 			init: function () {
 				this.dataType = dataType;
