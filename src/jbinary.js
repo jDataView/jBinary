@@ -432,11 +432,13 @@ jBinary.prototype.createProperty = function (structure, args) {
 };
 
 jBinary.prototype.read = function (structure, offset) {
+	if (structure === undefined) return;
 	var read = function () { return this.createProperty(structure).read(this.contexts[0]) };
 	return offset !== undefined ? this.seek(offset, read) : read.call(this);
 };
 
 jBinary.prototype.write = function (structure, data, offset) {
+	if (structure === undefined) return;
 	var write = function () { this.createProperty(structure).write(data, this.contexts[0]) };
 	offset !== undefined ? this.seek(offset, write) : write.call(this);
 };
