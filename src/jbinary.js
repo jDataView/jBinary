@@ -173,25 +173,45 @@ jBinary.prototype.structure = {
 	}),
 	'string': jBinary.Type({
 		params: ['length', 'encoding'],
-		read: function () {
-			var string;
-			if (this.length !== undefined) {
-				string = this.binary.view.getString(toValue(this, this.length), undefined, this.encoding);
-			} else {
-				var begin = this.binary.tell();
-				var end = this.binary.seek(begin, function () {
-					while (this.view.getUint8());
-					return this.tell();
-				}) - 1;
-				string = this.binary.view.getString(end - begin, undefined, this.encoding);
-				this.binary.skip(1);
+		init: function (length, encoding) {
+			if (length === undefined) {
+				this.baseType = ['string0', undefined, encoding];
+				this.read = function () {
+					return this.binary.read(this.baseType);
+				};
+				this.write = function (value) {
+					this.binary.write(this.baseType, value);
+				};
 			}
-			return string;
+		},
+		read: function () {
+			return this.binary.view.getString(toValue(this, this.length), undefined, this.encoding);
 		},
 		write: function (value) {
 			this.binary.view.writeString(value, undefined, this.encoding);
-			if (this.length === undefined) {
-				this.binary.view.writeUint8(0);
+		}
+	}),
+	'string0': jBinary.Type({
+		params: ['length', 'encoding'],
+		read: function () {
+			var view = this.binary.view, maxLength = this.length;
+			if (maxLength === undefined) {
+				var startPos = view.tell(), length = 0, code;
+				maxLength = view.byteLength - startPos;
+				while (length < maxLength && (code = view.getUint8())) {
+					length++;
+				}
+				return view.getString(length, undefined, this.encoding);
+			} else {
+				return view.getString(maxLength, undefined, this.encoding).replace(/\0.*$/, '');
+			}
+		},
+		write: function (value) {
+			var view = this.binary.view, zeroLength = this.length === undefined ? 1 : this.length - value.length;
+			view.writeString(value, undefined, this.encoding);
+			if (zeroLength > 0) {
+				view.writeUint8(0);
+				view.skip(zeroLength - 1);
 			}
 		}
 	}),
