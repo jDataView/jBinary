@@ -1,12 +1,12 @@
-(function (exports, global) {
+(function (global) {
 
 // https://github.com/davidchambers/Base64.js
 if (!('atob' in global) || !('btoa' in global))
 (function(){var t="undefined"!=typeof window?window:exports,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n=function(){try{document.createElement("$")}catch(t){return t}}();t.btoa||(t.btoa=function(t){for(var o,e,a=0,c=r,f="";t.charAt(0|a)||(c="=",a%1);f+=c.charAt(63&o>>8-8*(a%1))){if(e=t.charCodeAt(a+=.75),e>255)throw n;o=o<<8|e}return f}),t.atob||(t.atob=function(t){if(t=t.replace(/=+$/,""),1==t.length%4)throw n;for(var o,e,a=0,c=0,f="";e=t.charAt(c++);~e&&(o=a%4?64*o+e:e,a++%4)?f+=String.fromCharCode(255&o>>(6&-2*a)):0)e=r.indexOf(e);return f})})();
 
-if (!('jDataView' in global) && 'require' in global) {
-	jDataView = require('jDataView');
-}
+var hasRequire = typeof require === 'function';
+
+var jDataView = global.jDataView || require('jDataView');
 
 function extend(obj) {
 	for (var i = 1; i < arguments.length; ++i) {
@@ -510,6 +510,18 @@ jBinary.loadData = function (source, callback) {
 		reader.onload = reader.onerror = function() { callback(this.error, this.result) };
 		reader.readAsArrayBuffer(source);
 	} else {
+		if (typeof source === 'object') {
+			if (hasRequire && source instanceof require('stream').Readable) {
+				var buffers = [];
+
+				source
+				.on('readable', function () { buffers.push(this.read()) })
+				.on('end', function () { callback(null, Buffer.concat(buffers)) })
+				.on('error', callback);
+			}
+			return;
+		}
+
 		if (typeof source !== 'string') return callback(new TypeError('Unsupported source type.'));
 
 		var dataParts = source.match(/^data:(.+?)(;base64)?,(.*)$/);
@@ -565,18 +577,12 @@ jBinary.loadData = function (source, callback) {
 
 			xhr.send();
 		} else
-		if ('require' in global) {
+		if (hasRequire) {
 			var protocol = source.match(/^(https?):\/\//);
 			if (protocol) {
 				require(protocol).get(source, function (res) {
 					if (res.statusCode !== 200) return callback(new Error('HTTP Error #' + res.statusCode));
-
-					var buffers = [];
-					res.on('data', function (data) {
-						buffers.push(data);
-					}).on('end', function () {
-						callback(null, Buffer.concat(buffers));
-					});
+					jBinary.loadData(res, callback);
 				}).on('error', callback);
 			} else {
 				require('fs').readFile(source, callback);
@@ -585,14 +591,17 @@ jBinary.loadData = function (source, callback) {
 	}
 };
 
-if ('module' in global && exports === module.exports) {
+if (typeof module === 'object' && module && typeof module.exports === 'object') {
 	module.exports = jBinary;
+} else
+if (typeof define === 'function' && define.amd) {
+	define('jbinary', [], function () { return jBinary });
 } else {
-	exports.jBinary = jBinary;
+	global.jBinary = jBinary;
 }
 
 jDataView.prototype.toBinary = function (structure) {
 	return new jBinary(this, structure);
 };
 
-})(this, (function () { return this })());
+})((function () { return this })());

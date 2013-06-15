@@ -1,9 +1,6 @@
-if (typeof jDataView === 'undefined') {
-	jDataView = require('jDataView');
-}
-if (typeof jBinary === 'undefined') {
-	jBinary = require('..');
-}
+var jDataView = this.jDataView || require('jDataView');
+var jBinary = this.jBinary || require('..');
+
 var module = QUnit.module;
 var test = QUnit.test;
 

@@ -1,6 +1,6 @@
 {
   "name": "jbinary",
-  "version": "2013.03.161",
+  "version": "0.9",
   "description": "Manipulating binary files made easy.",
   "keywords": [
     "parser",
@@ -12,13 +12,13 @@
     "write",
     "manipulate"
   ],
-  "homepage": "https://github.com/RReverser/jBinary",
   "author": "RReverser <me@rreverser.com> (http://rreverser.com/)",
   "contributors": [
+    "RReverser <me@rreverser.com> (http://rreverser.com)",
     "Vjeux <vjeuxx@gmail.com> (http://blog.vjeux.com/)"
   ],
   "dependencies": {
-    "jDataView": "git://github.com/RReverser/jDataView.git"
+    "jDataView": "*"
   },
   "devDependencies": {
     "qunit": "*"
@@ -28,8 +28,6 @@
     "type": "git",
     "url": "git://github.com/RReverser/jBinary.git"
   },
-  "readmeFilename": "README.md",
-  "gitHead": "26c7d2159c26a256c8d130114c0a8f35376c1e28",
   "directories": {
     "lib": "src",
     "test": "test",
