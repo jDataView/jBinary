@@ -493,41 +493,75 @@ jBinary.loadData = function (source, callback) {
 		reader.onload = function() { callback(this.result) };
 		reader.readAsArrayBuffer(source);
 	} else {
-		var xhr = new XMLHttpRequest();
-		xhr.open('GET', source, true);
+		if (typeof source !== 'string') throw new TypeError('Unsupported source type.');
 
-		// new browsers (XMLHttpRequest2-compliant)
-		if ('responseType' in xhr) {
-			xhr.responseType = 'arraybuffer';
-		}
-		// old browsers (XMLHttpRequest-compliant)
-		else if ('overrideMimeType' in xhr) {
-			xhr.overrideMimeType('text/plain; charset=x-user-defined');
-		}
-		// IE9 (Microsoft.XMLHTTP-compliant)
-		else {
-			xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
-		}
+		var dataParts = source.match(/^data:(.+?)(;base64)?,(.*)$/);
+		if (dataParts) {
+			var isBase64 = dataParts[2] !== undefined,
+				content = dataParts[3];
 
-		// shim for onload for old IE
-		if (!('onload' in xhr)) {
-			xhr.onreadystatechange = function () {
-				if (this.readyState === 4) this.onload();
+			if (isBase64 && jDataView.prototype.compatibility.NodeBuffer) {
+				callback(new Buffer(content, 'base64'));
+			} else {
+				callback((isBase64 ? atob : decodeURIComponent)(content));
+			}
+		} else
+		if ('XMLHttpRequest' in global) {
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', source, true);
+
+			// new browsers (XMLHttpRequest2-compliant)
+			if ('responseType' in xhr) {
+				xhr.responseType = 'arraybuffer';
+			}
+			// old browsers (XMLHttpRequest-compliant)
+			else if ('overrideMimeType' in xhr) {
+				xhr.overrideMimeType('text/plain; charset=x-user-defined');
+			}
+			// IE9 (Microsoft.XMLHTTP-compliant)
+			else {
+				xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
+			}
+
+			// shim for onload for old IE
+			if (!('onload' in xhr)) {
+				xhr.onreadystatechange = function () {
+					if (this.readyState === 4) this.onload();
+				}
+			}
+
+			xhr.onload = function() {
+				if (this.status !== 200) throw new Error(this.statusText);
+
+				// emulating response field for IE9
+				if (!('response' in this)) {
+					this.response = new VBArray(this.responseBody).toArray();
+				}
+				callback(this.response);
+			};
+
+			xhr.send();
+		} else
+		if ('require' in global) {
+			var protocol = source.match(/^(https?):\/\//);
+			if (protocol) {
+				require(protocol).get(source, function (res) {
+					if (res.status !== 200) throw new Error('HTTP Error #' + res.status);
+
+					var buffers = [];
+					res.on('data', function (data) {
+						buffers.push(data);
+					}).on('end', function () {
+						callback(Buffer.concat(buffers));
+					});
+				})
+			} else {
+				require('fs').readFile(source, function (err, data) {
+					if (err) throw new Error(err);
+					callback(data);
+				});
 			}
 		}
-
-		xhr.onload = function() {
-			if (this.status != 200) {
-				throw new Error(this.statusText);
-			}
-			// emulating response field for IE9
-			if (!('response' in this)) {
-				this.response = new VBArray(this.responseBody).toArray();
-			}
-			callback(this.response);
-		};
-
-		xhr.send();
 	}
 };
 
