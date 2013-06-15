@@ -83,29 +83,26 @@ jBinary.Type = function (config) {
 	}
 };
 
-function notImplemented() {
-	throw new ReferenceError('Operation was not implemented for this binary type.');
-}
-
-jBinary.Property = function (type, binary, args) {
-	if (!(this instanceof jBinary.Property)) {
-		return new jBinary.Property(type, binary, args);
-	}
-	this.binary = binary;
-	this.read = type.read || notImplemented;
-	this.write = type.write || notImplemented;
-	args = args || [];
-	if (type.params) {
-		if (type.params instanceof Array) {
-			for (var i = 0, length = type.params.length; i < length; i++) {
-				this[type.params[i]] = args[i];
+jBinary.Type.prototype = {
+	withArgs: function (args) {
+		args = args || [];
+		var type = inherit(this);
+		if (this.params) {
+			if (this.params instanceof Array) {
+				for (var i = 0, length = this.params.length; i < length; i++) {
+					type[this.params[i]] = args[i];
+				}
+			} else {
+				type[this.params] = args;
 			}
-		} else {
-			this[type.params] = args;
 		}
-	}
-	if (type.init) {
-		type.init.apply(this, args);
+		if (this.init) {
+			this.init.apply(type, args);
+		}
+		return type;
+	},
+	createProperty: function (binary) {
+		return inherit(this, {binary: binary});
 	}
 };
 
@@ -467,7 +464,7 @@ jBinary.prototype.createProperty = function (structure, args) {
 
 		case 'object':
 			if (structure instanceof jBinary.Type) {
-				return new jBinary.Property(structure, this, args);
+				return structure.withArgs(args).createProperty(this);
 			} else
 			if (structure instanceof Array) {
 				return this.createProperty(structure[0], structure.slice(1));
