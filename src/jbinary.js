@@ -485,7 +485,7 @@ jBinary.prototype.write = function (structure, data, offset) {
 	offset !== undefined ? this.seek(offset, write) : write.call(this);
 };
 
-jBinary.prototype.toURL = function (type) {
+jBinary.prototype.toURI = function (type) {
 	type = type || 'application/octet-stream';
 	if ('URL' in global && 'createObjectURL' in URL) {
 		var data = this.seek(0, function () { return this.view.getBytes() });
