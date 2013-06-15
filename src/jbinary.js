@@ -111,18 +111,35 @@ jBinary.Property = function (type, binary, args) {
 };
 
 jBinary.Template = function (config) {
-	return jBinary.Type.call(this, inherit(config, {
-		read: config.read || (config.getBaseType ? function (context) {
+	config = inherit(config);
+
+	config.baseRead =
+		config.getBaseType
+		? function (context) {
 			return this.binary.read(config.getBaseType.call(this, context));
-		} : function (context) {
+		}
+		: function (context) {
 			return this.binary.read(this.baseType);
-		}),
-		write: config.write || (config.getBaseType ? function (value, context) {
+		};
+
+	if (!('read' in config)) {
+		config.read = config.baseRead;
+	}
+
+	config.baseWrite =
+		config.getBaseType
+		? function (value, context) {
 			return this.binary.write(config.getBaseType.call(this, context), value);
-		} : function (value, context) {
+		}
+		: function (value, context) {
 			return this.binary.write(this.baseType, value);
-		})
-	}));
+		};
+
+	if (!('write' in config)) {
+		config.write = config.baseWrite;
+	}
+
+	return jBinary.Type.call(this, config);
 };
 
 jBinary.Template.prototype = inherit(jBinary.Type.prototype);
