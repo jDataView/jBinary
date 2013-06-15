@@ -479,7 +479,8 @@ jBinary.prototype.toURL = function (type) {
 		var data = this.seek(0, function () { return this.view.getBytes() });
 		return URL.createObjectURL(new Blob([data], {type: type}));
 	} else {
-		return 'data:' + type + ';base64,' + btoa(this.seek(0, function () { return this.view.getString() }));
+		var string = this.seek(0, function () { return this.view.getString(undefined, undefined, this.view._isNodeBuffer ? 'base64' : 'binary') });
+		return 'data:' + type + ';base64,' + (this.view._isNodeBuffer ? string : btoa(string));
 	}
 };
 
