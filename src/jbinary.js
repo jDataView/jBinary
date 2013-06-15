@@ -489,21 +489,26 @@ jBinary.prototype.slice = function (start, end, forceCopy) {
 
 jBinary.loadData = function (source, callback) {
 	if ('File' in global && source instanceof File) {
-		var reader = new FileReader;
-		reader.onload = function() { callback(this.result) };
+		var reader = new FileReader();
+		reader.onload = reader.onerror = function() { callback(this.error, this.result) };
 		reader.readAsArrayBuffer(source);
 	} else {
-		if (typeof source !== 'string') throw new TypeError('Unsupported source type.');
+		if (typeof source !== 'string') return callback(new TypeError('Unsupported source type.'));
 
 		var dataParts = source.match(/^data:(.+?)(;base64)?,(.*)$/);
 		if (dataParts) {
 			var isBase64 = dataParts[2] !== undefined,
 				content = dataParts[3];
 
-			if (isBase64 && jDataView.prototype.compatibility.NodeBuffer) {
-				callback(new Buffer(content, 'base64'));
-			} else {
-				callback((isBase64 ? atob : decodeURIComponent)(content));
+			try {
+				callback(
+					null,
+					(isBase64 && jDataView.prototype.compatibility.NodeBuffer)
+						? new Buffer(content, 'base64')
+						: (isBase64 ? atob : decodeURIComponent)(content)
+				);
+			} catch (e) {
+				callback(e);
 			}
 		} else
 		if ('XMLHttpRequest' in global) {
@@ -531,13 +536,14 @@ jBinary.loadData = function (source, callback) {
 			}
 
 			xhr.onload = function() {
-				if (this.status !== 200) throw new Error(this.statusText);
+				if (this.status !== 200) return callback(new Error('HTTP Error #' + this.status + ': ' + this.statusText));
 
 				// emulating response field for IE9
 				if (!('response' in this)) {
 					this.response = new VBArray(this.responseBody).toArray();
 				}
-				callback(this.response);
+
+				callback(null, this.response);
 			};
 
 			xhr.send();
@@ -546,20 +552,17 @@ jBinary.loadData = function (source, callback) {
 			var protocol = source.match(/^(https?):\/\//);
 			if (protocol) {
 				require(protocol).get(source, function (res) {
-					if (res.status !== 200) throw new Error('HTTP Error #' + res.status);
+					if (res.statusCode !== 200) return callback(new Error('HTTP Error #' + res.statusCode));
 
 					var buffers = [];
 					res.on('data', function (data) {
 						buffers.push(data);
 					}).on('end', function () {
-						callback(Buffer.concat(buffers));
+						callback(null, Buffer.concat(buffers));
 					});
-				})
+				}).on('error', callback);
 			} else {
-				require('fs').readFile(source, function (err, data) {
-					if (err) throw new Error(err);
-					callback(data);
-				});
+				require('fs').readFile(source, callback);
 			}
 		}
 	}
