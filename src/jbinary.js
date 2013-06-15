@@ -453,24 +453,28 @@ jBinary.prototype.skip = function (offset, block) {
 	return this.seek(this.tell() + toValue(this, offset), block);
 };
 
-jBinary.prototype.createProperty = function (structure, args) {
+jBinary.prototype.getType = function (structure, args) {
 	switch (typeof structure) {
 		case 'string':
-			return this.createProperty(this.structure[structure], args);
+			return this.getType(this.structure[structure], args);
 
 		case 'number':
-			return this.createProperty('bitfield', [structure]);
+			return this.getType('bitfield', [structure]);
 
 		case 'object':
 			if (structure instanceof jBinary.Type) {
-				return structure.withArgs(args).createProperty(this);
+				return structure.withArgs(args);
 			} else
 			if (structure instanceof Array) {
-				return this.createProperty(structure[0], structure.slice(1));
+				return this.getType(structure[0], structure.slice(1));
 			} else {
-				return this.createProperty('object', [structure]);
+				return this.getType('object', [structure]);
 			}
 	}
+};
+
+jBinary.prototype.createProperty = function (structure, args) {
+	return this.getType(structure, args).createProperty(this);
 };
 
 jBinary.prototype.read = function (structure, offset) {
