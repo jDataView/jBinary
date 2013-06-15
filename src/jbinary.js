@@ -165,36 +165,29 @@ jBinary.prototype.structure = {
 			});
 		}
 	}),
-	'enum': jBinary.Type({
+	'enum': jBinary.Template({
 		params: ['baseType', 'matches'],
-		read: function () {
-			var value = this.binary.read(this.baseType);
-			if (value in this.matches) {
-				value = this.matches[value];
+		init: function (baseType, matches) {
+			this.backMatches = {};
+			for (var key in matches) {
+				this.backMatches[matches[key]] = key;
 			}
-			return value;
+		},
+		read: function () {
+			var value = this.baseRead();
+			return value in this.matches ? this.matches[value] : value;
 		},
 		write: function (value) {
-			for (var index in this.matches) {
-				if (this.matches[index] === value) {
-					value = index;
-					break;
-				}
-			}
-			this.binary.write(this.baseType, value);
+			this.baseWrite(value in this.backMatches ? this.backMatches[value] : value);
 		}
 	}),
-	'string': jBinary.Type({
+	'string': jBinary.Template({
 		params: ['length', 'encoding'],
 		init: function (length, encoding) {
 			if (length === undefined) {
 				this.baseType = ['string0', undefined, encoding];
-				this.read = function () {
-					return this.binary.read(this.baseType);
-				};
-				this.write = function (value) {
-					this.binary.write(this.baseType, value);
-				};
+				this.read = this.baseRead;
+				this.write = this.baseWrite;
 			}
 		},
 		read: function () {
