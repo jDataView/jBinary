@@ -85,6 +85,10 @@ jBinary.Type = function (config) {
 
 jBinary.Type.prototype = {
 	withArgs: function (args) {
+		if (!this.init && (!this.params || !args || !args.length)) {
+			return this;
+		}
+
 		args = args || [];
 		var type = inherit(this);
 		if (this.params) {
@@ -95,9 +99,11 @@ jBinary.Type.prototype = {
 			} else {
 				type[this.params] = args;
 			}
+			type.params = null;
 		}
 		if (this.init) {
 			this.init.apply(type, args);
+			type.init = null;
 		}
 		return type;
 	},
