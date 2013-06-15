@@ -6,7 +6,7 @@ if (!('atob' in global) || !('btoa' in global))
 
 var hasRequire = typeof require === 'function';
 
-var jDataView = global.jDataView || require('jDataView');
+var jDataView;
 
 function extend(obj) {
 	for (var i = 1; i < arguments.length; ++i) {
@@ -592,11 +592,16 @@ jBinary.loadData = function (source, callback) {
 };
 
 if (typeof module === 'object' && module && typeof module.exports === 'object') {
+	jDataView = require('jDataView');
 	module.exports = jBinary;
 } else
 if (typeof define === 'function' && define.amd) {
-	define('jbinary', [], function () { return jBinary });
+	define('jBinary', ['jDataView'], function (_jDataView) {
+		jDataView = _jDataView;
+		return jBinary;
+	});
 } else {
+	jDataView = global.jDataView;
 	global.jBinary = jBinary;
 }
 
