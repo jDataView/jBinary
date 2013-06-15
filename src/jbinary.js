@@ -97,7 +97,6 @@ jBinary.Property = function (type, binary, args) {
 	args = args || [];
 	if (type.params) {
 		if (type.params instanceof Array) {
-			args = args;
 			for (var i = 0, length = type.params.length; i < length; i++) {
 				this[type.params[i]] = args[i];
 			}
