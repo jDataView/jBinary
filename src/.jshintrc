@@ -1,0 +1,26 @@
+{
+	"browser": true,
+	"node": true,
+	"nonstandard": true,
+	"worker": true,
+	"globals": {"define": false, "URL": false, "File": false, "VBArray": false},
+
+	"camelcase": true,
+	"curly": true,
+	"eqeqeq": true,
+	"es3": true,
+	"immed": true,
+	"lastsemic": true,
+	"latedef": true,
+	"laxbreak": true,
+	"loopfunc": true,
+	"newcap": false,
+	"noarg": true,
+	"noempty": true,
+	"nonew": true,
+	"quotmark": "single",
+	"smarttabs": true,
+	"strict": true,
+	"trailing": true,
+	"undef": true
+}

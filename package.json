@@ -1,40 +1,27 @@
 {
   "name": "jbinary",
-  "version": "0.9",
-  "description": "Manipulating binary files made easy.",
-  "keywords": [
-    "parser",
-    "editor",
-    "buffer",
-    "binary",
-    "file",
-    "read",
-    "write",
-    "manipulate"
-  ],
+  "version": "0.9.1",
+  "description": "High-level I/O for binary data.",
+  "keywords": ["parse", "edit", "buffer", "binary", "file", "read", "write", "manipulate"],
   "author": "RReverser <me@rreverser.com> (http://rreverser.com/)",
   "contributors": [
     "RReverser <me@rreverser.com> (http://rreverser.com)",
     "Vjeux <vjeuxx@gmail.com> (http://blog.vjeux.com/)"
   ],
-  "dependencies": {
-    "jDataView": "*"
-  },
-  "devDependencies": {
-    "qunit": "*"
-  },
+  "files": ["src/jbinary.js"],
   "main": "src/jbinary.js",
+  "scripts": {
+    "test": "cd test && node test.runner.js"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/RReverser/jBinary.git"
   },
-  "directories": {
-    "lib": "src",
-    "test": "test",
-    "example": "sample"
+  "dependencies": {
+    "jDataView": "*"
   },
-  "scripts": {
-    "test": "cd test && node test.runner.js"
-  },
-  "license": "WTFPL"
+  "devDependencies": {
+    "qunit": "*",
+    "jshint": ">= 2.1.0"
+  }
 }

@@ -1,8 +1,12 @@
 (function (global) {
 
+'use strict';
+
 // https://github.com/davidchambers/Base64.js
-if (!('atob' in global) || !('btoa' in global))
+if (!('atob' in global) || !('btoa' in global)) {
+// jshint:skipline
 (function(){var t="undefined"!=typeof window?window:exports,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n=function(){try{document.createElement("$")}catch(t){return t}}();t.btoa||(t.btoa=function(t){for(var o,e,a=0,c=r,f="";t.charAt(0|a)||(c="=",a%1);f+=c.charAt(63&o>>8-8*(a%1))){if(e=t.charCodeAt(a+=.75),e>255)throw n;o=o<<8|e}return f}),t.atob||(t.atob=function(t){if(t=t.replace(/=+$/,""),1==t.length%4)throw n;for(var o,e,a=0,c=0,f="";e=t.charAt(c++);~e&&(o=a%4?64*o+e:e,a++%4)?f+=String.fromCharCode(255&o>>(6&-2*a)):0)e=r.indexOf(e);return f})})();
+}
 
 var hasRequire = typeof require === 'function';
 
@@ -22,16 +26,17 @@ function extend(obj) {
 
 function inherit(obj) {
 	if ('create' in Object) {
-		obj = Object.create(obj);
+		arguments[0] = Object.create(obj);
 	} else {
 		var ClonedObject = function () {};
 		ClonedObject.prototype = obj;
-		obj = new ClonedObject();
+		arguments[0] = new ClonedObject();
 	}
-	return extend.apply(this, arguments);
+	return extend.apply(null, arguments);
 }
 
 function jBinary(view, structure) {
+	/* jshint validthis:true */
 	if (!(view instanceof jDataView)) {
 		view = new jDataView(view);
 	}
@@ -318,7 +323,9 @@ jBinary.prototype.structure = {
 		},
 		write: function (value) {
 			var bitSize = this.bitSize,
-				binary = this.binary;
+				binary = this.binary,
+				pos,
+				curByte;
 
 			if (binary._bitShift < 0 || binary._bitShift >= 8) {
 				var byteShift = binary._bitShift >> 3; // Math.floor(_bitShift / 8)
@@ -326,10 +333,10 @@ jBinary.prototype.structure = {
 				binary._bitShift &= 7; // _bitShift + 8 * Math.floor(_bitShift / 8)
 			}
 			if (binary._bitShift > 0 && bitSize >= 8 - binary._bitShift) {
-				var pos = binary.tell();
-				var byte = binary.view.getUint8(pos) & (-1 << (8 - binary._bitShift));
-				byte |= value >>> (bitSize - (8 - binary._bitShift));
-				binary.view.setUint8(pos, byte);
+				pos = binary.tell();
+				curByte = binary.view.getUint8(pos) & (-1 << (8 - binary._bitShift));
+				curByte |= value >>> (bitSize - (8 - binary._bitShift));
+				binary.view.setUint8(pos, curByte);
 				bitSize -= 8 - binary._bitShift;
 				binary._bitShift = 0;
 			}
@@ -338,10 +345,10 @@ jBinary.prototype.structure = {
 				bitSize -= 8;
 			}
 			if (bitSize > 0) {
-				var pos = binary.tell();
-				var byte = binary.view.getUint8(pos) & ~(~(-1 << bitSize) << (8 - (binary._bitShift + bitSize)));
-				byte |= (value & ~(-1 << bitSize)) << (8 - (binary._bitShift + bitSize));
-				binary.view.setUint8(pos, byte);
+				pos = binary.tell();
+				curByte = binary.view.getUint8(pos) & ~(~(-1 << bitSize) << (8 - (binary._bitShift + bitSize)));
+				curByte |= (value & ~(-1 << bitSize)) << (8 - (binary._bitShift + bitSize));
+				binary.view.setUint8(pos, curByte);
 				binary._bitShift += bitSize - 8; // passing negative value for next pass
 			}
 		}
@@ -376,7 +383,9 @@ jBinary.prototype.structure = {
 		params: ['type', 'value', 'strict'],
 		read: function () {
 			var value = this.binary.read(this.type);
-			if (this.strict && value != this.value) throw new TypeError('Unexpected value.');
+			if (this.strict && value !== this.value) {
+				throw new TypeError('Unexpected value.');
+			}
 			return value;
 		},
 		write: function () {
@@ -435,10 +444,10 @@ for (var i = 0; i < dataTypes.length; i++) {
 jBinary.prototype.seek = function (position, block) {
 	position = toValue(this, position);
 	if (block instanceof Function) {
-		var old_position = this.view.tell();
+		var oldPos = this.view.tell();
 		this.view.seek(position);
 		var result = block.call(this);
-		this.view.seek(old_position);
+		this.view.seek(oldPos);
 		return result;
 	} else {
 		return this.view.seek(position);
@@ -478,15 +487,19 @@ jBinary.prototype.createProperty = function (structure, args) {
 };
 
 jBinary.prototype.read = function (structure, offset) {
-	if (structure === undefined) return;
+	if (structure === undefined) {
+		return;
+	}
 	var read = function () { return this.createProperty(structure).read(this.contexts[0]) };
 	return offset !== undefined ? this.seek(offset, read) : read.call(this);
 };
 
 jBinary.prototype.write = function (structure, data, offset) {
-	if (structure === undefined) return;
+	if (structure === undefined) {
+		return;
+	}
 	var write = function () { this.createProperty(structure).write(data, this.contexts[0]) };
-	offset !== undefined ? this.seek(offset, write) : write.call(this);
+	return offset !== undefined ? this.seek(offset, write) : write.call(this);
 };
 
 jBinary.prototype.toURI = function (type) {
@@ -522,7 +535,9 @@ jBinary.loadData = function (source, callback) {
 			return;
 		}
 
-		if (typeof source !== 'string') return callback(new TypeError('Unsupported source type.'));
+		if (typeof source !== 'string') {
+			return callback(new TypeError('Unsupported source type.'));
+		}
 
 		var dataParts = source.match(/^data:(.+?)(;base64)?,(.*)$/);
 		if (dataParts) {
@@ -560,12 +575,16 @@ jBinary.loadData = function (source, callback) {
 			// shim for onload for old IE
 			if (!('onload' in xhr)) {
 				xhr.onreadystatechange = function () {
-					if (this.readyState === 4) this.onload();
-				}
+					if (this.readyState === 4) {
+						this.onload();
+					}
+				};
 			}
 
 			xhr.onload = function() {
-				if (this.status !== 200) return callback(new Error('HTTP Error #' + this.status + ': ' + this.statusText));
+				if (this.status !== 200) {
+					return callback(new Error('HTTP Error #' + this.status + ': ' + this.statusText));
+				}
 
 				// emulating response field for IE9
 				if (!('response' in this)) {
@@ -581,7 +600,9 @@ jBinary.loadData = function (source, callback) {
 			var protocol = source.match(/^(https?):\/\//);
 			if (protocol) {
 				require(protocol).get(source, function (res) {
-					if (res.statusCode !== 200) return callback(new Error('HTTP Error #' + res.statusCode));
+					if (res.statusCode !== 200) {
+						return callback(new Error('HTTP Error #' + res.statusCode));
+					}
 					jBinary.loadData(res, callback);
 				}).on('error', callback);
 			} else {
@@ -609,4 +630,4 @@ jDataView.prototype.toBinary = function (structure) {
 	return new jBinary(this, structure);
 };
 
-})((function () { return this })());
+})((function () { /* jshint strict: false */ return this })());

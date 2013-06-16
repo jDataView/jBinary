@@ -1,5 +1,89 @@
-var jDataView = this.jDataView || require('jDataView');
-var jBinary = this.jBinary || require('..');
+if (typeof require !== 'undefined') {
+	if (typeof jDataView === 'undefined') {
+		jDataView = require('jDataView');
+	}
+
+	if (typeof jBinary === 'undefined') {
+		jBinary = require('..');
+	}
+
+	if (typeof JSHINT === 'undefined') {
+		JSHINT = require('jshint').JSHINT;
+	}
+}
+
+if (typeof JSHINT !== 'undefined') {
+	asyncTest('JSHint', function () {
+		var paths = {
+			source: '../src/jbinary.js',
+			options: '../src/.jshintrc'
+		},
+		contents = {};
+
+		function onLoad(err, name, text) {
+			if (err) {
+				start();
+				return ok(false, 'Error while loading ' + name + ': ' + err);
+			}
+
+			contents[name] = text;
+			for (var name in paths) {
+				if (!(name in contents)) {
+					return;
+				}
+			}
+
+			var options = JSON.parse(contents.options), globals = options.globals;
+			delete options.globals;
+
+			start();
+
+			if (JSHINT(contents.source, options, globals)) {
+				ok(true);
+			} else {
+				var errors = JSHINT.errors, skipLines = [], errorCount = errors.length;
+				for (var i = 0, length = errors.length; i < length; i++) {
+					var error = errors[i];
+					if (error) {
+						if (error.code === 'E001' && /^\/\/\s*jshint:\s*skipline/.test(error.evidence)) {
+							skipLines.push(error.line + 1);
+							errorCount--;
+							continue;
+						}
+						if (skipLines.indexOf(error.line) >= 0) {
+							errorCount--;
+							continue;
+						}
+						ok(false, 'Line ' + error.line + ', character ' + error.character + ': ' + error.reason);
+						console.log(error);
+					}
+				}
+				if (!errorCount) {
+					ok(true);
+				}
+			}
+		}
+
+		function load(name) {
+			if (typeof XMLHttpRequest !== 'undefined') {
+				var ajax = new XMLHttpRequest();
+				ajax.onload = function () {
+					this.status === 200 ? onLoad(null, name, this.responseText) : onLoad(this.statusText, name);
+				};
+				ajax.open('GET', paths[name], true);
+				ajax.send();
+			} else {
+				require('fs').readFile(paths[name], function (err, data) {
+					onLoad(err, name, String(data));
+				});
+			}
+		}
+
+		for (var name in paths) {
+			load(name);
+		}
+	});
+}
 
 var module = QUnit.module;
 var test = QUnit.test;

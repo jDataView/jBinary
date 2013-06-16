@@ -1,4 +1,3 @@
-
 var testrunner = require('qunit');
 testrunner.options.errorsOnly = true;
 testrunner.options.assertions = false;
