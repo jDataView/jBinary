@@ -48,7 +48,7 @@ function jBinary(view, structure) {
 	this._bitShift = 0;
 	this.contexts = [];
 	this.structure = inherit(proto.structure, structure);
-	this.cacheKey = proto.cacheKey + '.' + (++proto.id);
+	this.cacheKey = this._getCached(structure, function () { return proto.cacheKey + '.' + (++proto.id) }, true);
 }
 
 var proto = jBinary.prototype;
