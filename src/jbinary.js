@@ -48,7 +48,9 @@ function jBinary(view, structure) {
 	this._bitShift = 0;
 	this.contexts = [];
 	this.structure = inherit(proto.structure, structure);
-	this.cacheKey = this._getCached(structure, function () { return proto.cacheKey + '.' + (++proto.id) }, true);
+	if (structure) {
+		this.cacheKey = this._getCached(structure, function () { return proto.cacheKey + '.' + (++proto.id) }, true);
+	}
 }
 
 var proto = jBinary.prototype;
@@ -143,9 +145,12 @@ jBinary.Type.prototype = {
 
 jBinary.Template = function (config) {
 	return inherit(jBinary.Template.prototype, config, {
-		initProperty: function () {
+		initProperty: function (context) {
 			if (config.initProperty) {
 				config.initProperty.call(this);
+			}
+			if (this.getBaseType) {
+				this.baseType = this.getBaseType(context);
 			}
 			if (this.baseType) {
 				this.baseType = this.binary.getType(this.baseType);
@@ -155,14 +160,11 @@ jBinary.Template = function (config) {
 };
 
 jBinary.Template.prototype = inherit(jBinary.Type.prototype, {
-	getBaseType: function () {
-		return this.baseType;
-	},
 	baseRead: function (context) {
-		return this.binary.read(this.getBaseType(context));
+		return this.binary.read(this.baseType);
 	},
 	baseWrite: function (value, context) {
-		this.binary.write(this.getBaseType(context), value);
+		this.binary.write(this.baseType, value);
 	}
 });
 jBinary.Template.prototype.read = jBinary.Template.prototype.baseRead;
