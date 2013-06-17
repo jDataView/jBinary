@@ -65,8 +65,8 @@ try {
 }
 
 proto._getCached = function (obj, valueAccessor, allowVisible) {
-	var value = obj[this.cacheKey];
-	if (value === undefined) {
+	var value;
+	if (!obj.hasOwnProperty(this.cacheKey)) {
 		value = valueAccessor.call(this, obj);
 		if (defineProperty) {
 			defineProperty(obj, this.cacheKey, {value: value});
@@ -74,6 +74,8 @@ proto._getCached = function (obj, valueAccessor, allowVisible) {
 		if (allowVisible) {
 			obj[this.cacheKey] = value;
 		}
+	} else {
+		value = obj[this.cacheKey];
 	}
 	return value;
 };
@@ -140,40 +142,31 @@ jBinary.Type.prototype = {
 };
 
 jBinary.Template = function (config) {
-	if (!(this instanceof jBinary.Template)) {
-		return new jBinary.Template(config);
-	}
-
-	extend(this, config);
-
-	this.initProperty = function (context) {
-		this.baseType = this.getBaseType ? this.getBaseType(context) : this.baseType;
-		if (!this.baseType) {
-			return;
+	return inherit(jBinary.Template.prototype, config, {
+		initProperty: function () {
+			if (config.initProperty) {
+				config.initProperty.call(this);
+			}
+			if (this.baseType) {
+				this.baseType = this.binary.getType(this.baseType);
+			}
 		}
-		this.baseProperty = this.binary.createProperty(this.baseType);
-		if (config.initProperty) {
-			config.initProperty.call(this, context);
-		}
-	};
-
-	if (!('read' in this)) {
-		this.read = this.baseRead;
-	}
-
-	if (!('write' in this)) {
-		this.write = this.baseWrite;
-	}
+	});
 };
 
 jBinary.Template.prototype = inherit(jBinary.Type.prototype, {
+	getBaseType: function () {
+		return this.baseType;
+	},
 	baseRead: function (context) {
-		return this.baseProperty.read(context);
+		return this.binary.read(this.getBaseType(context));
 	},
 	baseWrite: function (value, context) {
-		this.baseProperty.write(value, context);
+		this.binary.write(this.getBaseType(context), value);
 	}
 });
+jBinary.Template.prototype.read = jBinary.Template.prototype.baseRead;
+jBinary.Template.prototype.write = jBinary.Template.prototype.baseWrite;
 
 function toValue(prop, val) {
 	return val instanceof Function ? val.call(prop, prop.binary.contexts[0]) : val;
@@ -185,17 +178,17 @@ proto.structure = {
 			this.parts = arguments;
 		},
 		initProperty: function () {
-			var parts = Array.prototype.slice.call(this.parts);
-			for (var i = 0, length = parts.length; i < length; i++) {
-				parts[i] = this.binary.createProperty(parts[i]);
+			var parts = this.parts, length = parts.length, partTypes = new Array(length);
+			for (var i = 0; i < length; i++) {
+				partTypes[i] = this.binary.getType(parts[i]);
 			}
-			this.parts = parts;
+			this.parts = partTypes;
 		},
 		read: function () {
 			var parts = this.parts, obj = this.binary.read(parts[0]);
 			this.binary.inContext(obj, function () {
 				for (var i = 1, length = parts.length; i < length; i++) {
-					extend(obj, parts[i].read(obj));
+					extend(obj, this.read(parts[i]));
 				}
 			});
 			return obj;
@@ -204,7 +197,7 @@ proto.structure = {
 			var parts = this.parts;
 			this.binary.inContext(obj, function () {
 				for (var i = 0, length = parts.length; i < length; i++) {
-					parts[i].write(obj, obj);
+					this.write(parts[i], obj);
 				}
 			});
 		}
@@ -269,7 +262,7 @@ proto.structure = {
 		params: ['baseType', 'length'],
 		read: function (context) {
 			var length = toValue(this, this.length);
-			if (this.baseType === 'uint8') {
+			if (this.baseType === proto.structure.uint8) {
 				return this.binary.view.getBytes(length, undefined, true, true);
 			}
 			var results;
@@ -288,7 +281,7 @@ proto.structure = {
 			return results;
 		},
 		write: function (values, context) {
-			if (this.baseType === 'uint8') {
+			if (this.baseType === proto.structure.uint8) {
 				return this.binary.view.writeBytes(values);
 			}
 			for (var i = 0, length = values.length; i < length; i++) {
@@ -503,16 +496,15 @@ proto.getType = function (structure, args) {
 				return structure.withArgs(args || []);
 			} else {
 				return structure instanceof Array
-					   ? proto._getCached(structure, function (structure) { return this.getType(structure[0], structure.slice(1)) }, true)
-					   : proto._getCached(structure, function (structure) { return this.getType(proto.structure.object, [structure]) }, false)
+					   ? this._getCached(structure, function (structure) { return this.getType(structure[0], structure.slice(1)) }, true)
+					   : this._getCached(structure, function (structure) { return this.getType(proto.structure.object, [structure]) }, false)
 				;
 			}
 	}
 };
 
 proto.createProperty = function (structure) {
-	var type = this.getType(structure);
-	return this._getCached(type, function (type) { return type.createProperty(this) }, true);
+	return this.getType(structure).createProperty(this);
 };
 
 proto.read = function (structure, offset) {
