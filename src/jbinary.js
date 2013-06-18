@@ -358,7 +358,7 @@ proto.structure = {
 				binary._bitShift += bitSize - 8; // passing negative value for next pass
 			}
 
-			return fieldValue;
+			return fieldValue >>> 0;
 		},
 		write: function (value) {
 			var bitSize = this.bitSize,
@@ -393,21 +393,17 @@ proto.structure = {
 		}
 	}),
 	'if': jBinary.Template({
-		setParams: function (condition, trueType, falseType) {
+		params: ['condition', 'trueType', 'falseType'],
+		setParams: function (condition) {
 			if (typeof condition === 'string') {
-				condition = [condition, condition];
-			}
-
-			if (condition instanceof Array) {
 				this.condition = function () {
-					return this.binary.getContext(condition[1])[condition[0]];
+					return this.binary.getContext(condition)[condition];
 				};
-			} else {
-				this.condition = condition;
 			}
-
-			this.trueType = trueType;
-			this.falseType = falseType;
+		},
+		resolve: function (getType) {
+			this.trueType = getType(this.trueType);
+			this.falseType = getType(this.falseType);
 		},
 		getBaseType: function (context) {
 			return this.condition(context) ? this.trueType : this.falseType;
