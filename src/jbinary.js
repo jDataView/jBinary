@@ -35,25 +35,25 @@ function inherit(obj) {
 	return extend.apply(null, arguments);
 }
 
-function toValue(prop, val) {
-	return val instanceof Function ? val.call(prop, prop.binary.contexts[0]) : val;
+function toValue(obj, value) {
+	return value instanceof Function ? value.call(obj, obj.binary.contexts[0]) : value;
 }
 
-function jBinary(view, structure) {
+function jBinary(view, typeSet) {
 	/* jshint validthis:true */
 	if (!(view instanceof jDataView)) {
 		view = new jDataView(view);
 	}
 	if (!(this instanceof jBinary)) {
-		return new jBinary(view, structure);
+		return new jBinary(view, typeSet);
 	}
 	this.view = view;
 	this.view.seek(0);
 	this._bitShift = 0;
 	this.contexts = [];
-	if (structure) {
-		this.structure = inherit(proto.structure, structure);
-		this.cacheKey = this._getCached(structure, function () { return proto.cacheKey + '.' + (++proto.id) }, true);
+	if (typeSet) {
+		this.typeSet = inherit(proto.typeSet, typeSet);
+		this.cacheKey = this._getCached(typeSet, function () { return proto.cacheKey + '.' + (++proto.id) }, true);
 	}
 }
 
@@ -89,7 +89,7 @@ proto.getContext = function (filter) {
 	switch (typeof filter) {
 		case 'undefined':
 			filter = 0;
-		// falls through
+		/* falls through */
 		case 'number':
 			return this.contexts[filter];
 
@@ -180,7 +180,7 @@ jBinary.Template.prototype = inherit(jBinary.Type.prototype, {
 jBinary.Template.prototype.read = jBinary.Template.prototype.baseRead;
 jBinary.Template.prototype.write = jBinary.Template.prototype.baseWrite;
 
-proto.structure = {
+proto.typeSet = {
 	'extend': jBinary.Type({
 		setParams: function () {
 			this.parts = arguments;
@@ -270,7 +270,7 @@ proto.structure = {
 		params: ['baseType', 'length'],
 		read: function (context) {
 			var length = this.toValue(this.length);
-			if (this.baseType === proto.structure.uint8) {
+			if (this.baseType === proto.typeSet.uint8) {
 				return this.binary.view.getBytes(length, undefined, true, true);
 			}
 			var results;
@@ -289,7 +289,7 @@ proto.structure = {
 			return results;
 		},
 		write: function (values, context) {
-			if (this.baseType === proto.structure.uint8) {
+			if (this.baseType === proto.typeSet.uint8) {
 				return this.binary.view.writeBytes(values);
 			}
 			for (var i = 0, length = values.length; i < length; i++) {
@@ -466,15 +466,15 @@ var simpleType = jBinary.Type({
 
 for (var i = 0, length = dataTypes.length; i < length; i++) {
 	var dataType = dataTypes[i];
-	proto.structure[dataType.toLowerCase()] = inherit(simpleType, {dataType: dataType});
+	proto.typeSet[dataType.toLowerCase()] = inherit(simpleType, {dataType: dataType});
 }
 
-proto.seek = function (position, block) {
+proto.seek = function (position, callback) {
 	position = toValue(this, position);
-	if (block instanceof Function) {
+	if (callback !== undefined) {
 		var oldPos = this.view.tell();
 		this.view.seek(position);
-		var result = block.call(this);
+		var result = callback.call(this);
 		this.view.seek(oldPos);
 		return result;
 	} else {
@@ -486,27 +486,33 @@ proto.tell = function () {
 	return this.view.tell();
 };
 
-proto.skip = function (offset, block) {
-	return this.seek(this.tell() + toValue(this, offset), block);
+proto.skip = function (offset, callback) {
+	return this.seek(this.tell() + toValue(this, offset), callback);
 };
 
-proto.getType = function (structure, args) {
-	switch (typeof structure) {
+proto.getType = function (type, args) {
+	switch (typeof type) {
 		case 'string':
-			return this.getType(this.structure[structure], args);
+			return this.getType(this.typeSet[type], args);
 
 		case 'number':
-			return this.getType(proto.structure.bitfield, [structure]);
+			return this.getType(proto.typeSet.bitfield, [type]);
 
 		case 'object':
-			if (structure instanceof jBinary.Type) {
+			if (type instanceof jBinary.Type) {
 				var binary = this;
-				return structure.inherit(args || [], function (structure) { return binary.getType(structure) });
+				return type.inherit(args || [], function (structure) { return binary.getType(structure) });
 			} else {
-				return structure instanceof Array
-					   ? this._getCached(structure, function (structure) { return this.getType(structure[0], structure.slice(1)) }, true)
-					   : this._getCached(structure, function (structure) { return this.getType(proto.structure.object, [structure]) }, false)
-				;
+				var isArray = type instanceof Array;
+				return this._getCached(
+					type,
+					(
+						isArray
+						? function (structure) { return this.getType(structure[0], structure.slice(1)) }
+						: function (structure) { return this.getType(proto.typeSet.object, [structure]) }
+					),
+					isArray
+				);
 			}
 	}
 };
@@ -515,35 +521,46 @@ proto.createProperty = function (structure) {
 	return this.getType(structure).createProperty(this);
 };
 
-proto.read = function (structure, offset) {
+proto._action = function (structure, offset, callback) {
 	if (structure === undefined) {
 		return;
 	}
-	var read = function () { return this.createProperty(structure).read(this.contexts[0]) };
-	return offset !== undefined ? this.seek(offset, read) : read.call(this);
+	return offset !== undefined ? this.seek(offset, callback) : callback.call(this);
 };
 
-proto.write = function (structure, data, offset) {
-	if (structure === undefined) {
-		return;
-	}
-	var write = function () { this.createProperty(structure).write(data, this.contexts[0]) };
-	return offset !== undefined ? this.seek(offset, write) : write.call(this);
+proto.read = function (type, offset) {
+	return this._action(
+		type,
+		offset,
+		function () { return this.createProperty(type).read(this.contexts[0]) }
+	);
 };
 
-proto.toURI = function (type) {
-	type = type || 'application/octet-stream';
-	if ('URL' in global && 'createObjectURL' in URL) {
+proto.write = function (type, data, offset) {
+	this._action(
+		type,
+		offset,
+		function () { this.createProperty(type).write(data, this.contexts[0]) }
+	);
+};
+
+proto._toURI =
+	('URL' in global && 'createObjectURL' in URL)
+	? function (type) {
 		var data = this.seek(0, function () { return this.view.getBytes() });
 		return URL.createObjectURL(new Blob([data], {type: type}));
-	} else {
+	}
+	: function (type) {
 		var string = this.seek(0, function () { return this.view.getString(undefined, undefined, this.view._isNodeBuffer ? 'base64' : 'binary') });
 		return 'data:' + type + ';base64,' + (this.view._isNodeBuffer ? string : btoa(string));
-	}
+	};
+
+proto.toURI = function (mimeType) {
+	return this._toURI(mimeType || 'application/octet-stream');
 };
 
 proto.slice = function (start, end, forceCopy) {
-	return new jBinary(this.view.slice(start, end, forceCopy), this.structure);
+	return new jBinary(this.view.slice(start, end, forceCopy), this.typeSet);
 };
 
 jBinary.loadData = function (source, callback) {
@@ -655,8 +672,8 @@ if (typeof define === 'function' && define.amd) {
 	global.jBinary = jBinary;
 }
 
-jDataView.prototype.toBinary = function (structure) {
-	return new jBinary(this, structure);
+jDataView.prototype.toBinary = function (typeSet) {
+	return new jBinary(this, typeSet);
 };
 
 })((function () { /* jshint strict: false */ return this })());
