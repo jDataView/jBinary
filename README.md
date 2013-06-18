@@ -158,7 +158,6 @@ jBinary.loadData('file.bin', function (err, data) {
 });
 ```
 
-
 **Browser**:
 
 ```html
@@ -172,6 +171,16 @@ jBinary.loadData('file.bin', function (err, data) {
   });
   console.log(binary.read('magic'));
 });
+</script>
+```
+
+**AMD**:
+
+```html
+<script>
+require(['jBinary'], function (jBinary) {
+	// ...your code goes here...
+})
 </script>
 ```
 
