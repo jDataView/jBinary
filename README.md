@@ -1,211 +1,147 @@
-jBinary - Manipulating binary files made easy.
+jBinary - High-level I/O for binary data.
 ================================
 
-jBinary makes it easy to parse and build binary files in JavaScript.
-It's derived from [jParser](https://github.com/vjeux/jParser) binary parsing library as new tool with full set of I/O operations for manipulations on binary data in JavaScript.
+**jBinary** makes it easy to work with binary files in JavaScript.
 
- * You write the structure once, it gets parsed or built automatically.
- * Both parsing and building processes can be extended with custom functions. It allows to manipulate non trivial files with ease.
- * It works both in the browser and NodeJS as it is powered by [jDataView](https://github.com/vjeux/jDataView) (or, actually, it's [extended version](https://github.com/RReverser/jDataView) that is now successfully merged into primary repo).
+
+It works on top of [jDataView](https://github.com/jDataView/jDataView) binary processing library.
+
+
+Was inspired by [jParser](https://github.com/vjeux/jParser) and derived as new library with full set of I/O operations for manipulations on binary data in JavaScript.
+
+**Typical scenario**:
+
+  * Create your custom types using ``jBinary.Type`` (if needed).
+  * Describe type set with JavaScript-compatible declarative syntax.
+  * Create jBinary instance from jDataView (or any underlying type) and your type set.
+  * Use it!
 
 API
 ======
 
-Primitive Structures:
-
-  * **Unsigned Int**: uint8, uint16, uint32
-  * **Signed Int**: int8, int16, int32
-  * **Float**: float32, float64
-  * **String**: char, string(len)
-  * **BitField**: (bitCount)
-
-Extensions:
-
-  * **Array**: array(type, len)
-  * **Position**: tell, skip(len), seek(pos), seek(pos, func)
-  * **Conditionals**: if(predicate, type)
-
-jBinary Methods:
-
-  * **parse(type)**: Run the parsing, can be used recursively.
-    * **Number**: Reads bitfield of given length in left-to-right mode and returns them as unsigned integer
-      (so you can work with them using simple JavaScript binary operators).
-      Please note that you can mix bitfields with primitive and complex types in one structure or even use
-      them in own functions, but **ALWAYS** make sure that consecutive bitfields are padded to integer
-      byte count (or **8*N bit count**) before reading any other data types; most popular data formats
-      already follow this rule but better to check out when writing own structures if you don't want
-      to get unexpected behavior.
-    * **Function**: Calls the function.
-    * **String**: Dereferences the value in the structure.
-    * **Array**: Function call, the function is the first element and arguments are the following.
-    * **Object**: Returns an object with the same keys and parses the values.
-  * **write(type, data)**: Run the writing binary data (works in the same way parse does, but accepts additional data parameter).
-  * **modify(type, callback)**: Parse data at current position, pass it to callback and write returned or just modified data object at current position.
-  * **tell()**: Return the current position.
-  * **skip(count)**: Advance in the file by ``count`` bytes.
-  * **seek(position)**: Go to ``position``.
-  * **seek(position, callback)**: Go to ``position``, execute the ``callback`` and return to the previous position.
-  * **current**: The current object being parsed. See it as a way to use what has been parsed just before.
+jBinary
+-------
 
 jBinary Constructor:
 
-  * **new jBinary(data, structure)**
-    * ``data`` is a [jDataView](https://github.com/vjeux/jDataView). You can give pretty much anything (String, Array, [ArrayBuffer](https://developer.mozilla.org/en/JavaScript_typed_arrays), [Node Buffer](http://nodejs.org/docs/v0.6.2/api/buffers.html)), it will be casted to jDataView automatically.
-    * ``structure`` is an object with all the defined structures.
+  * **new jBinary(data, typeset)**
+    * ``data`` is a [jDataView](https://github.com/vjeux/jDataView) or any underlying type (in that case ``jDataView`` will be created with default parameters).
+    * ``typeset`` is your typeset - object with all the defined structures.
 
-jBinary Property Constructor:
+jBinary Methods:
 
-  * **jBinary.Property(reader, writer, forceNew = false)**
-    * ``reader`` is function for parsing data read from current position.
-    * ``writer`` is function for writing binary representation of data at current position; should accept same parameter list as reader does + additional data parameter.
-    * ``forceNew`` is optional parameter that forces creation of new function to be returned from property constructor instead or modifying original ``reader``.
+  * **read(type, offset=binary.tell())**: Read value of specified type. If ``offset`` given, read it from custom position, otherwise read it from current position and move pointer forward (streaming mode).
+  * **write(type, data, offset=binary.tell())**: Write value of specified type. Same ``offset`` behavior.
+  * **tell()**: Return the current position.
+  * **seek(position)**: Go to ``position``.
+  * **seek(position, callback)**: Go to ``position``, execute the ``callback`` and return to the previous position.
+  * **skip(count)**: Advance in the file by ``count`` bytes.
+  * **slice(start, end, forceCopy=false)**: Returns sliced version of current binary with same structure. If ``forceCopy`` set to true, underlying jDataView will be created on copy of original data not linked to it.
 
-Examples
-========
+Internal Methods (useful for custom types):
 
-**Basic C Structure**
-You have the ability to define C-like structures. It's a JavaScript object where keys are labels and values are types.
+  * **getType(type)**: Returns constructed ``jBinary.Type`` instance from given descriptor.
+  * **createProperty(type)**: Constructs property from given type linked to current binary.
+  * **getContext(filter)**: Get object context specified by ``filter``. Possible filter types:
+    * not set - current context will be returned.
+    * number - ``filter`` will be used as relative depth (0 is current context, 1 for parent and so on).
+    * string - will look for closest context that contains property name equal to ``filter``.
+    * function - will be used as boolean function (``true`` to stop) while bubbling up through contexts.
+  * **inContext(newContext, callback)**: Executes function inside given context.
 
-```javascript
-var parser = new jBinary(file, {
-  header: {
-    fileId: 'int32',
-    recordIndex: 'int32',
-    hash: ['array', 'uint32', 4],
-    fileName: ['string', 256],
-    version: 2,
-    flags: {
-      precisionFlag: 1,
-      marker: {
-       part1: 2,
-       part2: 2
-      }
-    },
-    _reserved: 1 // padding to 8*N bits
-  }
-});
+Loading/saving data:
 
-// Parsing:
-var header = parser.parse('header');
-// {
-//   fileId: 42,
-//   recordIndex: 6002,
-//   hash: [4237894687, 3491173757, 3626834111, 2631772842],
-//   fileName: ".\\Resources\\Excel\\Items_Weapons.xls",
-//   version: 3,
-//   flags: {
-//     precisionFlag: 1,
-//     marker: {
-//       part1: 2,
-//       part2: 0
-//     }
-//   },
-//   _reserved: 0
-// }
+  * **jBinary.loadData(source, callback)** (static method): Loads data from given ``source`` and returns it in Node.js-like ``callback(error, data)``. Source can be one of (if supported on current engine):
+    * HTTP(S) URL (should be on the same host or allowed by [CORS](http://www.w3.org/TR/cors/) if called from browser).
+    * Data-URI (simple or base64-encoded)
+    * Node.js local file path.
+    * Node.js [Readable stream](http://nodejs.org/api/stream.html#stream_class_stream_readable).
+  * **toURI(mimeType='application/octet-stream')**: Returns URI suitable for usage in DOM elements (uses ``Blob`` URIs where supported, data-URIs in other cases, so may be problematic when using with big data in old browsers).
 
+Type usage syntax
+-----------------
 
-// Writing:
-parser.seek(0);
-header.flags.precisionFlag = 0;
-parser.write('header', header);
+Types can be used in one of the following forms:
 
-// In-place editing:
-parser.seek(0);
-parser.modify('header', function (header) {
-  header.flags.precisionFlag = 0;
-  // return header; - not necessary here since we are modifying original object
-});
-```
+  * String ``'typeName'`` - will be retrieved from binary's type set and used without arguments.
+  * Array ```['typeName', arg1, arg2, ..., argN]``` - will be retrieved by type name and used with given argument list.
+  * Structure object ``{name1: type1, name2: type2, ...}`` - shorthand for ``['object', structure]`` - please see below for details.
+  * Bit length number - shorthand for ``['bitfield', length]`` - please see below for details.
 
-**References**
-Structures can reference other structures. Use structure name within a string in order to reference it. The following is an example from World of Warcraft model files.
+Standard types
+-------------
 
-```javascript
-nofs: {
-  count: 'uint32',
-  offset: 'uint32'
-},
- 
-animationBlock: {
-  interpolationType: 'uint16',
-  globalSequenceID: 'int16',
-  timestamps: 'nofs',
-  keyFrame: 'nofs'
-},
- 
-uvAnimation: {
-  translation: 'animationBlock',
-  rotation: 'animationBlock',
-  scaling: 'animationBlock'
-}
-```
+* **Integers**:
+    * ``uint8`` / ``int8`` - one-byte integer.
+    * ``uint16`` / ``int16`` - word.
+    * ``uint32`` / ``int32`` - dword (double-word).
+    * ``uint64`` / ``int64`` - qword - please see warning about precision loss in [jDataView documentation](https://github.com/jdataview/jdataview#readme).
 
-**Helpers**
-It is really easy to make new primitive types. You can either use existing constructions such as objects (```float3```) or arrays (```float4```). In case you want to do something more complicated, you always have the option to define a new function and use ```this.parse``` to keep parsing (```hex32```, ```string0```).
+* **Floats**:
+    * ``float32``.
+    * ``float64``.
 
-```javascript
-float3: {
-  x: 'float32',
-  y: 'float32',
-  z: 'float32'
-},
-float4: ['array', 'float32', 4],
-hex32: function () {
-  return '0x' + this.parse('uint32').toString(16);
-},
-string0: function (length) {
-  return this.parse(['string', length]).replace(/\0+$/g, '');
-}
-```
+* **Strings**:
+    * ``char`` - one binary character.
+    * ``string(*ref* length, encoding='binary')`` - string of given length in binary or 'utf8' encoding; falls to ``string0`` if ``length`` is not given.
+    * ``string0(*ref* length, encoding='binary')`` - null-terminated string stored in given number of bytes; treated as dynamic null-terminated string if ``length`` is not given.
 
-**Back Reference** Instead of using an integer for the array size, you can put a function that will return an integer. In this function, you can use ```this.current``` to reference the englobing object being parsed.
+* **Complex types**:
+    * ``const(baseType, value, strict)`` - treats type as constant, throws ``TypeError`` if read value does not match expected.
+    * ``array(baseType, *ref* length)`` - array of given type and length, reads/writes to the end of file if ``length`` is not given.
+    * ``object(structure)`` - complex object of given structure (name => type), creates new context while processing inner properties; object may also contain functions instead of types for calculating some values during read/write for internal purposes.
+    * ``extend(...object structures...)`` - extends one structure with others; merges data into one object when reading and passing entire object when writing.
+    * ``enum(baseType, matches)`` - enumeration type with given key <=> value map (if value not found there, it's used "as-is").
 
-```javascript
-image: {
-  width: 'uint8',
-  height: 'uint8',
-  pixels: [
-    'array',
-    ['array', 'rgba', function () { return this.current.width; }],
-    function () { return this.current.height; }
-  ]
-}
-```
+* **Binary types**:
+    * ``bitfield(length)`` - unsigned integer of given bit length (supports up to 32 bits, wraps around 2^32).
+    * ``blob(*ref* length)`` - byte array represented in most native type for current engine; reads/writes to the end of file if ``length`` is not given.
+    
+* **Control statements**:
+    * ``if(*ref* condition, trueType, falseType)`` - conditional statement.
+    * ``if_not(*ref* condition, trueType, falseType)`` - same but inverted.
+    * ``skip(*ref* length)`` - simply skips given length on read/write.
 
-**Advanced Parsing** The best part of jBinary is that complicated logic can be expressed within the structure. It allows to parse complex files without having to split structure from parsing code.
+**Note**: arguments marked with *ref* (references) can be passed not only as direct values, but also as functions ``callback(context)`` or string property names inside current context chain.
 
-```javascript
-entryHeader: {
-  start: 'int32',
-  count: 'int32'
-},
+Custom types
+------------
 
-entry: function (type) {
-  var that = this;
-  var header = this.parse('entryHeader');
+**jBinary.Type** Constructor:
 
-  var res = [];
-  this.seek(header.start, function () {
-    for (var i = 0; i < header.count; ++i) {
-      res.push(that.parse(type));
-    }
-  });
-  return res;
-},
+  * **jBinary.Type(config)**
 
-name: {
- language: 'int32',
- text: ['string', 256]
-},
+Config must contain following methods:
 
-file: {
-  names: ['entry', 'name']
-}
-```
+  * **read(context)** - required for reading data, gets current ``context`` in argument for internal purposes.
+  * **write(data, context)** - required for writing data, also gets current ``context``.
 
+Config may contain additional options:
+
+  * **params** - array of names of internal parameters to be retrieved from arguments list type was called with.
+  * **setParams(...params...)** - additional/custom initialization method with input arguments while creating type.
+  * **resolve(getType)** - inside this function type should resolve it's inner dependency types using given ``getType`` method so it could be cached by engine.
+  * **...add anything else you want to be able to access in property instances...**
+
+If you want to use references like in standard types (see above), you may call `this.toValue(value, allowResolve=true)` from inside your `jBinary.Type` instance.
+
+**jBinary.Template** is useful for creating custom wrapper around underlying type.
+
+Methods:
+
+  * **baseRead()** - reads underlying type value.
+  * **baseWrite(data)** - writes value as underlying type.
+
+Base type, template is wrapped around, should be specified using one of the following methods:
+
+  * Config option **baseType** - static base type.
+  * Property **baseType** set inside **setParams** initialization method.
+  * Config property **getBaseType(context)** - method to get base type dynamically depending on current ``context`` in the moment of creating property before I/O operation.
+  
+First two cases are preferred if possible since they will automatically resolve and cache underlying type.
 
 Get Started
-=======
+===========
 
 **NodeJS**: Just use ```npm``` to install ```jBinary``` and you are set :)
 
@@ -213,32 +149,42 @@ Get Started
 npm install jBinary
 ```
 
+
 ```javascript
 var fs = require('fs');
 var jBinary = require('jBinary');
 
-fs.readFile('file.bin', function (err, data) {
-  var parser = new jBinary(data, {
+jBinary.loadData('file.bin', function (err, data) {
+  var binary = new jBinary(data, {
     magic: ['array', 'uint8', 4]
   });
-  console.log(parser.parse('magic'));
+  console.log(binary.read('magic'));
 });
 ```
 
-**Browser**: [Vjeux](https://github.com/vjeux/) had [patched jQuery](https://github.com/vjeux/jDataView/blob/master/jquery/jquery-patch.txt) to allow to download binary files using the best binary format. You include this patched jQuery, jDataView and jBinary and you are set :)
+**Browser**:
 
 ```html
-<script src="https://raw.github.com/vjeux/jDataView/master/jquery/jquery-1.7.1-binary-ajax.js"></script>
 <script src="https://raw.github.com/vjeux/jDataView/master/src/jdataview.js"></script>
 <script src="https://raw.github.com/vjeux/jBinary/master/src/jbinary.js"></script>
 
 <script>
-$.get('file.bin', function (data) {
-  var parser = new jBinary(data, {
+jBinary.loadData('file.bin', function (err, data) {
+  var binary = new jBinary(data, {
     magic: ['array', 'uint8', 4]
   });
-  console.log(parser.parse('magic'));
-}, 'dataview');
+  console.log(binary.read('magic'));
+});
+</script>
+```
+
+**AMD**:
+
+```html
+<script>
+require(['jBinary'], function (jBinary) {
+	// ...your code goes here...
+})
 </script>
 ```
 
@@ -252,30 +198,7 @@ If you follow those two rules, the library will work in all the current JavaScri
  * Do not start a key name with a digit
  * Do not put the same key twice in the same object
 
-
 Demos
 =====
 
-**ICO Parser**. This is a basic example to parse a binary file in NodeJS. It shows how to solve many common issues with binary file parsing.
-
- * **[ico.js](https://github.com/vjeux/jBinary/blob/master/sample/ico/ico.node.js)**: jBinary structure.
- * [ico.json](http://fooo.fr/~vjeux/github/jBinary/sample/ico/favicon.json): parsed file.
-
-**[Tar Extractor](http://fooo.fr/~vjeux/github/jBinary/sample/tar/tar.html)**. This is a basic example to parse a binary file in the browser.
-
- * **[tar.html](https://github.com/vjeux/jBinary/blob/master/sample/tar/tar.html)**: jBinary structure.
-
-**<a href="http://fooo.fr/~vjeux/github/jsWoWModelViewer/modelviewer.html">World of Warcraft Model Viewer</a>.** It uses jBinary to read the binary model and then WebGL to display it.
-
-  * **[m2.js](http://fooo.fr/~vjeux/github/jsWoWModelViewer/scripts/m2.js)**: jBinary structure.
-  * [model.json](http://fooo.fr/~vjeux/github/jsWoWModelViewer/model.json): parsed file.
-
-<a href="http://fooo.fr/~vjeux/github/jsWoWModelViewer/modelviewer.html"><img src="http://fooo.fr/~vjeux/github/jsWoWModelViewer/images/modelviewer.png"></a>
-
-**Diablo 3 Internal Files**.
-
-  * **[convert.coffee](http://fooo.fr/~vjeux/boub/d3/files/convert.coffee)**: jBinary structure. CoffeeScript makes it even easier to write file structure.
-  * Example of parsed files:
-    * [Items_Weapons.json](http://fooo.fr/~vjeux/boub/d3/files/GameBalance/Items_Weapons.json)
-    * [Quest/ProtectorOfTristam.json](http://fooo.fr/~vjeux/boub/d3/files/Quest/ProtectorOfTristram.json)
-    * [TreasureClass/SkeletonKing](http://fooo.fr/~vjeux/boub/d3/files/TreasureClass/SkeletonKing.json)
+Coming soon...
