@@ -35,6 +35,10 @@ function inherit(obj) {
 	return extend.apply(null, arguments);
 }
 
+function toValue(prop, val) {
+	return val instanceof Function ? val.call(prop, prop.binary.contexts[0]) : val;
+}
+
 function jBinary(view, structure) {
 	/* jshint validthis:true */
 	if (!(view instanceof jDataView)) {
@@ -140,6 +144,12 @@ jBinary.Type.prototype = {
 	},
 	createProperty: function (binary) {
 		return inherit(this, {binary: binary});
+	},
+	_toValue: function (val, allowResolve) {
+		if (allowResolve !== false && typeof val === 'string') {
+			return this.binary.getContext(val)[val];
+		}
+		return toValue(this, val);
 	}
 };
 
@@ -170,13 +180,6 @@ jBinary.Template.prototype = inherit(jBinary.Type.prototype, {
 });
 jBinary.Template.prototype.read = jBinary.Template.prototype.baseRead;
 jBinary.Template.prototype.write = jBinary.Template.prototype.baseWrite;
-
-function toValue(prop, val, allowResolve) {
-	if (allowResolve !== false && typeof val === 'string') {
-		return prop.binary.getContext(val)[val];
-	}
-	return val instanceof Function ? val.call(prop, prop.binary.contexts[0]) : val;
-}
 
 proto.structure = {
 	'extend': jBinary.Type({
@@ -234,7 +237,7 @@ proto.structure = {
 			}
 		},
 		read: function () {
-			return this.binary.view.getString(toValue(this, this.length), undefined, this.encoding);
+			return this.binary.view.getString(this._toValue(this.length), undefined, this.encoding);
 		},
 		write: function (value) {
 			this.binary.view.writeString(value, undefined, this.encoding);
@@ -267,7 +270,7 @@ proto.structure = {
 	'array': jBinary.Template({
 		params: ['baseType', 'length'],
 		read: function (context) {
-			var length = toValue(this, this.length);
+			var length = this._toValue(this.length);
 			if (this.baseType === proto.structure.uint8) {
 				return this.binary.view.getBytes(length, undefined, true, true);
 			}
@@ -402,7 +405,7 @@ proto.structure = {
 			this.falseType = getType(this.falseType);
 		},
 		getBaseType: function (context) {
-			return toValue(this, this.condition) ? this.trueType : this.falseType;
+			return this._toValue(this.condition) ? this.trueType : this.falseType;
 		}
 	}),
 	'if_not': jBinary.Template({
@@ -423,14 +426,14 @@ proto.structure = {
 	'skip': jBinary.Type({
 		setParams: function (length) {
 			this.read = this.write = function () {
-				this.binary.view.skip(toValue(this, length));
+				this.binary.view.skip(this._toValue(length));
 			};
 		}
 	}),
 	'blob': jBinary.Type({
 		params: ['length'],
 		read: function () {
-			return this.binary.view.getBytes(toValue(this, this.length));
+			return this.binary.view.getBytes(this._toValue(this.length));
 		},
 		write: function (bytes) {
 			this.binary.view.writeBytes(bytes, true);
@@ -468,7 +471,7 @@ for (var i = 0, length = dataTypes.length; i < length; i++) {
 }
 
 proto.seek = function (position, block) {
-	position = toValue(this, position, false);
+	position = toValue(this, position);
 	if (block instanceof Function) {
 		var oldPos = this.view.tell();
 		this.view.seek(position);
@@ -485,7 +488,7 @@ proto.tell = function () {
 };
 
 proto.skip = function (offset, block) {
-	return this.seek(this.tell() + toValue(this, offset, false), block);
+	return this.seek(this.tell() + toValue(this, offset), block);
 };
 
 proto.getType = function (structure, args) {
