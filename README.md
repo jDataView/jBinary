@@ -68,7 +68,7 @@ Types can be used in one of the following forms:
   * Structure object ``{name1: type1, name2: type2, ...}`` - shorthand for ``['object', structure]`` - please see below for details.
   * Bit length number - shorthand for ``['bitfield', length]`` - please see below for details.
 
-Default types
+Standard types
 -------------
 
 * **Integers**:
@@ -102,7 +102,7 @@ Default types
     * ``if_not(*ref* condition, trueType, falseType)`` - same but inverted.
     * ``skip(*ref* length)`` - simply skips given length on read/write.
 
-**Note**: arguments marked with *ref* can be used not only as simple values, but also as functions ``callback(context)`` or string property names inside current context.
+**Note**: arguments marked with *ref* (references) can be passed not only as direct values, but also as functions ``callback(context)`` or string property names inside current context chain.
 
 Custom types
 ------------
@@ -122,6 +122,8 @@ Config may contain additional options:
   * **setParams(...params...)** - additional/custom initialization method with input arguments while creating type.
   * **resolve(getType)** - inside this function type should resolve it's inner dependency types using given ``getType`` method so it could be cached by engine.
   * **...add anything else you want to be able to access in property instances...**
+
+If you want to use references like in standard types (see above), you may call `this.toValue(value, allowResolve=true)` from inside your `jBinary.Type` instance.
 
 **jBinary.Template** is useful for creating custom wrapper around underlying type.
 
