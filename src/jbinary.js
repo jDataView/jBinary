@@ -643,14 +643,17 @@ jBinary.loadData = function (source, callback) {
 			xhr.send();
 		} else
 		if (hasRequire) {
-			var protocol = source.match(/^(https?):\/\//);
-			if (protocol) {
-				require(protocol).get(source, function (res) {
-					if (res.statusCode !== 200) {
-						return callback(new Error('HTTP Error #' + res.statusCode));
+			if (/^(https?):\/\//.test(source)) {
+				require('request').get({
+					uri: source,
+					encoding: null
+				}, function (error, response, body) {
+					if (!error && response.statusCode !== 200) {
+						var statusText = require('http').STATUS_CODES[response.statusCode];
+						error = new Error('HTTP Error #' + response.statusCode + ': ' + statusText);
 					}
-					jBinary.loadData(res, callback);
-				}).on('error', callback);
+					callback(error, body);
+				});
 			} else {
 				require('fs').readFile(source, callback);
 			}
