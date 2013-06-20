@@ -1,34 +1,33 @@
 jBinary - High-level I/O for binary data.
-================================
+=========================================
 
-**jBinary** makes it easy to work with binary files in JavaScript.
-
+jBinary makes it easy to work with binary files in JavaScript.
 
 It works on top of [jDataView](https://github.com/jDataView/jDataView) binary processing library.
 
-
 Was inspired by [jParser](https://github.com/vjeux/jParser) and derived as new library with full set of I/O operations for manipulations on binary data in JavaScript.
 
-**Typical scenario**:
+
+Typical scenario
+----------------
 
   * Create your custom types using ``jBinary.Type`` (if needed).
   * Describe type set with JavaScript-compatible declarative syntax.
   * Create jBinary instance from jDataView (or any underlying type) and your type set.
   * Use it!
 
-API
-======
+jBinary API
+===========
 
-jBinary
--------
+jBinary Constructor
+-------------------
 
-jBinary Constructor:
-
-  * **new jBinary(data, typeset)**
+  * **new jBinary(data, typeSet)**
     * ``data`` is a [jDataView](https://github.com/vjeux/jDataView) or any underlying type (in that case ``jDataView`` will be created with default parameters).
-    * ``typeset`` is your typeset - object with all the defined structures.
+    * ``typeSet`` is your typeset - object with all the defined structures.
 
-jBinary Methods:
+jBinary Methods
+---------------
 
   * **read(type, offset=binary.tell())**: Read value of specified type. If ``offset`` given, read it from custom position, otherwise read it from current position and move pointer forward (streaming mode).
   * **write(type, data, offset=binary.tell())**: Write value of specified type. Same ``offset`` behavior.
@@ -38,7 +37,8 @@ jBinary Methods:
   * **skip(count)**: Advance in the file by ``count`` bytes.
   * **slice(start, end, forceCopy=false)**: Returns sliced version of current binary with same structure. If ``forceCopy`` set to true, underlying jDataView will be created on copy of original data not linked to it.
 
-Internal Methods (useful for custom types):
+Internal Methods (useful for custom types)
+------------------------------------------
 
   * **getType(type)**: Returns constructed ``jBinary.Type`` instance from given descriptor.
   * **createProperty(type)**: Constructs property from given type linked to current binary.
@@ -49,7 +49,12 @@ Internal Methods (useful for custom types):
     * function - will be used as boolean function (``true`` to stop) while bubbling up through contexts.
   * **inContext(newContext, callback)**: Executes function inside given context.
 
-Loading/saving data:
+Loading/saving data
+-------------------
+
+Most times you don't have binary data hard-coded in your JavaScript (why do you need any operation on it then?).
+
+So you need to get this data from some external source. And `jBinary` provides handy methods for that:
 
   * **jBinary.loadData(source, callback)** (static method): Loads data from given ``source`` and returns it in Node.js-like ``callback(error, data)``. Source can be one of (if supported on current engine):
     * HTTP(S) URL (should be on the same host or allowed by [CORS](http://www.w3.org/TR/cors/) if called from browser).
@@ -59,7 +64,7 @@ Loading/saving data:
   * **toURI(mimeType='application/octet-stream')**: Returns URI suitable for usage in DOM elements (uses ``Blob`` URIs where supported, data-URIs in other cases, so may be problematic when using with big data in old browsers).
 
 Type usage syntax
------------------
+=================
 
 Types can be used in one of the following forms:
 
@@ -69,70 +74,110 @@ Types can be used in one of the following forms:
   * Bit length number - shorthand for ``['bitfield', length]`` - please see below for details.
 
 Standard types
+==============
+
+Integers
+--------
+
+  * ``uint8`` / ``int8`` - one-byte integer.
+  * ``uint16`` / ``int16`` - word.
+  * ``uint32`` / ``int32`` - dword (double-word).
+  * ``uint64`` / ``int64`` - qword - please see warning about precision loss in [jDataView documentation](https://github.com/jdataview/jdataview#readme).
+
+Floats
+------
+
+  * ``float32`` - classic 32-bit `float` used in languages like C.
+  * ``float64`` - 64-bit float (`double` in C), default for JavaScript number representation.
+
+Strings
+-------
+
+  * ``char`` - one binary character.
+  * ``string(@length, encoding='binary')`` - string of given length in binary or 'utf8' encoding; falls to ``string0`` if ``length`` is not given.
+  * ``string0(@length, encoding='binary')`` - null-terminated string stored in given number of bytes; treated as dynamic null-terminated string if ``length`` is not given.
+
+Complex types
 -------------
 
-* **Integers**:
-    * ``uint8`` / ``int8`` - one-byte integer.
-    * ``uint16`` / ``int16`` - word.
-    * ``uint32`` / ``int32`` - dword (double-word).
-    * ``uint64`` / ``int64`` - qword - please see warning about precision loss in [jDataView documentation](https://github.com/jdataview/jdataview#readme).
+  * ``const(baseType, value, strict)`` - treats type as constant, throws ``TypeError`` if read value does not match expected.
+  * ``array(baseType, @length)`` - array of given type and length, reads/writes to the end of file if ``length`` is not given.
+  * ``object(structure)`` - complex object of given structure (name => type), creates new context while processing inner properties; object may also contain functions instead of types for calculating some values during read/write for internal purposes.
+  * ``extend(...object structures...)`` - extends one structure with others; merges data into one object when reading and passing entire object when writing.
+  * ``enum(baseType, matches)`` - enumeration type with given key <=> value map (if value not found in the map, it's used "as-is").
 
-* **Floats**:
-    * ``float32``.
-    * ``float64``.
-
-* **Strings**:
-    * ``char`` - one binary character.
-    * ``string(*ref* length, encoding='binary')`` - string of given length in binary or 'utf8' encoding; falls to ``string0`` if ``length`` is not given.
-    * ``string0(*ref* length, encoding='binary')`` - null-terminated string stored in given number of bytes; treated as dynamic null-terminated string if ``length`` is not given.
-
-* **Complex types**:
-    * ``const(baseType, value, strict)`` - treats type as constant, throws ``TypeError`` if read value does not match expected.
-    * ``array(baseType, *ref* length)`` - array of given type and length, reads/writes to the end of file if ``length`` is not given.
-    * ``object(structure)`` - complex object of given structure (name => type), creates new context while processing inner properties; object may also contain functions instead of types for calculating some values during read/write for internal purposes.
-    * ``extend(...object structures...)`` - extends one structure with others; merges data into one object when reading and passing entire object when writing.
-    * ``enum(baseType, matches)`` - enumeration type with given key <=> value map (if value not found there, it's used "as-is").
-
-* **Binary types**:
-    * ``bitfield(length)`` - unsigned integer of given bit length (supports up to 32 bits, wraps around 2^32).
-    * ``blob(*ref* length)`` - byte array represented in most native type for current engine; reads/writes to the end of file if ``length`` is not given.
-    
-* **Control statements**:
-    * ``if(*ref* condition, trueType, falseType)`` - conditional statement.
-    * ``if_not(*ref* condition, trueType, falseType)`` - same but inverted.
-    * ``skip(*ref* length)`` - simply skips given length on read/write.
-
-**Note**: arguments marked with *ref* (references) can be passed not only as direct values, but also as functions ``callback(context)`` or string property names inside current context chain.
-
-Custom types
+Binary types
 ------------
 
-**jBinary.Type** Constructor:
+  * ``bitfield(length)`` - unsigned integer of given bit length (supports up to 32 bits, wraps around 2^32).
+  * ``blob(@length)`` - byte array represented in most native type for current engine; reads/writes to the end of file if ``length`` is not given.
+    
+Control statements
+------------------
+  * ``if(@condition, trueType, falseType)`` - conditional statement.
+  * ``if_not(@condition, trueType, falseType)`` - same but inverted.
+  * ``skip(@length)`` - simply skips given length on read/write.
+
+References
+----------
+
+All the arguments marked with @(references) can be passed not only as direct values, but also as getter functions ``callback(context)`` or string property names inside current context chain.
+
+jBinary.Type
+============
+
+Type Constructor
+----------------
+
+When you need extra functionality that you can't achieve using declarative syntax, you are able to create and reuse your own types in the same way standard types are used.
+
+Creating type is simple:
 
   * **jBinary.Type(config)**
 
-Config must contain following methods:
+Required methods
+----------------
+
+Config must contain following methods for I/O operations
 
   * **read(context)** - required for reading data, gets current ``context`` in argument for internal purposes.
   * **write(data, context)** - required for writing data, also gets current ``context``.
 
-Config may contain additional options:
+Additional options
+------------------
+
+Config may contain following optional parameters:
 
   * **params** - array of names of internal parameters to be retrieved from arguments list type was called with.
   * **setParams(...params...)** - additional/custom initialization method with input arguments while creating type.
   * **resolve(getType)** - inside this function type should resolve it's inner dependency types using given ``getType`` method so it could be cached by engine.
   * **...add anything else you want to be able to access in property instances...**
 
-If you want to use references like in standard types (see above), you may call `this.toValue(value, allowResolve=true)` from inside your `jBinary.Type` instance.
+Internal methods
+----------------
 
-**jBinary.Template** is useful for creating custom wrapper around underlying type.
+There are some methods you wouldn't need to call nor override in most cases since it may break basic type functionality, so before using them make sure you really need that and are doing that right.
 
-Methods:
+  * **toValue(value, allowResolve=true)** - call this method on your type instance when you want to use reference-arguments like in standard types.
+  * **inherit(args, getType)** - this method is internally called on creating type with given arguments (or without them) and getType provider for resolving dependencies; in most cases you shouldn't override or call it on yourself.
+  * **createProperty(binary)** - creates property of current type, linked to given `jBinary` instance; you may override it when you need to hook property creation, but don't forget to call underlying method.
 
-  * **baseRead()** - reads underlying type value.
-  * **baseWrite(data)** - writes value as underlying type.
+jBinary.Template
+================
 
-Base type, template is wrapped around, should be specified using one of the following methods:
+Constructor
+-----------
+
+jBinary.Template is useful when you want to wrap some basic type but override some of it's options or functionality.
+
+Creating is pretty similar to simple custom type:
+
+  * **jBinary.Template(config)**
+
+Base type
+---------
+
+Base type for template should be specified using one of the following methods:
 
   * Config option **baseType** - static base type.
   * Property **baseType** set inside **setParams** initialization method.
@@ -140,10 +185,21 @@ Base type, template is wrapped around, should be specified using one of the foll
   
 First two cases are preferred if possible since they will automatically resolve and cache underlying type.
 
-Get Started
-===========
+Extra methods
+-------------
 
-**NodeJS**: Just use ```npm``` to install ```jBinary``` and you are set :)
+`jBinary.Template` instance has following extra methods compared to `jBinary.Type` that you can use in your implementations:
+
+  * **baseRead()** - reads underlying type value.
+  * **baseWrite(data)** - writes value as underlying type.
+
+Usage
+=====
+
+Node.JS
+-------
+
+Just use `npm` to install `jBinary` and you are set :)
 
 ```bash
 npm install jBinary
@@ -162,11 +218,14 @@ jBinary.loadData('file.bin', function (err, data) {
 });
 ```
 
-**Browser**:
+Browser
+-------
+
+Include scripts for `jDataView` and `jBinary` like that:
 
 ```html
-<script src="https://raw.github.com/vjeux/jDataView/master/src/jdataview.js"></script>
-<script src="https://raw.github.com/vjeux/jBinary/master/src/jbinary.js"></script>
+<script src="https://rawgithub.com/jDataView/jDataView/master/src/jdataview.js"></script>
+<script src="https://rawgithub.com/jDataView/jBinary/master/src/jbinary.js"></script>
 
 <script>
 jBinary.loadData('file.bin', function (err, data) {
@@ -178,7 +237,10 @@ jBinary.loadData('file.bin', function (err, data) {
 </script>
 ```
 
-**AMD**:
+AMD
+---
+
+`jBinary` supports dynamic loading via AMD too:
 
 ```html
 <script>
@@ -189,7 +251,7 @@ require(['jBinary'], function (jBinary) {
 ```
 
 Caveats
-=======
+-------
 
 This tool works thanks to a feature that is not in the JavaScript specification: When you iterate over an object keys, the keys will be listed in their order of insertion. Note that Chrome and Opera do not respect this implicit rule for keys that are numbers.
 
@@ -199,6 +261,6 @@ If you follow those two rules, the library will work in all the current JavaScri
  * Do not put the same key twice in the same object
 
 Demos
-=====
+-----
 
 Coming soon...
