@@ -469,6 +469,12 @@ for (var i = 0, length = dataTypes.length; i < length; i++) {
 	proto.typeSet[dataType.toLowerCase()] = inherit(simpleType, {dataType: dataType});
 }
 
+extend(proto.typeSet, {
+	'byte': proto.typeSet.uint8,
+	'float': proto.typeSet.float32,
+	'double': proto.typeSet.float64
+});
+
 proto.seek = function (position, callback) {
 	position = toValue(this, position);
 	if (callback !== undefined) {
@@ -501,14 +507,14 @@ proto.getType = function (type, args) {
 		case 'object':
 			if (type instanceof jBinary.Type) {
 				var binary = this;
-				return type.inherit(args || [], function (structure) { return binary.getType(structure) });
+				return type.inherit(args || [], function (type) { return binary.getType(type) });
 			} else {
 				var isArray = type instanceof Array;
 				return this._getCached(
 					type,
 					(
 						isArray
-						? function (structure) { return this.getType(structure[0], structure.slice(1)) }
+						? function (type) { return this.getType(type[0], type.slice(1)) }
 						: function (structure) { return this.getType(proto.typeSet.object, [structure]) }
 					),
 					isArray
@@ -517,12 +523,12 @@ proto.getType = function (type, args) {
 	}
 };
 
-proto.createProperty = function (structure) {
-	return this.getType(structure).createProperty(this);
+proto.createProperty = function (type) {
+	return this.getType(type).createProperty(this);
 };
 
-proto._action = function (structure, offset, callback) {
-	if (structure === undefined) {
+proto._action = function (type, offset, callback) {
+	if (type === undefined) {
 		return;
 	}
 	return offset !== undefined ? this.seek(offset, callback) : callback.call(this);
@@ -577,8 +583,9 @@ jBinary.loadData = function (source, callback) {
 				.on('readable', function () { buffers.push(this.read()) })
 				.on('end', function () { callback(null, Buffer.concat(buffers)) })
 				.on('error', callback);
+
+				return;
 			}
-			return;
 		}
 
 		if (typeof source !== 'string') {
@@ -593,9 +600,11 @@ jBinary.loadData = function (source, callback) {
 			try {
 				callback(
 					null,
-					(isBase64 && jDataView.prototype.compatibility.NodeBuffer)
+					(
+						(isBase64 && jDataView.prototype.compatibility.NodeBuffer)
 						? new Buffer(content, 'base64')
 						: (isBase64 ? atob : decodeURIComponent)(content)
+					)
 				);
 			} catch (e) {
 				callback(e);
@@ -657,6 +666,8 @@ jBinary.loadData = function (source, callback) {
 			} else {
 				require('fs').readFile(source, callback);
 			}
+		} else {
+			callback(new TypeError('Unsupported source type.'));
 		}
 	}
 };
