@@ -342,18 +342,28 @@ testGetters('array', [
 typeSet.const.isTested.getter = true;
 test('const', function () {
 	try {
-		binary.read(['const', 'uint16', 0, true]);
+		binary.read(['const', 'uint16', 0, true], 0);
 		ok(false);
 	} catch (e) {
 		ok(true);
 	}
 
 	try {
-		equal(binary.read(['const', 'uint8', 253, true]), 253);
+		notEqual(binary.read(['const', 'uint8', 0], 0), 0);
 	} catch (e) {
 		ok(false);
 	}
 });
+
+testGetters('if', [
+	{offset: 0, args: [true, 'uint8'], value: 0xff},
+	{offset: 0, args: [function () { return false }, 'uint8', 'uint16'], value: 65279}
+]);
+
+testGetters('if_not', [
+	{offset: 0, args: [false, 'uint8'], value: 0xff},
+	{offset: 0, args: [function () { return false }, 'uint16', 'uint8'], value: 65279}
+]);
 
 module('Value Write', {
 	teardown: function () {
@@ -502,6 +512,16 @@ test('const', function () {
 		ok(false);
 	}
 });
+
+testSetters('if', [
+	{args: [true, 'uint8'], value: 123},
+	{args: [function () { return false }, 'uint8', 'uint16'], value: 17893}
+]);
+
+testSetters('if_not', [
+	{args: [false, 'uint8'], value: 123},
+	{args: [function () { return false }, 'uint16', 'uint8'], value: 17893}
+]);
 
 test('slice', function () {
 	try {
