@@ -182,8 +182,8 @@ function testSetters(typeName, setters) {
 function testCovering(typeName) {
 	test(typeName, function () {
 		var isTested = typeSet[typeName].isTested;
-		ok(isTested.getter, 'No tests for getter are found');
-		ok(isTested.setter, 'No tests for setter are found');
+		ok(isTested.getter, 'Getter tests');
+		ok(isTested.setter, 'Setter tests');
 	});
 }
 
@@ -215,6 +215,11 @@ testGetters('string', [
 	{offset: 7, args: [1], value: chr(1)},
 	{binary: b(127, 0, 1, 65, 66), args: [5], value: chr(127) + chr(0) + chr(1) + chr(65) + chr(66)},
 	{binary: b(0xd1, 0x84, 0xd1, 0x8b, 0xd0, 0xb2), args: [6, 'utf8'], value: chr(1092) + chr(1099) + chr(1074)}
+]);
+
+testGetters('string0', [
+	{offset: 0, args: [8], value: chr(0xff) + chr(0xfe) + chr(0xfd) + chr(0xfc) + chr(0xfa)},
+	{binary: b(127, 0, 1, 65, 66), value: chr(127)}
 ]);
 
 testGetters('int8', [
@@ -305,14 +310,14 @@ testGetters('float64', [
 	{binary: b(0xff, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01), check: compareWithNaN}
 ]);
 
-testGetters('uint64', [
-	{binary: b(0x00, 0x67, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe), value: 29273397577908224, check: compareInt64},
-	{binary: b(0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77), value: 4822678189205111, check: compareInt64}
-]);
-
 testGetters('int64', [
 	{offset: 0, args: [false], value: -283686985483775, check: compareInt64},
 	{binary: b(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe), value: -2, check: compareInt64},
+	{binary: b(0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77), value: 4822678189205111, check: compareInt64}
+]);
+
+testGetters('uint64', [
+	{binary: b(0x00, 0x67, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe), value: 29273397577908224, check: compareInt64},
 	{binary: b(0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77), value: 4822678189205111, check: compareInt64}
 ]);
 
@@ -338,6 +343,17 @@ testSetters('string', [
 	{args: [3], value: chr(1) + chr(2) + chr(3)},
 	{args: [2], value: chr(8) + chr(9)},
 	{args: [6, 'utf8'], value: chr(1092) + chr(1099) + chr(1074)}
+]);
+
+testSetters('string0', [
+	{args: [4], value: chr(0xff) + chr(0xfe) + chr(0xfd), check: function (value, expected) {
+		equal(value, expected);
+		equal(binary.read('uint8', value.length), 0);
+	}},
+	{value: chr(127) + chr(0) + chr(1) + chr(65) + chr(66), check: function (value, expected) {
+		equal(value, expected.slice(0, value.length));
+		equal(binary.read('uint8', value.length), 0);
+	}}
 ]);
 
 testSetters('int8', [
@@ -404,14 +420,14 @@ testSetters('float64', [
 	{value: NaN, check: compareWithNaN}
 ]);
 
-testSetters('uint64', [
-	{value: 29273397577908224, check: compareInt64},
-	{value: 4822678189205111, check: compareInt64}
-]);
-
 testSetters('int64', [
 	{value: -283686985483775, check: compareInt64},
 	{value: -2, check: compareInt64},
+	{value: 4822678189205111, check: compareInt64}
+]);
+
+testSetters('uint64', [
+	{value: 29273397577908224, check: compareInt64},
 	{value: 4822678189205111, check: compareInt64}
 ]);
 

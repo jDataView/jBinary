@@ -252,7 +252,11 @@ proto.typeSet = {
 				while (length < maxLength && (code = view.getUint8())) {
 					length++;
 				}
-				return view.getString(length, undefined, this.encoding);
+				var string = view.getString(length, startPos, this.encoding);
+				if (length === maxLength) {
+					view.skip(1);
+				}
+				return string;
 			} else {
 				return view.getString(maxLength, undefined, this.encoding).replace(/\0.*$/, '');
 			}
