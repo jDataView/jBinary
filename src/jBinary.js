@@ -239,7 +239,7 @@ proto.typeSet = {
 			return this.binary.view.getString(this.toValue(this.length), undefined, this.encoding);
 		},
 		write: function (value) {
-			this.binary.view.writeString(value, undefined, this.encoding);
+			this.binary.view.writeString(value, this.encoding);
 		}
 	}),
 	'string0': jBinary.Type({
@@ -457,7 +457,7 @@ var dataTypes = [
 var simpleType = jBinary.Type({
 	params: ['littleEndian'],
 	read: function () {
-		return this.binary.view['get' + this.dataType](this.littleEndian);
+		return this.binary.view['get' + this.dataType](undefined, this.littleEndian);
 	},
 	write: function (value) {
 		this.binary.view['write' + this.dataType](value, this.littleEndian);

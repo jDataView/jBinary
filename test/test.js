@@ -85,209 +85,325 @@ if (typeof JSHINT !== 'undefined') {
 	});
 }
 
-var module = QUnit.module;
-var test = QUnit.test;
+var
+	module = QUnit.module,
+	chr = String.fromCharCode,
+	// workaround for http://code.google.com/p/v8/issues/detail?id=2578
+	_isNaN = Number.isNaN || window.isNaN,
+	isNaN = function (obj) {
+		return _isNaN(obj) || (typeof obj === 'number' && obj.toString() === 'NaN');
+	},
+	dataBytes = [
+		0x00,
+		0xff, 0xfe, 0xfd, 0xfc,
+		0xfa, 0x00, 0xba, 0x01
+	],
+	dataStart = 1,
+	view = new jDataView(dataBytes.slice(), dataStart, undefined, true),
+	binary = new jBinary(view);
 
-var dataBytes = [
-	0x00,
-	0xff, 0xfe, 0xfd, 0xfc,
-	0xfa, 0x00, 0xba, 0x01
-];
-var dataStart = 1;
-var view = new jDataView(dataBytes.slice(), dataStart, undefined, true);
-var binary = new jBinary(view);
-
-function chr (x) {
-	return String.fromCharCode(x);
+function test(name) {
+	name = name.replace(/(^|_)(.)/g, function (m, p, c) { return c.toUpperCase() });
+	QUnit.test.apply(null, arguments);
 }
 
+function b() {
+	return new jBinary(arguments);
+}
 
-module("Parse");
-test('uint', function () {
-	binary.seek(0);
-	equal(binary.read('uint8'), 255);
-	equal(binary.read('uint16'), 65022);
-	equal(binary.read('uint32'), 3120626428);
-});
+function compareInt64(value, expected) {
+	equal(Number(value), expected);
+}
 
-test('int', function () {
-	binary.seek(0);
-	equal(binary.read('int8'), -1);
-	equal(binary.read('int16'), -514);
-	equal(binary.read('int32'), -1174340868);
-});
+function compareBytes(value, expected) {
+	deepEqual(Array.prototype.slice.call(value), expected);
+}
 
-test('float', function () {
-	binary.seek(0);
-	equal(binary.read('float32'), -1.055058432344064e+37);
-	binary.seek(0);
-	equal(binary.read('float64'), 2.426842827241402e-300);
-});
+function compareWithNaN(value) {
+	ok(isNaN(value));
+}
 
-test('string', function () {
-	binary.seek(5);
-	equal(binary.read('char'), chr(0x00));
-	equal(binary.read(['string', 2]), chr(0xba) + chr(0x01));
-});
+// getter = value || {value, check?, binary?, args?, offset?}
+function testGetters(typeName, getters) {
+	test(typeName, function () {
+		for (var i = 0; i < getters.length; i++) {
+			var getter = getters[i];
 
-test('array', function () {
-	binary.seek(0);
-	deepEqual(binary.read(['array', 'uint8', 8]),
-		[0xff, 0xfe, 0xfd, 0xfc, 0xfa, 0x00, 0xba, 0x01]);
-	binary.seek(0);
-	deepEqual(binary.read(['array', 'int32', 2]),
-		[-50462977, 28967162]);
-});
-
-test('object', function () {
-	binary.seek(0);
-	deepEqual(binary.read({
-		a: 'int32',
-		b: 'int8',
-		c: ['array', 'uint8', 2]
-	}), {
-		a: -50462977,
-		b: -6,
-		c: [0, 186]
-	});
-});
-
-test('seek', function () {
-	binary.seek(5);
-	equal(binary.tell(), 5);
-	binary.seek(binary.tell() - 2);
-	equal(binary.tell(), 3);
-
-	binary.seek(5, function () {
-		equal(binary.tell(), 5);
-		binary.seek(0);
-		equal(binary.tell(), 0);
-	});
-	equal(binary.tell(), 3);
-});
-
-test('bitfield', function () {
-	binary.seek(6);
-	deepEqual(binary.read({
-		first5: 5,
-		next5: new jBinary.Type({
-			read: function () {
-				return this.binary.read(5);
+			if (typeof getter !== 'object') {
+				getter = {value: getter};
 			}
-		}),
-		last6: {
-			first3: 3,
-			last3: 3
-		}
-	}), {
-		first5: 0x17,
-		next5: 0x08,
-		last6: {
-			first3: 0,
-			last3: 1
+
+			var args = getter.args,
+				type = args ? [typeName].concat(args) : typeName,
+				offset = getter.offset,
+				contextBinary = getter.binary || binary,
+				check = getter.check || equal,
+				value = getter.value;
+
+			if (offset !== undefined) {
+				contextBinary.seek(offset);
+			}
+
+			check(contextBinary.read(type), value);
 		}
 	});
-});
+}
 
-module("Write", {
+// setter = value || {value, args?, check?}
+function testSetters(typeName, setters) {
+	test(typeName, function () {
+		for (var i = 0; i < setters.length; i++) {
+			var setter = setters[i];
+
+			if (typeof setter !== 'object') {
+				setter = {value: setter};
+			}
+
+			var args = setter.args,
+				type = args ? [typeName].concat(args) : typeName,
+				check = setter.check || equal,
+				value = setter.value;
+
+			binary.write(type, value, 0);
+			check(binary.read(type, 0), value);
+		}
+	});
+}
+
+module('Value Read', {
 	teardown: function () {
-		view.setBytes(0, dataBytes.slice(dataStart), true);
+		binary.seek(0);
 	}
 });
 
-// writer = [type, value, checkFn]
-function testWriters(name, writers) {
-	test(name, function () {
-		for (var i = 0; i < writers.length; i++) {
-			var writer = writers[i],
-				type = writer[0],
-				value = writer[1],
-				check = writer[2] || equal;
-
-			binary.seek(0);
-			binary.write(type, value);
-			binary.seek(0);
-			check(binary.read(type), value);
-		}
-	});
-}
-
-testWriters('uint', [
-	['uint8', 17],
-	['uint16', 39871],
-	['uint32', 2463856109]
+testGetters('blob', [
+	{offset: 1, args: [2], value: [0xfe, 0xfd], check: compareBytes},
+	{args: [3], value: [0xfc, 0xfa, 0x00], check: compareBytes}
 ]);
 
-testWriters('int', [
-	['int8', -15],
-	['int16', -972],
-	['int32', -1846290834]
+testGetters('char', [
+	chr(0xff),
+	chr(0xfe),
+	chr(0xfd),
+	chr(0xfc),
+	chr(0xfa),
+	chr(0),
+	chr(0xba),
+	chr(1)
 ]);
 
-testWriters('float', [
-	['float32', -1.0751052490836633e+37],
-	['float64', 2.531423904252017e-300]
+testGetters('string', [
+	{offset: 0, args: [1], value: chr(0xff)},
+	{offset: 5, args: [1], value: chr(0)},
+	{offset: 7, args: [1], value: chr(1)},
+	{binary: b(127, 0, 1, 65, 66), args: [5], value: chr(127) + chr(0) + chr(1) + chr(65) + chr(66)},
+	{binary: b(0xd1, 0x84, 0xd1, 0x8b, 0xd0, 0xb2), args: [6, 'utf8'], value: chr(1092) + chr(1099) + chr(1074)}
 ]);
 
-testWriters('string', [
-	['char', chr(0x89)],
-	[['string', 4], 'smth']
+testGetters('int8', [
+	-1,
+	-2,
+	-3,
+	-4,
+	-6,
+	0,
+	-70,
+	1
 ]);
 
-testWriters('array', [
-	[
-		['array', 'uint8', 8],
-		[0x54, 0x17, 0x29, 0x34, 0x5a, 0xfb, 0x00, 0xff],
-		deepEqual
-	],
-	[
-		['array', 'int32', 2],
-		[-59371033, 2021738594],
-		deepEqual
-	]
+testGetters('uint8', [
+	255,
+	254,
+	253,
+	252,
+	250,
+	0,
+	186,
+	1
 ]);
 
-testWriters('object', [
-	[
-		{
-			a: 'int32',
-			b: 'int8',
-			c: ['array', 'uint8', 2]
-		},
-		{
-			a: -7943512,
-			b: -105,
-			c: [17, 94]
-		},
-		deepEqual
-	]
+testGetters('int16', [
+	{offset: 0, value: -257},
+	{offset: 1, value: -514},
+	{offset: 2, value: -771},
+	{offset: 3, value: -1284},
+	{offset: 4, value: 250},
+	{offset: 5, value: -17920},
+	{offset: 6, value: 442}
 ]);
 
-testWriters('bitfield', [
-	[
-		{
-			first5: 5,
-			next5: new jBinary.Type({
-				read: function () {
-					return this.binary.read(5);
-				},
-				write: function (value) {
-					this.binary.write(5, value);
-				}
-			}),
-			last6: {
-				first3: 3,
-				last3: 3
-			}
-		},
-		{
-			first5: 17,
-			next5: 21,
-			last6: {
-				first3: 2,
-				last3: 5
-			}
-		},
-		deepEqual
-	]
+testGetters('uint16', [
+	{offset: 0, value: 65279},
+	{offset: 1, value: 65022},
+	{offset: 2, value: 64765},
+	{offset: 3, value: 64252},
+	{offset: 4, value: 250},
+	{offset: 5, value: 47616},
+	{offset: 6, value: 442}
 ]);
+
+testGetters('uint32', [
+	{offset: 0, value: 4244504319},
+	{offset: 1, value: 4210884094},
+	{offset: 2, value: 16448765},
+	{offset: 3, value: 3120626428},
+	{offset: 4, value: 28967162}
+]);
+
+testGetters('int32', [
+	{offset: 0, value: -50462977},
+	{offset: 1, value: -84083202},
+	{offset: 2, value: 16448765},
+	{offset: 3, value: -1174340868},
+	{offset: 4, value: 28967162}
+]);
+
+testGetters('float32', [
+	{offset: 0, value: -1.055058432344064e+37},
+	{offset: 1, value: -6.568051909668895e+35},
+	{offset: 2, value: 2.30496291345398e-38},
+	{offset: 3, value: -0.0004920212086290121},
+	{offset: 4, value: 6.832701044000979e-38},
+	{binary: b(0x7f, 0x80, 0x00, 0x00), value: Infinity},
+	{binary: b(0xff, 0x80, 0x00, 0x00), value: -Infinity},
+	{binary: b(0x00, 0x00, 0x00, 0x00), value: 0},
+	{binary: b(0xff, 0x80, 0x00, 0x01), check: compareWithNaN}
+]);
+
+testGetters('float64', [
+	{offset: 0, value: 2.426842827241402e-300},
+	{binary: b(0x7f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00), value: Infinity},
+	{binary: b(0xff, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00), value: -Infinity},
+	{binary: b(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00), value: 0},
+	{binary: b(0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00), value: -0},
+	{binary: b(0x3f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00), value: 1},
+	{binary: b(0x3f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01), value: 1.0000000000000002},
+	{binary: b(0x3f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02), value: 1.0000000000000004},
+	{binary: b(0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00), value: 2},
+	{binary: b(0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00), value: -2},
+	{binary: b(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01), value: 5e-324},
+	{binary: b(0x00, 0x0f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff), value: 2.225073858507201e-308},
+	{binary: b(0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00), value: 2.2250738585072014e-308},
+	{binary: b(0x7f, 0xef, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff), value: 1.7976931348623157e+308},
+	{binary: b(0xff, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01), check: compareWithNaN}
+]);
+
+testGetters('int64', [
+	{offset: 0, args: [false], value: -283686985483775, check: compareInt64},
+	{binary: b(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe), value: -2, check: compareInt64},
+	{binary: b(0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77), value: 4822678189205111, check: compareInt64}
+]);
+
+module('Value Write', {
+	teardown: function () {
+		binary.write('blob', dataBytes.slice(dataStart), 0);
+	}
+});
+
+testSetters('blob', [
+	{args: [2], value: [0xfe, 0xfd], check: compareBytes},
+	{args: [3], value: [0xfd, 0xfe, 0xff], check: compareBytes}
+]);
+
+testSetters('char', [
+	chr(0xdf),
+	chr(0x03),
+	chr(0x00),
+	chr(0xff)
+]);
+
+testSetters('string', [
+	{args: [3], value: chr(1) + chr(2) + chr(3)},
+	{args: [2], value: chr(8) + chr(9)},
+	{args: [6, 'utf8'], value: chr(1092) + chr(1099) + chr(1074)}
+]);
+
+testSetters('int8', [
+	-10,
+	29
+]);
+
+testSetters('uint8', [
+	19,
+	129,
+	0,
+	255,
+	254
+]);
+
+testSetters('int16', [
+	-17593,
+	23784
+]);
+
+testSetters('uint16', [
+	39571,
+	35
+]);
+
+testSetters('int32', [
+	-1238748268,
+	69359465
+]);
+
+testSetters('uint32', [
+	3592756249,
+	257391
+]);
+
+testSetters('float32', [
+	Math.pow(2, -149),
+	-Math.pow(2, -149),
+	Math.pow(2, -126),
+	-Math.pow(2, -126),
+	-1.055058432344064e+37,
+	-6.568051909668895e+35,
+	2.30496291345398e-38,
+	-0.0004920212086290121,
+	6.832701044000979e-38,
+	Infinity,
+	-Infinity,
+	0,
+	{value: NaN, check: compareWithNaN}
+]);
+
+testSetters('float64', [
+	Math.pow(2, -1074),
+	-Math.pow(2, -1074),   
+	Math.pow(2, -1022),
+	-Math.pow(2, -1022),
+	2.426842827241402e-300,
+	Infinity,
+	-Infinity,
+	0,
+	1,
+	1.0000000000000004,
+	-2,
+	{value: NaN, check: compareWithNaN}
+]);
+
+testSetters('int64', [
+	{value: -283686985483775, check: compareInt64},
+	{value: -2, check: compareInt64},
+	{value: 4822678189205111, check: compareInt64}
+]);
+
+test('slice', function () {
+	try {
+		binary.slice(5, 10);
+		ok(false);
+	} catch(e) {
+		ok(true);
+	}
+
+	var pointerCopy = binary.slice(1, 4);
+	compareBytes(pointerCopy.read('blob'), [0xfe, 0xfd, 0xfc]);
+	pointerCopy.write('char', chr(1), 0);
+	equal(binary.read('char', 1), chr(1));
+	pointerCopy.write('char', chr(0xfe), 0);
+
+	var copy = binary.slice(1, 4, true);
+	compareBytes(copy.read('blob'), [0xfe, 0xfd, 0xfc]);
+	copy.write('char', chr(1), 0);
+	notEqual(binary.read('char', 1), chr(1));
+});
