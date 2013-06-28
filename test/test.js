@@ -563,7 +563,7 @@ test('const', function () {
 	var type = ['const', 'uint16', 123, true];
 
 	try {
-		binary.write(type, 10, 0);
+		binary.write(type.slice(0, -1), 10, 0);
 		binary.read(type, 0);
 		ok(false);
 	} catch (e) {
@@ -571,7 +571,7 @@ test('const', function () {
 	}
 
 	try {
-		binary.write(type, 123, 0);
+		binary.write(type, 10, 0);
 		equal(binary.read(type, 0), 123);
 	} catch (e) {
 		ok(false);

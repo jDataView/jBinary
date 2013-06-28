@@ -424,6 +424,9 @@ proto.typeSet = {
 				throw new TypeError('Unexpected value.');
 			}
 			return value;
+		},
+		write: function (value) {
+			this.baseWrite((this.strict || value === undefined) ? this.value : value);
 		}
 	}),
 	'skip': jBinary.Type({
