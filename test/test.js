@@ -110,6 +110,9 @@ var
 				values: ['array', 'uint16', 'length']
 			}]
 		}, 2]
+	},
+	ExtensionStructure = {
+		extraByte: 'uint8'
 	};
 
 for (var typeName in typeSet) {
@@ -190,7 +193,7 @@ function testSetters(typeName, setters) {
 	});
 }
 
-function testCovering(typeName) {
+function testCoverage(typeName) {
 	test(typeName, function () {
 		var isTested = typeSet[typeName].isTested;
 		ok(isTested.getter, 'Getter tests');
@@ -406,6 +409,27 @@ testGetters('object', [{
 	check: deepEqual
 }]);
 
+testGetters('extend', [{
+	binary: b(0x01, 0x02, 0xff, 0xfe, 0xfd, 0xfc, 0x00, 0x10),
+	args: [ObjectStructure, ExtensionStructure],
+	value: {
+		arrays: [
+			{
+				flag: true,
+				array: {
+					length: 2,
+					values: [0xfffe, 0xfdfc]
+				}
+			},
+			{
+				flag: false
+			}
+		],
+		extraByte: 0x10
+	},
+	check: deepEqual
+}]);
+
 module('Value Write', {
 	teardown: function () {
 		binary.write('blob', dataBytes.slice(dataStart), 0);
@@ -593,6 +617,26 @@ testSetters('object', [{
 	check: deepEqual
 }]);
 
+testSetters('extend', [{
+	args: [ObjectStructure, ExtensionStructure],
+	value: {
+		arrays: [
+			{
+				flag: true,
+				array: {
+					length: 2,
+					values: [0xfffe, 0xfdfc]
+				}
+			},
+			{
+				flag: false
+			}
+		],
+		extraByte: 0x10
+	},
+	check: deepEqual
+}]);
+
 test('slice', function () {
 	try {
 		binary.slice(5, 10);
@@ -613,8 +657,8 @@ test('slice', function () {
 	notEqual(binary.read('char', 1), chr(1));
 });
 
-module('Type Covering');
+module('Type Coverage');
 
 for (var typeName in typeSet) {
-	testCovering(typeName);
+	testCoverage(typeName);
 }
