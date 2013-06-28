@@ -15,7 +15,7 @@ if (typeof require !== 'undefined') {
 if (typeof JSHINT !== 'undefined') {
 	asyncTest('JSHint', function () {
 		var paths = {
-			source: '../src/jbinary.js',
+			source: '../src/jBinary.js',
 			options: '../src/.jshintrc'
 		},
 		contents = {};

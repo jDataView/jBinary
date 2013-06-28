@@ -4,6 +4,6 @@ testrunner.options.assertions = false;
 testrunner.options.summary = false;
 testrunner.options.coverage = false;
 testrunner.run({
-	code: '../src/jbinary.js',
+	code: '../src/jBinary.js',
 	tests: './test.js'
 });

@@ -570,7 +570,7 @@ proto.slice = function (start, end, forceCopy) {
 };
 
 jBinary.loadData = function (source, callback) {
-	if ('File' in global && source instanceof File) {
+	if ('Blob' in global && source instanceof Blob) {
 		var reader = new FileReader();
 		reader.onload = reader.onerror = function() { callback(this.error, this.result) };
 		reader.readAsArrayBuffer(source);
@@ -637,7 +637,7 @@ jBinary.loadData = function (source, callback) {
 			}
 
 			xhr.onload = function() {
-				if (this.status !== 200) {
+				if (this.status !== 0 && this.status !== 200) {
 					return callback(new Error('HTTP Error #' + this.status + ': ' + this.statusText));
 				}
 

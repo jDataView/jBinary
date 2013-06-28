@@ -46,8 +46,9 @@ So you need to get this data from some external source and show result when you 
 And `jBinary` provides handy methods for that:
 
   * `jBinary.loadData(source, callback)` (static method): Loads data from given `source` and returns it in Node.js-like `callback(error, data)`. Source can be one of (if supported on current engine):
+    * [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob) / [File](https://developer.mozilla.org/en-US/docs/Web/API/File) instance ([http://www.w3.org/TR/FileAPI/](HTML5 File API))
     * HTTP(S) URL (should be on the same host or allowed by [CORS](http://www.w3.org/TR/cors/) if called from browser).
-    * Data-URI (simple or base64-encoded)
+    * [Data-URI](https://developer.mozilla.org/en-US/docs/data_URIs) (simple or base64-encoded)
     * Node.js local file path.
     * Node.js [Readable stream](http://nodejs.org/api/stream.html#stream_class_stream_readable).
   * `toURI(mimeType = 'application/octet-stream')`: Returns URI suitable for usage in DOM elements (uses `Blob` URIs where supported, data-URIs in other cases, so may be problematic when using with big data in old browsers).
@@ -227,8 +228,8 @@ Browser
 Include scripts for `jDataView` and `jBinary` like that:
 
 ```html
-<script src="https://rawgithub.com/jDataView/jDataView/master/src/jdataview.js"></script>
-<script src="https://rawgithub.com/jDataView/jBinary/master/src/jbinary.js"></script>
+<script src="https://rawgithub.com/jDataView/jDataView/master/src/jDataView.js"></script>
+<script src="https://rawgithub.com/jDataView/jBinary/master/src/jBinary.js"></script>
 
 <script>
 jBinary.loadData('file.bin', function (err, data) {
