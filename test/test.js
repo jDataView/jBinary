@@ -68,7 +68,7 @@ if (typeof JSHINT !== 'undefined') {
 			if (typeof XMLHttpRequest !== 'undefined') {
 				var ajax = new XMLHttpRequest();
 				ajax.onload = function () {
-					this.status === 200 ? onLoad(null, name, this.responseText) : onLoad(this.statusText, name);
+					(this.status === 0 || this.status === 200) ? onLoad(null, name, this.responseText) : onLoad(this.statusText, name);
 				};
 				ajax.open('GET', paths[name], true);
 				ajax.send();
