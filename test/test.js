@@ -174,7 +174,9 @@ function testSetters(typeName, setters) {
 				value = setter.value;
 
 			binary.write(type, value, 0);
+			binary._bitShift = 0;
 			check(binary.read(type, 0), value);
+			binary._bitShift = 0;
 		}
 	});
 }
@@ -365,6 +367,16 @@ testGetters('if_not', [
 	{offset: 0, args: [function () { return false }, 'uint16', 'uint8'], value: 65279}
 ]);
 
+testGetters('bitfield', [
+	// padded to byte here
+	{offset: 1, args: [3], value: 7},
+	{args: [5], value: 30},
+	// padded to byte here
+	{args: [15], value: 32510},
+	{args: [17], value: 64000}
+	// padded to byte here
+]);
+
 module('Value Write', {
 	teardown: function () {
 		binary.write('blob', dataBytes.slice(dataStart), 0);
@@ -521,6 +533,16 @@ testSetters('if', [
 testSetters('if_not', [
 	{args: [false, 'uint8'], value: 123},
 	{args: [function () { return false }, 'uint16', 'uint8'], value: 17893}
+]);
+
+testSetters('bitfield', [
+	// padded to byte here
+	{args: [3], value: 5},
+	{args: [5], value: 29},
+	// padded to byte here
+	{args: [15], value: 19781},
+	{args: [17], value: 68741}
+	// padded to byte here
 ]);
 
 test('slice', function () {
