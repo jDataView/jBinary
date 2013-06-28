@@ -100,7 +100,12 @@ var
 	],
 	dataStart = 1,
 	view = new jDataView(dataBytes.slice(), dataStart, undefined, true),
-	binary = new jBinary(view);
+	binary = new jBinary(view),
+	typeCovering = {};
+
+for (var typeName in binary.typeSet) {
+	typeCovering[typeName] = {get: false, set: false};
+}
 
 function test(name) {
 	name = name.replace(/(^|_)(.)/g, function (m, p, c) { return c.toUpperCase() });
@@ -146,6 +151,8 @@ function testGetters(typeName, getters) {
 
 			check(contextBinary.read(type), value);
 		}
+
+		typeCovering[typeName].get = true;
 	});
 }
 
@@ -167,6 +174,16 @@ function testSetters(typeName, setters) {
 			binary.write(type, value, 0);
 			check(binary.read(type, 0), value);
 		}
+
+		typeCovering[typeName].set = true;
+	});
+}
+
+function testCovering(typeName) {
+	test(typeName, function () {
+		var covering = typeCovering[typeName];
+		ok(covering.get, 'No tests for getter are found');
+		ok(covering.set, 'No tests for setter are found');
 	});
 }
 
@@ -407,3 +424,9 @@ test('slice', function () {
 	copy.write('char', chr(1), 0);
 	notEqual(binary.read('char', 1), chr(1));
 });
+
+module('Type Covering');
+
+for (var typeName in typeCovering) {
+	testCovering(typeName);
+}
