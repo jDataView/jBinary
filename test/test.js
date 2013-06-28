@@ -101,7 +101,16 @@ var
 	dataStart = 1,
 	view = new jDataView(dataBytes.slice(), dataStart, undefined, true),
 	binary = new jBinary(view),
-	typeSet = jBinary.prototype.typeSet;
+	typeSet = jBinary.prototype.typeSet,
+	ObjectStructure = {
+		arrays: ['array', {
+			flag: ['enum', 'uint8', [false, true]],
+			array: ['if', 'flag', {
+				length: 'uint8',
+				values: ['array', 'uint16', 'length']
+			}]
+		}, 2]
+	};
 
 for (var typeName in typeSet) {
 	typeSet[typeName].isTested = {getter: false, setter: false};
@@ -377,6 +386,26 @@ testGetters('bitfield', [
 	// padded to byte here
 ]);
 
+testGetters('object', [{
+	binary: b(0x01, 0x02, 0xff, 0xfe, 0xfd, 0xfc, 0x00, 0x10),
+	args: [ObjectStructure],
+	value: {
+		arrays: [
+			{
+				flag: true,
+				array: {
+					length: 2,
+					values: [0xfffe, 0xfdfc]
+				}
+			},
+			{
+				flag: false
+			}
+		]
+	},
+	check: deepEqual
+}]);
+
 module('Value Write', {
 	teardown: function () {
 		binary.write('blob', dataBytes.slice(dataStart), 0);
@@ -544,6 +573,25 @@ testSetters('bitfield', [
 	{args: [17], value: 68741}
 	// padded to byte here
 ]);
+
+testSetters('object', [{
+	args: [ObjectStructure],
+	value: {
+		arrays: [
+			{
+				flag: true,
+				array: {
+					length: 2,
+					values: [0xfffe, 0xfdfc]
+				}
+			},
+			{
+				flag: false
+			}
+		]
+	},
+	check: deepEqual
+}]);
 
 test('slice', function () {
 	try {
