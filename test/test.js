@@ -321,6 +321,40 @@ testGetters('uint64', [
 	{binary: b(0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77), value: 4822678189205111, check: compareInt64}
 ]);
 
+typeSet.skip.isTested.getter = true;
+test('skip', function () {
+	binary.read(['skip', 2]);
+	equal(binary.tell(), 2);
+	binary.read(['skip', 1]);
+	equal(binary.tell(), 3);
+});
+
+testGetters('enum', [
+	{offset: 5, args: ['uint8', [false, true]], value: false},
+	{offset: 7, args: ['uint8', {'0': 'false', '1': 'true'}], value: 'true'}
+]);
+
+testGetters('array', [
+	{offset: 0, args: ['uint16', 2], value: [65279, 64765], check: deepEqual},
+	{offset: 5, args: ['uint8'], value: [0x00, 0xba, 0x01], check: deepEqual}
+]);
+
+typeSet.const.isTested.getter = true;
+test('const', function () {
+	try {
+		binary.read(['const', 'uint16', 0, true]);
+		ok(false);
+	} catch (e) {
+		ok(true);
+	}
+
+	try {
+		equal(binary.read(['const', 'uint8', 253, true]), 253);
+	} catch (e) {
+		ok(false);
+	}
+});
+
 module('Value Write', {
 	teardown: function () {
 		binary.write('blob', dataBytes.slice(dataStart), 0);
@@ -430,6 +464,44 @@ testSetters('uint64', [
 	{value: 29273397577908224, check: compareInt64},
 	{value: 4822678189205111, check: compareInt64}
 ]);
+
+typeSet.skip.isTested.setter = true;
+test('skip', function () {
+	binary.write(['skip', 2]);
+	equal(binary.tell(), 2);
+	binary.write(['skip', 1]);
+	equal(binary.tell(), 3);
+});
+
+testSetters('enum', [
+	{args: ['uint8', {'0': false, '1': true}], value: false},
+	{args: ['uint8', ['false', 'true']], value: 'true'}
+]);
+
+testSetters('array', [
+	{args: ['uint16', 2], value: [65279, 64765], check: deepEqual},
+	{args: ['uint8', 3], value: [0x00, 0xba, 0x01], check: deepEqual}
+]);
+
+typeSet.const.isTested.setter = true;
+test('const', function () {
+	var type = ['const', 'uint16', 123, true];
+
+	try {
+		binary.write(type, 10, 0);
+		binary.read(type, 0);
+		ok(false);
+	} catch (e) {
+		ok(true);
+	}
+
+	try {
+		binary.write(type, 123, 0);
+		equal(binary.read(type, 0), 123);
+	} catch (e) {
+		ok(false);
+	}
+});
 
 test('slice', function () {
 	try {
