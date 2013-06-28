@@ -101,10 +101,10 @@ var
 	dataStart = 1,
 	view = new jDataView(dataBytes.slice(), dataStart, undefined, true),
 	binary = new jBinary(view),
-	typeCovering = {};
+	typeSet = jBinary.prototype.typeSet;
 
-for (var typeName in binary.typeSet) {
-	typeCovering[typeName] = {get: false, set: false};
+for (var typeName in typeSet) {
+	typeSet[typeName].isTested = {getter: false, setter: false};
 }
 
 function test(name) {
@@ -130,6 +130,8 @@ function compareWithNaN(value) {
 
 // getter = value || {value, check?, binary?, args?, offset?}
 function testGetters(typeName, getters) {
+	typeSet[typeName].isTested.getter = true;
+
 	test(typeName, function () {
 		for (var i = 0; i < getters.length; i++) {
 			var getter = getters[i];
@@ -151,13 +153,13 @@ function testGetters(typeName, getters) {
 
 			check(contextBinary.read(type), value);
 		}
-
-		typeCovering[typeName].get = true;
 	});
 }
 
 // setter = value || {value, args?, check?}
 function testSetters(typeName, setters) {
+	typeSet[typeName].isTested.setter = true;
+
 	test(typeName, function () {
 		for (var i = 0; i < setters.length; i++) {
 			var setter = setters[i];
@@ -174,16 +176,14 @@ function testSetters(typeName, setters) {
 			binary.write(type, value, 0);
 			check(binary.read(type, 0), value);
 		}
-
-		typeCovering[typeName].set = true;
 	});
 }
 
 function testCovering(typeName) {
 	test(typeName, function () {
-		var covering = typeCovering[typeName];
-		ok(covering.get, 'No tests for getter are found');
-		ok(covering.set, 'No tests for setter are found');
+		var isTested = typeSet[typeName].isTested;
+		ok(isTested.getter, 'No tests for getter are found');
+		ok(isTested.setter, 'No tests for setter are found');
 	});
 }
 
@@ -305,6 +305,11 @@ testGetters('float64', [
 	{binary: b(0xff, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01), check: compareWithNaN}
 ]);
 
+testGetters('uint64', [
+	{binary: b(0x00, 0x67, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe), value: 29273397577908224, check: compareInt64},
+	{binary: b(0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77), value: 4822678189205111, check: compareInt64}
+]);
+
 testGetters('int64', [
 	{offset: 0, args: [false], value: -283686985483775, check: compareInt64},
 	{binary: b(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe), value: -2, check: compareInt64},
@@ -399,6 +404,11 @@ testSetters('float64', [
 	{value: NaN, check: compareWithNaN}
 ]);
 
+testSetters('uint64', [
+	{value: 29273397577908224, check: compareInt64},
+	{value: 4822678189205111, check: compareInt64}
+]);
+
 testSetters('int64', [
 	{value: -283686985483775, check: compareInt64},
 	{value: -2, check: compareInt64},
@@ -427,6 +437,6 @@ test('slice', function () {
 
 module('Type Covering');
 
-for (var typeName in typeCovering) {
+for (var typeName in typeSet) {
 	testCovering(typeName);
 }
