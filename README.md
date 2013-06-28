@@ -136,6 +136,8 @@ Creating type is simple:
 
   * `jBinary.Type(config)`
 
+In property instances, you can access `this.binary` for accessing `jBinary` instance this property belongs to.
+
 Required methods
 ----------------
 
