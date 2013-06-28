@@ -8,8 +8,8 @@
     "RReverser <me@rreverser.com> (http://rreverser.com)",
     "Vjeux <vjeuxx@gmail.com> (http://blog.vjeux.com/)"
   ],
-  "files": ["src/jbinary.js"],
-  "main": "src/jbinary.js",
+  "files": ["src/jBinary.js"],
+  "main": "src/jBinary.js",
   "scripts": {
     "test": "cd test && node test.runner.js"
   },
