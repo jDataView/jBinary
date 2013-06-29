@@ -559,7 +559,31 @@ var byteArray = binary.read('byteArray'); // [0x04, 0x05, 0x06]
           </script>
           </section>
           <section>
-            More questions?<br />Feel free to ask <a href="https://twitter.com/RReverser">in Twitter</a> or <a href="mailto:me+jdataview@rreverser.com">by e-mail</a>!
+            <h3>Ready-to-go structures in official repo:<br /><a href="https://github.com/jDataView/jBinary.Repo"><small>(feel free to submit own!)</small></a></h3>
+            <ul id="fileFormats"></ul>
+            <script>
+              function listItems(response) {
+                var ul = document.getElementById('fileFormats');
+                var items = response.data;
+                for (var i = 0; i < items.length; i++) {
+                  var item = items[i];
+                  if (item.type !== 'dir') {
+                    continue;
+                  }
+                  var link = document.createElement('a');
+                  link.innerHTML = link.href = item.name;
+                  var li = document.createElement('li');
+                  li.appendChild(link);
+                  ul.appendChild(li);
+                }
+              }
+            </script>
+            <script src="https://api.github.com/repos/jDataView/jBinary.Repo/contents/?callback=listItems"></script>
+          </section>
+          <section>
+            More questions?<br />Don't hesitate to ask <a href="https://twitter.com/RReverser">in Twitter</a> or <a href="mailto:me+jdataview@rreverser.com">via e-mail</a>!
+            <hr />
+            <a href="https://github.com/jDataView/jBinary">Go to repo and let JavaScript rock</a>
           </section>
         </section>
       </div>
