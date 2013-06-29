@@ -367,6 +367,14 @@ test('const', function () {
 	} catch (e) {
 		ok(false);
 	}
+
+	var errorFlag = false;
+	binary.read(['const', 'uint8', 123, function (value) {
+		equal(value, 0xff);
+		equal(this.value, 123);
+		errorFlag = true;
+	}], 0);
+	ok(errorFlag);
 });
 
 testGetters('if', [

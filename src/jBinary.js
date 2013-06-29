@@ -414,7 +414,11 @@ proto.typeSet = {
 		read: function () {
 			var value = this.baseRead();
 			if (this.strict && value !== this.value) {
-				throw new TypeError('Unexpected value.');
+				if (this.strict instanceof Function) {
+					return this.strict(value);
+				} else {
+					throw new TypeError('Unexpected value.');
+				}
 			}
 			return value;
 		},
