@@ -46,7 +46,7 @@ So you need to get this data from some external source and show result when you 
 And `jBinary` provides handy methods for that:
 
   * `jBinary.loadData(source, callback)` (static method): Loads data from given `source` and returns it in Node.js-like `callback(error, data)`. Source can be one of (if supported on current engine):
-    * [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob) / [File](https://developer.mozilla.org/en-US/docs/Web/API/File) instance ([http://www.w3.org/TR/FileAPI/](HTML5 File API))
+    * [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob) / [File](https://developer.mozilla.org/en-US/docs/Web/API/File) instance ([HTML5 File API](http://www.w3.org/TR/FileAPI/))
     * HTTP(S) URL (should be on the same host or allowed by [CORS](http://www.w3.org/TR/cors/) if called from browser).
     * [Data-URI](https://developer.mozilla.org/en-US/docs/data_URIs) (simple or base64-encoded)
     * Node.js local file path.
