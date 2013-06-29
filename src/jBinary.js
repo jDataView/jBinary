@@ -682,6 +682,9 @@ jBinary.loadData = function (source, callback) {
 	}
 };
 
+// storage for standard file formats from https://github.com/jDataView/jBinary.Repo
+jBinary.Repo = {};
+
 if (typeof module === 'object' && module && typeof module.exports === 'object') {
 	jDataView = require('jDataView');
 	module.exports = jBinary;
