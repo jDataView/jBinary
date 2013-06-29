@@ -358,7 +358,7 @@ if (shouldBeSame !== 12384) {
           -------
 
             * `char`
-            * `string(@length, encoding = 'binary')` - string of given length in binary or 'utf8' encoding; falls to `string0` if `length` is not given
+            * `string(@length, encoding = 'binary')` - string of given length in binary or 'utf8' encoding; reads/writes to the end if length is not given
             * `string0(@length, encoding = 'binary')` - null-terminated string stored in given number of bytes; treated as dynamic null-terminated string if `length` is not given
           </script>
           </section>
