@@ -267,4 +267,9 @@ If you follow those two rules, the library will work in all the current JavaScri
 Demos
 -----
 
-Coming soon...
+Please check out [jBinary.Repo](https://jDataView.github.io/jBinary.Repo/) for demos of some popular format and feel free to submit more!
+
+License
+-------
+
+This library is provided under [MIT-license.txt](https://raw.github.com/jDataView/jBinary/master/MIT-license.txt).
