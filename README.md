@@ -272,4 +272,4 @@ Please check out [jBinary.Repo](https://jDataView.github.io/jBinary.Repo/) for d
 License
 -------
 
-This library is provided under [MIT-license.txt](https://raw.github.com/jDataView/jBinary/master/MIT-license.txt).
+This library is provided under [MIT license](https://raw.github.com/jDataView/jBinary/master/MIT-license.txt).
