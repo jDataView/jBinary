@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/RReverser/jBinary.git"
+    "url": "git://github.com/jDataView/jBinary.git"
   },
   "dependencies": {
     "jDataView": "*",
