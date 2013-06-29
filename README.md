@@ -96,14 +96,14 @@ Strings
 -------
 
   * `char` - one-byte binary character.
-  * `string(@length, encoding = 'binary')` - string of given length in binary or 'utf8' encoding; falls to `string0` if `length` is not given.
+  * `string(@length, encoding = 'binary')` - string of given length in binary or 'utf8' encoding, reads/writes to the end of binary if `length` is not given.
   * `string0(@length, encoding = 'binary')` - null-terminated string stored in given number of bytes; treated as dynamic null-terminated string if `length` is not given.
 
 Complex types
 -------------
 
   * `const(baseType, value, strict = false)` - treats type as constant, throws `TypeError` if read value does not match expected.
-  * `array(baseType, @length)` - array of given type and length, reads/writes to the end of file if `length` is not given.
+  * `array(baseType, @length)` - array of given type and length, reads/writes to the end of binary if `length` is not given.
   * `object(structure)` - complex object of given structure (name => type), creates new context while processing inner properties; object may also contain functions instead of types for calculating some values during read/write for internal purposes.
   * `extend(...object structures...)` - extends one structure with others; merges data into one object when reading and passing entire object when writing.
   * `enum(baseType, matches)` - enumeration type with given key <=> value map (if value not found in the map, it's used "as-is").
@@ -112,7 +112,7 @@ Binary types
 ------------
 
   * `bitfield(length)` - unsigned integer of given bit length (supports up to 32 bits, wraps around 2^32).
-  * `blob(@length)` - byte array represented in most native type for current engine; reads/writes to the end of file if `length` is not given.
+  * `blob(@length)` - byte array represented in most native type for current engine; reads/writes to the end of binary if `length` is not given.
     
 Control statements
 ------------------

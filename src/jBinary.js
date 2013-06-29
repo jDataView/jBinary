@@ -228,13 +228,6 @@ proto.typeSet = {
 	}),
 	'string': jBinary.Template({
 		params: ['length', 'encoding'],
-		setParams: function (length, encoding) {
-			if (length === undefined) {
-				this.baseType = ['string0', undefined, encoding];
-				this.read = this.baseRead;
-				this.write = this.baseWrite;
-			}
-		},
 		read: function () {
 			return this.binary.view.getString(this.toValue(this.length), undefined, this.encoding);
 		},
