@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+
+    <title>Binary data in JavaScript</title>
+
+    <meta name="description" content="High-level library for manipulating binary data in JavaScript.">
+    <meta name="author" content="Ingvar Stepanyan">
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+    <link rel="stylesheet" href="css/reveal.min.css">
+    <link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+    <!-- For syntax highlighting -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- If the query includes 'print-pdf', use the PDF print sheet -->
+    <script>
+      document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+    </script>
+
+    <!--[if lt IE 9]>
+    <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+    <a href="https://github.com/jDataView/jBinary" style="position: absolute; top: 0; right: 0; z-index: 50"><img src="https://s3.amazonaws.com/github/ribbons/forkme_right_white_ffffff.png" alt="Fork me on GitHub"></a>
+    <div class="reveal">
+      <div class="slides">
+        <section>
+          <table class="identity">
+            <tr>
+              <td align="left">Ingvar Stepanyan (<a href="http://twitter.com/RReverser">@RReverser</a>)</td>
+              <td align="right"><img src="img/umlogo.png" class="logo" /></td>
+            </tr>
+          </table>
+          <h1>Binary data in JS</h1>
+          <h3>You can do more!</h3>
+        </section>
+        <section>
+          <section>
+            <table class="identity fragment roll-in" data-fragment-index="1">
+              <tr>
+                <td align="left">Christopher Chedeaux (<a href="http://twitter.com/Vjeux">@Vjeux</a>)</td>
+                <td align="right">Ingvar Stepanyan (<a href="http://twitter.com/RReverser">@RReverser</a>)</td>
+              </tr>
+            </table>
+            <h1><span class="fragment roll-in" data-fragment-index="1">j</span>DataView</h1>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+            Binary in JavaScript
+            ====================
+
+            * `charset=x-user-defined` (`XMLHttpRequest`)
+            * `CanvasPixelArray` (`<canvas />`)
+            * `ArrayBuffer` (WebGL) + typed arrays (`Int32Array`, `Float64Array`, ...)
+            * `Buffer`
+            * `DataView`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+            API
+            ===
+
+            `DataView` + extensions
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+            Constructor
+            -----------
+            `new DataView(arrayBuffer, offset = 0, length = arrayBuffer.length)`
+
+            vs
+
+            `new jDataView(buffer, offset = 0, length = buffer.length, littleEndian = false)`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+            Specification Getters
+            -----------------
+
+              * `getInt8(byteOffset)`, `getUint8(byteOffset)`
+              * `getInt16(byteOffset, littleEndian)`, `getUint16(byteOffset, littleEndian)`
+              * `getInt32(byteOffset, littleEndian)`, `getUint32(byteOffset, littleEndian)`
+              * `getFloat32(byteOffset, littleEndian)`, `getFloat64(byteOffset, littleEndian)`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+            Specification Setters
+            -----------------
+
+              * `set(I|Ui)nt8(byteOffset, value)`
+              * `set(I|Ui)nt16(byteOffset, value, littleEndian)`
+              * `set(I|Ui)nt32(byteOffset, value, littleEndian)`
+              * `setFloat32(byteOffset, value, littleEndian)`, `setFloat64(byteOffset, value, littleEndian)`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+            Sequential write
+            ----------------
+
+            * `write(I|Ui)nt8(value)`
+            * `write(I|Ui)nt16(value, littleEndian)`
+            * `write(I|Ui)nt32(value, littleEndian)`
+            * `writeFloat32(value, littleEndian)`, `writeFloat64(value, littleEndian)`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+            64-bit integers (jDataView only)
+            --------------------------------
+
+            IEEE.754 limitations, `lo` and `hi` fields.
+
+            * `get(I|Ui)nt64(byteOffset, littleEndian)`
+            * `set(I|Ui)nt64(byteOffset, value, littleEndian)`
+            * `write(I|Ui)nt64(value, littleEndian)`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+            Strings (jDataView only)
+            ------------------------
+
+            * Chars
+
+              * `getChar(byteOffset)`
+              * `setChar(byteOffset, char)`
+            * Strings
+
+              * `getString(byteLength, byteOffset, encoding = 'binary')`
+              * `setString(byteOffset, chars, encoding = 'binary')`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+            Byte sequences (jDataView only)
+            -------------------------------
+
+              * `getBytes(length, byteOffset, littleEndian = true, toArray = false)`
+              * `setBytes(byteOffset, bytes, littleEndian = true)`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+            Extensions (jDataView only)
+            ---------------------------
+
+            * `seek(byteOffset)`
+            * `tell()`
+            * `skip(byteLength)`
+            * `slice(start, end, forceCopy = false)`
+            * `wrapBuffer(buffer)`
+            * `createBuffer(byte1, byte2, ...)`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+            Example
+            =======
+          </script>
+          </section>
+          <section>
+          <h2>Classic style</h2>
+          <pre>
+          <code data-trim>
+var file = jDataView.createBuffer(
+  0x10, 0x01, 0x00, 0x00, // Int32 - 272
+  0x90, 0xcf, 0x1b, 0x47, // Float32 - 39887.5625
+  0, 0, 0, 0, 0, 0, 0, 0, // 8 blank bytes
+  0x4d, 0x44, 0x32, 0x30, // String - MD20
+  0x61                    // Char - a
+);
+
+var view = new jDataView(file);
+var version = view.getInt32(0); // 272
+var float = view.getFloat32(4); // 39887.5625
+          </code>
+          </pre>
+          </section>
+          <section>
+          <h2>Managed API</h2>
+          <pre>
+          <code data-trim>
+var view = new jDataView(file);
+
+// A position counter is managed.
+version = view.getInt32(); // 272
+float = view.getFloat32(); // 39887.5625
+
+// You can move around with tell(), seek() and skip()
+view.skip(8);
+
+// Two helpers: getChar and getString will make your life easier
+var tag = view.getString(4); // MD20
+var char = view.getChar(); // a
+          </code>
+          </pre>
+          </section>
+        </section>
+        <section>
+          <section data-markdown>
+          <script type="text/template">
+          jBinary - High-level I/O for binary data.
+          =========================================
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Typical scenario
+          ----------------
+
+            * Create your custom types using `jBinary.Type` (if needed).
+            * Describe type set with JavaScript-compatible declarative syntax.
+            * Create `jBinary` instance from `jDataView` (or any underlying type) and your type set.
+            * Use it!
+          </script>
+          </section>
+        </section>
+        <section>
+          <section data-markdown>
+          <script type="text/template">
+          jBinary API
+          ===========
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          jBinary Constructor
+          -------------------
+
+            * `new jBinary(data, typeSet)`
+            * `data` is a [jDataView](https://github.com/vjeux/jDataView) or any underlying type (in that case `jDataView` will be created with default parameters).
+            * `typeSet` is your type set - object with all the defined types.
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          jBinary Methods
+          ---------------
+
+            * `read(type, offset = binary.tell())`
+            * `write(type, data, offset = binary.tell())`
+            * `slice(start, end, forceCopy = false)`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+            * `tell()`
+            * `seek(position)`
+            * `seek(position, callback)`
+            * `skip(count)`
+          </script>
+          </section>
+          <section>
+          <pre>
+          <code data-trim>
+var binary = new jBinary([0x01, 0x02, 0x03, 0x04, 0x05, 0x06], {
+  all: {
+    marker:  'uint16',
+    version: 'int32'
+  }
+});
+
+var data = binary.read('all');
+
+binary.slice(2, 4).write('uint16', 12384);
+
+var shouldBeSame = binary.read('uint16', 2);
+
+if (shouldBeSame !== 12384) {
+  throw new Error('Something went wrong.');
+}
+          </code>
+          </pre>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Type usage syntax
+          -----------------
+
+            * String `'typeName'` - will be retrieved from binary's type set and used without arguments.
+            * Array `['typeName', arg1, arg2, ..., argN]` - will be retrieved by type name and used with given argument list.
+            * Structure object `{name1: type1, name2: type2, ...}` - shorthand for `['object', structure]`
+            * Bit length number - shorthand for `['bitfield', length]`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Loading/saving data
+          -------------------
+
+            * `jBinary.loadData(source, callback)`
+              * File instance (File API)
+              * HTTP(S) URL
+              * Data-URI (simple or base64-encoded)
+              * Node.js local file path.
+              * Node.js [Readable stream](http://nodejs.org/api/stream.html#stream_class_stream_readable).
+            * `toURI(mimeType = 'application/octet-stream')`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Object contexts
+          ---------------
+
+            * `inContext(newContext, callback)`: Executes function inside given context.
+            * `getContext(filter)`
+              * number (default 0) - `filter` will be used as relative depth (0 is current context, 1 for parent and so on).
+              * string - will look for closest context that contains property name equal to `filter`.
+              * function - will be used as boolean function (`true` to stop) while bubbling up through contexts.
+          </script>
+          </section>
+        </section>
+        <section>
+          <section data-markdown>
+          <script type="text/template">
+          Standard types
+          ==============
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Integers
+          --------
+
+            * `uint8` (`byte`) / `int8`
+            * `uint16` / `int16`
+            * `uint32` / `int32`
+            * `uint64` / `int64`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Floats
+          ------
+
+            * `float32` (`float`)
+            * `float64` (`double`)
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Strings
+          -------
+
+            * `char`
+            * `string(@length, encoding = 'binary')` - string of given length in binary or 'utf8' encoding; falls to `string0` if `length` is not given
+            * `string0(@length, encoding = 'binary')` - null-terminated string stored in given number of bytes; treated as dynamic null-terminated string if `length` is not given
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Complex types
+          -------------
+
+            * `const(baseType, value, strict)`
+            * `array(baseType, @length)`
+            * `object(structure)`
+            * `extend(...object structures...)`
+            * `enum(baseType, matches)`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Binary types
+          ------------
+
+            * `bitfield(length)`
+            * `blob(@length)`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Control statements
+          ------------------
+            * `if(@condition, trueType, falseType)`
+            * `if_not(@condition, falseType, trueType)`
+            * `skip(@length)`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          References
+          ----------
+
+          All the arguments marked with `@`(references) can be passed not only as direct values, but also as getter functions `callback(context)` or string property names inside current context chain.
+          </script>
+          </section>
+        </section>
+        <section>
+          <section data-markdown>
+          <script type="text/template">
+          Custom types
+          ============
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Type Constructor
+          ----------------
+
+          Creating type is simple:
+
+            * `jBinary.Type(config)`
+
+          In property instances, you can access `this.binary` for accessing `jBinary` instance this property belongs to.
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Required methods
+          ----------------
+
+            * `read(context)` - required for reading data, gets current `context` in argument for internal purposes.
+            * `write(data, context)` - required for writing data, also gets current `context`.
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Additional options
+          ------------------
+
+            * `params` - array of names of internal parameters to be retrieved from arguments list type was called with.
+            * `setParams(...params...)` - additional/custom initialization method with input arguments while creating type.
+            * `resolve(getType)` - inside this function type should resolve it's inner dependency types using given `getType` method so it could be cached by engine.
+            * *...add anything else you want to be able to access in property instances...*
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Internal methods
+          ----------------
+
+            * `toValue(value, allowResolve = true)` - call this method on your type instance when you want to use reference arguments.
+            <font color="#AAA">
+            * `inherit(args, getType)` - this method is internally used on creating type with given arguments (or without) and getType provider for resolving dependencies; in most cases you shouldn't override or call it.
+            * `createProperty(binary)` - creates property of current type, linked to given `jBinary` instance; you may override it when you need to hook property creation, but don't forget to call underlying method.
+            </font>
+          </script>
+          </section>
+          <section>
+          <pre>
+          <code data-trim>
+var binary = new jBinary([0x00, 0x03, 0x04, 0x05, 0x06, 0x07], {
+  DynamicArray: jBinary.Type({
+    params: ['itemType'],
+    resolve: function (getType) {
+      this.itemType = getType(this.itemType);
+    },
+    read: function () {
+      var length = this.binary.read('uint16');
+      return this.binary.read(['array', this.itemType, length]);
+    },
+    write: function (values) {
+      this.binary.write('uint16', values.length);
+      this.binary.write(['array', this.itemType], values);
+    }
+  }),
+
+  byteArray: ['DynamicArray', 'uint8']
+});
+
+var byteArray = binary.read('byteArray'); // [0x04, 0x05, 0x06]
+          </code>
+          </pre>
+          </section>
+        </section>
+        <section>
+          <section data-markdown>
+          <script type="text/template">
+          Type wrappers (templates)
+          ================
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Constructor
+          -----------
+
+          Creating is pretty similar to simple custom type:
+
+            * `jBinary.Template(config)`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Base type
+          ---------
+
+            * Config option `baseType` - static base type.
+            * Property `baseType` set inside `setParams` initialization method.
+            * Config property `getBaseType(context)` - method to get base type dynamically depending on current `context` in the moment of creating property before I/O operation.
+            
+          *First two cases are preferred if possible since they will automatically resolve and cache underlying type.*
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Extra methods
+          -------------
+
+            * `baseRead()` - reads underlying type value.
+            * `baseWrite(data)` - writes value as underlying type.
+          </script>
+          </section>
+          <section>
+          <pre>
+          <code data-trim>
+var binary = new jBinary([0x00, 0x03, 0x04, 0x05, 0x06, 0x07], {
+  DynamicArray: jBinary.Template({
+    setParams: function (itemType) {
+      this.baseType = {
+        length: 'uint16',
+        values: ['array', itemType, 'length']
+      };
+    },
+    read: function () {
+      return this.baseRead().values;
+    },
+    write: function (values) {
+      this.baseWrite({
+        length: values.length,
+        values: values
+      });
+    }
+  }),
+
+  byteArray: ['DynamicArray', 'uint8']
+});
+
+var byteArray = binary.read('byteArray'); // [0x04, 0x05, 0x06]
+          </code>
+          </pre>
+          </section>
+        </section>
+        <section>
+          <section data-markdown>
+          <script type="text/template">
+          Supported usage
+          ---------------
+
+            * Include `jDataView` + `jBinary` scripts in browser.
+            * Use as Node.js module.
+            * Load in AMD style.
+          </script>
+          </section>
+          <section>
+            More questions? Feel free to <a href="mailto:me+jdataview@rreverser.com">ask</a>!
+          </section>
+        </section>
+      </div>
+
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.min.js"></script>
+
+    <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+
+        theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        multiplex: {
+          // Example values. Generate your own.
+          secret: '13717113714502789456', // Obtained from the socket.io server. Gives this (the master) control of the presentation
+          id: '1f92009a0c9b7aca', // Obtained from socket.io server
+          url: (location.hostname || 'localhost') + ':1948' // Location of socket.io server
+        },
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+          { src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } }
+          // { src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+          /*
+          { src: 'lib/js/socket.io.js' },
+          { src: 'plugin/multiplex/client.js', async: true },
+          { src: 'plugin/multiplex/master.js', async: true }
+          */
+          // { src: 'plugin/notes-server/client.js', async: true, condition: function() { return !!document.body.classList; } }
+          // { src: 'plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; } }
+        ]
+      });
+
+      /*
+      var demoVideoSlide = document.getElementById('demoVideo');
+      var demoVideoContainer = document.getElementById('demoVideoContainer');
+      var videoSrc = demoVideoContainer.src;
+
+      function onSlide(slide) {
+        demoVideoContainer.src = slide === demoVideoSlide ? videoSrc : '';
+      }
+
+      Reveal.addEventListener('slidechanged', function(event) {
+        onSlide(event.currentSlide);
+      });
+      */
+    </script>
+
+  </body>
+</html>
