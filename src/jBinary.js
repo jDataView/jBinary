@@ -506,6 +506,9 @@ proto.skip = function (offset, callback) {
 proto.getType = function (type, args) {
 	switch (typeof type) {
 		case 'string':
+			if (!(type in this.typeSet)) {
+				throw new ReferenceError('Unknown type `' + type + '`');
+			}
 			return this.getType(this.typeSet[type], args);
 
 		case 'number':
