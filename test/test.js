@@ -85,33 +85,6 @@ if (typeof JSHINT !== 'undefined') {
 	});
 }
 
-asyncTest('Loading from Repo by name', function () {
-	jBinary.Repo('bmp', function (BMP) {
-		start();
-		equal(this, jBinary.Repo);
-		ok(BMP); equal(this.BMP, BMP);
-	});
-});
-
-asyncTest('Loading from Repo by list of names', function () {
-	jBinary.Repo(['bmp', 'mp3', '__UNKNOWN__'], function (BMP, MP3, __UNKNOWN__) {
-		start();
-		equal(this, jBinary.Repo);
-		ok(BMP); equal(this.BMP, BMP);
-		ok(MP3); equal(this.MP3, MP3);
-		ok(!__UNKNOWN__); ok(!('__UNKNOWN__' in this));
-	});
-});
-
-asyncTest('Loading cached type from Repo', function () {
-	jBinary.Repo('bmp', function (BMP) {
-		jBinary.Repo('bmp', function (BMP2) {
-			start();
-			equal(BMP, BMP2);
-		});
-	});
-});
-
 var
 	module = QUnit.module,
 	chr = String.fromCharCode,
@@ -227,6 +200,41 @@ function testCoverage(typeName) {
 		ok(isTested.setter, 'Setter tests');
 	});
 }
+
+//-----------------------------------------------------------------
+
+module('Loading from Repo', {
+	teardown: function () {
+		binary.seek(0);
+	}
+});
+
+asyncTest('Single name', function () {
+	jBinary.Repo('bmp', function (BMP) {
+		start();
+		equal(this, jBinary.Repo);
+		ok(BMP); equal(this.BMP, BMP);
+	});
+});
+
+asyncTest('List of names', function () {
+	jBinary.Repo(['bmp', 'mp3', '__UNKNOWN__'], function (BMP, MP3, __UNKNOWN__) {
+		start();
+		equal(this, jBinary.Repo);
+		ok(BMP); equal(this.BMP, BMP);
+		ok(MP3); equal(this.MP3, MP3);
+		ok(!__UNKNOWN__); ok(!('__UNKNOWN__' in this));
+	});
+});
+
+asyncTest('Cached type', function () {
+	jBinary.Repo('bmp', function (BMP) {
+		jBinary.Repo('bmp', function (BMP2) {
+			start();
+			equal(BMP, BMP2);
+		});
+	});
+});
 
 //-----------------------------------------------------------------
 
