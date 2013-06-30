@@ -695,8 +695,75 @@ jBinary.loadData = function (source, callback) {
 	}
 };
 
-// storage for standard file formats from https://github.com/jDataView/jBinary.Repo
-jBinary.Repo = {};
+var getScript = (function () {
+	if ('window' in global && 'document' in global && document === window.document) {
+		var head = document.head || document.getElementsByTagName('head')[0];
+
+		return function (url, callback) {
+			var script = document.createElement('script');
+			script.src = url;
+			script.defer = true;
+
+			if (!('onload' in script)) {
+				script.onreadystatechange = function () {
+					console.log(this.src, ' ', this.readyState);
+					if (this.readyState === 'loaded' || this.readyState === 'complete') {
+						this.onreadystatechange = null;
+						this.onload();
+					}
+				};
+			}
+
+			script.onload = script.onerror = callback;
+
+			head.appendChild(script);
+		};
+	} else {
+		var request = require('request');
+
+		return function (url, callback) {
+			request.get(url, function (error, response, body) {
+				if (!error && response.statusCode === 200) {
+					// yes, eval is evil, but we are in Node.js and in strict mode, so let's use this
+					// jshint:skipline
+					eval(body);
+				}
+				callback();
+			});
+		};
+	}
+})();
+
+// "require"-like function+storage for standard file formats from https://github.com/jDataView/jBinary.Repo
+var repo = jBinary.Repo = function (names, callback) {
+	if (!(names instanceof Array)) {
+		names = [names];
+	}
+
+	var leftCount = names.length, typeSets = new Array(leftCount);
+
+	function done(index) {
+		typeSets[index] = repo[names[index].toUpperCase()];
+		if (--leftCount > 0) {
+			return;
+		}
+		callback.apply(repo, typeSets);
+	}
+
+	for (var i = 0, length = names.length; i < length; i++) {
+		var name = names[i];
+		if (name.toUpperCase() in repo) {
+			done(i);
+		} else {
+			(function () {
+				var index = i;
+				getScript('https://rawgithub.com/jDataView/jBinary.Repo/gh-pages/$/$.js'.replace(/\$/g, name.toLowerCase()), function () {
+					done(index);
+				});
+			})();
+		}
+	}
+};
 
 if (typeof module === 'object' && module && typeof module.exports === 'object') {
 	jDataView = require('jDataView');

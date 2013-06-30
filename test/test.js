@@ -45,7 +45,7 @@ if (typeof JSHINT !== 'undefined') {
 				for (var i = 0, length = errors.length; i < length; i++) {
 					var error = errors[i];
 					if (error) {
-						if (error.code === 'E001' && /^\/\/\s*jshint:\s*skipline/.test(error.evidence)) {
+						if (error.code === 'E001' && /\/\/\s*jshint:\s*skipline/.test(error.evidence)) {
 							skipLines.push(error.line + 1);
 							errorCount--;
 							continue;
@@ -84,6 +84,33 @@ if (typeof JSHINT !== 'undefined') {
 		}
 	});
 }
+
+asyncTest('Loading from Repo by name', function () {
+	jBinary.Repo('bmp', function (BMP) {
+		start();
+		equal(this, jBinary.Repo);
+		ok(BMP); equal(this.BMP, BMP);
+	});
+});
+
+asyncTest('Loading from Repo by list of names', function () {
+	jBinary.Repo(['bmp', 'mp3', '__UNKNOWN__'], function (BMP, MP3, __UNKNOWN__) {
+		start();
+		equal(this, jBinary.Repo);
+		ok(BMP); equal(this.BMP, BMP);
+		ok(MP3); equal(this.MP3, MP3);
+		ok(!__UNKNOWN__); ok(!('__UNKNOWN__' in this));
+	});
+});
+
+asyncTest('Loading cached type from Repo', function () {
+	jBinary.Repo('bmp', function (BMP) {
+		jBinary.Repo('bmp', function (BMP2) {
+			start();
+			equal(BMP, BMP2);
+		});
+	});
+});
 
 var
 	module = QUnit.module,
