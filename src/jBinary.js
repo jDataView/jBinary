@@ -739,35 +739,41 @@ var getScript = (function () {
 	}
 })();
 
+// helper function for common callback from multiple sources
+function whenAll(count, each, done) {
+	var results = new Array(count);
+	for (var i = 0; i < count; i++) {
+		(function () {
+			var index = i;
+			each(index, function (result) {
+				results[index] = result;
+				if (--count === 0) {
+					done(results);
+				}
+			});
+		})();
+	}
+}
+
 // "require"-like function+storage for standard file formats from https://github.com/jDataView/jBinary.Repo
 var repo = jBinary.Repo = function (names, callback) {
 	if (!(names instanceof Array)) {
 		names = [names];
 	}
 
-	var leftCount = names.length, typeSets = new Array(leftCount);
+	whenAll(names.length, function (i, callback) {
+		var name = names[i], upperName = name.toUpperCase();
 
-	function done(index) {
-		typeSets[index] = repo[names[index].toUpperCase()];
-		if (--leftCount > 0) {
-			return;
-		}
-		callback.apply(repo, typeSets);
-	}
-
-	for (var i = 0, length = names.length; i < length; i++) {
-		var name = names[i];
-		if (name.toUpperCase() in repo) {
-			done(i);
+		if (upperName in repo) {
+			callback(repo[upperName]);
 		} else {
-			(function () {
-				var index = i;
-				getScript('https://rawgithub.com/jDataView/jBinary.Repo/gh-pages/$/$.js'.replace(/\$/g, name.toLowerCase()), function () {
-					done(index);
-				});
-			})();
+			getScript('https://rawgithub.com/jDataView/jBinary.Repo/gh-pages/$/$.js'.replace(/\$/g, name.toLowerCase()), function () {
+				callback(repo[upperName]);
+			});
 		}
-	}
+	}, function (typeSets) {
+		callback.apply(repo, typeSets);
+	});
 };
 
 if (typeof module === 'object' && module && typeof module.exports === 'object') {
