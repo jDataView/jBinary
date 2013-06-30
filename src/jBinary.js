@@ -246,7 +246,7 @@ proto.typeSet = {
 					length++;
 				}
 				var string = view.getString(length, startPos, this.encoding);
-				if (length === maxLength) {
+				if (length < maxLength) {
 					view.skip(1);
 				}
 				return string;
