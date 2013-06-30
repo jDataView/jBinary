@@ -35,8 +35,8 @@ function inherit(obj) {
 	return extend.apply(null, arguments);
 }
 
-function toValue(obj, value) {
-	return value instanceof Function ? value.call(obj, obj.binary.contexts[0]) : value;
+function toValue(obj, binary, value) {
+	return value instanceof Function ? value.call(obj, binary.contexts[0]) : value;
 }
 
 function jBinary(view, typeSet) {
@@ -148,7 +148,7 @@ jBinary.Type.prototype = {
 		if (allowResolve !== false && typeof val === 'string') {
 			return this.binary.getContext(val)[val];
 		}
-		return toValue(this, val);
+		return toValue(this, this.binary, val);
 	}
 };
 
@@ -441,6 +441,18 @@ proto.typeSet = {
 		write: function (bytes) {
 			this.binary.view.writeBytes(bytes, true);
 		}
+	}),
+	'binary': jBinary.Template({
+		params: ['length', 'typeSet'],
+		read: function () {
+			var startPos = this.binary.tell();
+			var endPos = this.binary.skip(this.toValue(this.length));
+			var view = this.binary.view.slice(startPos, endPos);
+			return new jBinary(view, this.typeSet);
+		},
+		write: function (binary) {
+			this.binary.write('blob', binary instanceof jBinary ? binary.read('blob', 0) : binary);
+		}
 	})
 };
 
@@ -479,8 +491,12 @@ extend(proto.typeSet, {
 	'double': proto.typeSet.float64
 });
 
+proto.toValue = function (value) {
+	return toValue(this, this, value);
+};
+
 proto.seek = function (position, callback) {
-	position = toValue(this, position);
+	position = this.toValue(position);
 	if (callback !== undefined) {
 		var oldPos = this.view.tell();
 		this.view.seek(position);
@@ -497,7 +513,7 @@ proto.tell = function () {
 };
 
 proto.skip = function (offset, callback) {
-	return this.seek(this.tell() + toValue(this, offset), callback);
+	return this.seek(this.tell() + this.toValue(offset), callback);
 };
 
 proto.getType = function (type, args) {

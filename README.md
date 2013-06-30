@@ -46,9 +46,9 @@ So you need to get this data from some external source and show result when you 
 And `jBinary` provides handy methods for that:
 
   * `jBinary.loadData(source, callback)` (static method): Loads data from given `source` and returns it in Node.js-like `callback(error, data)`. Source can be one of (if supported on current engine):
-    * [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob) / [File](https://developer.mozilla.org/en-US/docs/Web/API/File) instance ([HTML5 File API](http://www.w3.org/TR/FileAPI/))
+    * [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob) / [File](https://developer.mozilla.org/en-US/docs/Web/API/File) instance ([HTML5 File API](http://www.w3.org/TR/FileAPI/)).
     * HTTP(S) URL (should be on the same host or allowed by [CORS](http://www.w3.org/TR/cors/) if called from browser).
-    * [Data-URI](https://developer.mozilla.org/en-US/docs/data_URIs) (simple or base64-encoded)
+    * [Data-URI](https://developer.mozilla.org/en-US/docs/data_URIs) (simple or base64-encoded).
     * Node.js local file path.
     * Node.js [Readable stream](http://nodejs.org/api/stream.html#stream_class_stream_readable).
   * `toURI(mimeType = 'application/octet-stream')`: Returns URI suitable for usage in DOM elements (uses `Blob` URIs where supported, data-URIs in other cases, so may be problematic when using with big data in old browsers).
@@ -113,6 +113,7 @@ Binary types
 
   * `bitfield(length)` - unsigned integer of given bit length (supports up to 32 bits, wraps around 2^32).
   * `blob(@length)` - byte array represented in most native type for current engine; reads/writes to the end of binary if `length` is not given.
+  * `binary(@length, typeSet = {})` - jBinary instance on part of original one with given length and optional custom typeset (useful for container formats); accepts also raw binary data when writing.
     
 Control statements
 ------------------

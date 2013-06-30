@@ -201,6 +201,8 @@ function testCoverage(typeName) {
 	});
 }
 
+//-----------------------------------------------------------------
+
 module('Value Read', {
 	teardown: function () {
 		binary.seek(0);
@@ -353,7 +355,7 @@ testGetters('array', [
 	{offset: 5, args: ['uint8'], value: [0x00, 0xba, 0x01], check: deepEqual}
 ]);
 
-typeSet.const.isTested.getter = true;
+typeSet['const'].isTested.getter = true;
 test('const', function () {
 	try {
 		binary.read(['const', 'uint16', 0, true], 0);
@@ -437,6 +439,19 @@ testGetters('extend', [{
 	},
 	check: deepEqual
 }]);
+
+testGetters('binary', [{
+	offset: 1,
+	args: [3, {__TEST_ME__: '__TEST_ME__'}],
+	value: [0xfe, 0xfd, 0xfc],
+	check: function (subBinary, values) {
+		deepEqual(subBinary.read(['array', 'uint8'], 0), values);
+		equal(subBinary.view.buffer, binary.view.buffer);
+		equal(subBinary.typeSet.__TEST_ME__, '__TEST_ME__');
+	}
+}]);
+
+//-----------------------------------------------------------------
 
 module('Value Write', {
 	teardown: function () {
@@ -566,7 +581,7 @@ testSetters('array', [
 	{args: ['uint8', 3], value: [0x00, 0xba, 0x01], check: deepEqual}
 ]);
 
-typeSet.const.isTested.setter = true;
+typeSet['const'].isTested.setter = true;
 test('const', function () {
 	var type = ['const', 'uint16', 123, true];
 
@@ -645,6 +660,26 @@ testSetters('extend', [{
 	check: deepEqual
 }]);
 
+testSetters('binary', [
+	{
+		args: [2],
+		value: new jBinary([0x12, 0x34]),
+		check: function (readBinary, writeBinary) {
+			deepEqual(readBinary.read(['array', 'uint8'], 0), writeBinary.read(['array', 'uint8'], 0));
+			equal(readBinary.view.buffer, binary.view.buffer);
+		}
+	},
+	{
+		args: [3],
+		value: [0x12, 0x34, 0x56],
+		check: function (subBinary, values) {
+			deepEqual(subBinary.read(['array', 'uint8'], 0), values);
+			deepEqual(binary.read(['array', 'uint8', 3], 0), values);
+			equal(subBinary.view.buffer, binary.view.buffer);
+		}
+	}
+]);
+
 test('slice', function () {
 	try {
 		binary.slice(5, 10);
@@ -664,6 +699,8 @@ test('slice', function () {
 	copy.write('char', chr(1), 0);
 	notEqual(binary.read('char', 1), chr(1));
 });
+
+//-----------------------------------------------------------------
 
 module('Type Coverage');
 
