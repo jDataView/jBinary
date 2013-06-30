@@ -41,16 +41,21 @@ function toValue(obj, binary, value) {
 
 function jBinary(view, typeSet) {
 	/* jshint validthis:true */
+	var config = typeSet && typeSet.jBinary ? typeSet.jBinary : {};
+
 	if (!(view instanceof jDataView)) {
-		view = new jDataView(view);
+		view = new jDataView(view, undefined, undefined, config.littleEndian);
 	}
+	
 	if (!(this instanceof jBinary)) {
 		return new jBinary(view, typeSet);
 	}
+	
 	this.view = view;
 	this.view.seek(0);
 	this._bitShift = 0;
 	this.contexts = [];
+	
 	if (typeSet) {
 		this.typeSet = inherit(proto.typeSet, typeSet);
 		this.cacheKey = this._getCached(typeSet, function () { return proto.cacheKey + '.' + (++proto.id) }, true);
