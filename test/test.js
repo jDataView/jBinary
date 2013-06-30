@@ -209,14 +209,6 @@ module('Loading from Repo', {
 	}
 });
 
-asyncTest('Single name', function () {
-	jBinary.Repo('bmp', function (BMP) {
-		start();
-		equal(this, jBinary.Repo);
-		ok(BMP); equal(this.BMP, BMP);
-	});
-});
-
 asyncTest('List of names', function () {
 	jBinary.Repo(['bmp', 'mp3', '__UNKNOWN__'], function (BMP, MP3, __UNKNOWN__) {
 		start();
@@ -224,6 +216,14 @@ asyncTest('List of names', function () {
 		ok(BMP); equal(this.BMP, BMP);
 		ok(MP3); equal(this.MP3, MP3);
 		ok(!__UNKNOWN__); ok(!('__UNKNOWN__' in this));
+	});
+});
+
+asyncTest('Single name', function () {
+	jBinary.Repo('bmp', function (BMP) {
+		start();
+		equal(this, jBinary.Repo);
+		ok(BMP); equal(this.BMP, BMP);
 	});
 });
 
