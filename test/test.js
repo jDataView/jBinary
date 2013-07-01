@@ -102,7 +102,7 @@ var
 	],
 	dataStart = 1,
 	view = new jDataView(dataBytes.slice(), dataStart, undefined, true),
-	binary = new jBinary(view),
+	binary = new jBinary(view, {__UNUSED__: '__UNUSED__'}),
 	typeSet = jBinary.prototype.typeSet,
 	ObjectStructure = {
 		arrays: ['array', {
@@ -830,11 +830,13 @@ test('slice', function () {
 	pointerCopy.write('char', chr(1), 0);
 	equal(binary.read('char', 1), chr(1));
 	pointerCopy.write('char', chr(0xfe), 0);
+	equal(pointerCopy.typeSet, binary.typeSet);
 
 	var copy = binary.slice(1, 4, true);
 	compareBytes(copy.read('blob'), [0xfe, 0xfd, 0xfc]);
 	copy.write('char', chr(1), 0);
 	notEqual(binary.read('char', 1), chr(1));
+	equal(pointerCopy.typeSet, binary.typeSet);
 });
 
 //-----------------------------------------------------------------
