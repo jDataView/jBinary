@@ -62,7 +62,7 @@ function jBinary(view, typeSet) {
 	this.contexts = [];
 	
 	if (typeSet) {
-		this.typeSet = inherit(proto.typeSet, typeSet);
+		this.typeSet = proto.typeSet.isPrototypeOf(typeSet) ? typeSet : inherit(proto.typeSet, typeSet);
 		this.cacheKey = this._getCached(typeSet, function () { return proto.cacheKey + '.' + (++proto.id) }, true);
 	}
 }
