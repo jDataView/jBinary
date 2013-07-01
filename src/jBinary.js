@@ -744,6 +744,12 @@ jBinary.loadData = function (source, callback) {
 };
 
 var getScript = (function () {
+	if ('importScripts' in global) {
+		return function (url, callback) {
+			importScripts(url);
+			callback();
+		};
+	} else
 	if ('window' in global && 'document' in global && document === window.document) {
 		var head = document.head || document.getElementsByTagName('head')[0];
 
