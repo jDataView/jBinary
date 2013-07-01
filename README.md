@@ -137,8 +137,8 @@ jBinary.load('sample.tar', function (error, binary) {
 });
 ```
 
-Internal Methods (useful for custom types)
-------------------------------------------
+Internal jBinary Methods (useful for custom types)
+--------------------------------------------------
 
   * `getType(type)`: Returns constructed `jBinary.Type` instance from given descriptor.
   * `createProperty(type)`: Constructs property from given type linked to current binary.
