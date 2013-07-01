@@ -48,10 +48,8 @@ function toValue(obj, binary, value) {
 
 function jBinary(view, typeSet) {
 	/* jshint validthis:true */
-	var config = typeSet && typeSet.jBinary ? typeSet.jBinary : {};
-
 	if (!(view instanceof jDataView)) {
-		view = new jDataView(view, undefined, undefined, config.littleEndian);
+		view = new jDataView(view, undefined, undefined, typeSet ? typeSet['jBinary.littleEndian'] : undefined);
 	}
 	
 	if (!(this instanceof jBinary)) {
@@ -603,7 +601,7 @@ proto._toURI =
 	};
 
 proto.toURI = function (mimeType) {
-	return this._toURI(mimeType || 'application/octet-stream');
+	return this._toURI(mimeType || this.typeSet['jBinary.mimeType']);
 };
 
 proto.slice = function (start, end, forceCopy) {
