@@ -311,7 +311,7 @@ proto.typeSet = {
 		}
 	}),
 	'object': jBinary.Type({
-		params: ['structure'],
+		params: ['structure', 'proto'],
 		resolve: function (getType) {
 			var structure = {};
 			for (var key in this.structure) {
@@ -323,7 +323,7 @@ proto.typeSet = {
 			this.structure = structure;
 		},
 		read: function () {
-			var self = this, structure = this.structure, output = {};
+			var self = this, structure = this.structure, output = this.proto ? inherit(this.proto) : {};
 			this.binary.inContext(output, function () {
 				for (var key in structure) {
 					var value = !(structure[key] instanceof Function)

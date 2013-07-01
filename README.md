@@ -188,7 +188,7 @@ Complex types
 
   * `const(baseType, value, strict = false)` - treats type as constant; if read value does not match expected and strict mode is enabled, calls `strict(readValue)` if it is function or simply throws `TypeError` if not.
   * `array(baseType, @length)` - array of given type and length, reads/writes to the end of binary if `length` is not given.
-  * `object(structure)` - complex object of given structure (name => type), creates new context while processing inner properties; object may also contain functions instead of types for calculating some values during read/write for internal purposes.
+  * `object(structure, proto = Object.prototype)` - complex object of given structure (name => type), creates new context while processing inner properties; object may also contain functions instead of types for calculating some values during read/write for internal purposes.
   * `extend(...object structures...)` - extends one structure with others; merges data into one object when reading and passing entire object when writing.
   * `enum(baseType, matches)` - enumeration type with given key <=> value map (if value not found in the map, it's used "as-is").
 
