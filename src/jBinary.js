@@ -610,6 +610,38 @@ proto.slice = function (start, end, forceCopy) {
 	return new jBinary(this.view.slice(start, end, forceCopy), this.typeSet);
 };
 
+jBinary.load = function (source, typeSet, callback) {
+	function withTypeSet(typeSet) {
+		jBinary.loadData(source, function (err, data) {
+			err ? callback(err) : callback(null, new jBinary(data, typeSet));
+		});
+	}
+
+	if (arguments.length < 3) {
+		callback = typeSet;
+		var srcInfo;
+
+		if ('Blob' in global && source instanceof Blob) {
+			srcInfo = {mimeType: source.type};
+			if (source instanceof File) {
+				srcInfo.fileName = source.name;
+			}
+		} else
+		if (typeof source === 'string') {
+			var dataParts = source.match(/^data:(.+?)(;base64)?,/);
+			srcInfo = dataParts ? {mimeType: dataParts[1]} : {fileName: source};
+		}
+
+		if (srcInfo) {
+			repo.getAssociation(srcInfo, withTypeSet);
+		} else {
+			withTypeSet();
+		}
+	} else {
+		typeof typeSet === 'string' ? repo(typeSet, withTypeSet) : withTypeSet(typeSet);
+	}
+};
+
 jBinary.loadData = function (source, callback) {
 	if ('Blob' in global && source instanceof Blob) {
 		var reader = new FileReader();
@@ -635,7 +667,7 @@ jBinary.loadData = function (source, callback) {
 
 		var dataParts = source.match(/^data:(.+?)(;base64)?,(.*)$/);
 		if (dataParts) {
-			var isBase64 = dataParts[2] !== undefined,
+			var isBase64 = dataParts[2],
 				content = dataParts[3];
 
 			try {
@@ -723,17 +755,20 @@ var getScript = (function () {
 			script.defer = true;
 
 			if (callback) {
-				if (!('onload' in script)) {
+				if ('onreadystatechange' in script) {
 					script.onreadystatechange = function () {
-						console.log(this.src, ' ', this.readyState);
 						if (this.readyState === 'loaded' || this.readyState === 'complete') {
 							this.onreadystatechange = null;
-							this.onload();
+
+							// delay to wait until script is executed
+							setTimeout(function () { callback.call(script) }, 0);
 						}
 					};
-				}
 
-				script.onload = script.onerror = callback;
+					script.onreadystatechange();
+				} else {
+					script.onload = script.onerror = callback;
+				}
 			}
 
 			head.appendChild(script);
@@ -807,14 +842,19 @@ repo.getAssociation =  function (source, _callback) {
 
 	repo.getAssociations(function (assoc) {
 		if (source.fileName) {
-			var fileParts = source.fileName.toLowerCase().split('.').slice(1);
-			// trying everything from longest possible extension to shortest one
-			for (var i = 0, length = fileParts.length; i < length; i++) {
-				var extension = fileParts.slice(i).join('.'),
-					typeSetName = assoc.extensions[extension];
+			// extracting only longest extension part
+			var longExtension = source.fileName.match(/^(.*\/)?.*?(\.|$)(.*)$/)[3].toLowerCase();
 
-				if (typeSetName) {
-					return callback(typeSetName);
+			if (longExtension) {
+				var fileParts = longExtension.split('.');
+				// trying everything from longest possible extension to shortest one
+				for (var i = 0, length = fileParts.length; i < length; i++) {
+					var extension = fileParts.slice(i).join('.'),
+						typeSetName = assoc.extensions[extension];
+
+					if (typeSetName) {
+						return callback(typeSetName);
+					}
 				}
 			}
 		}

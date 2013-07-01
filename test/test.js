@@ -238,6 +238,8 @@ asyncTest('Cached type', function () {
 	});
 });
 
+//-----------------------------------------------------------------
+
 module('File associations');
 
 asyncTest('Loading list', function () {
@@ -267,6 +269,72 @@ asyncTest('By mime-type', function () {
 	jBinary.Repo.getAssociation({mimeType: 'image/bmp'}, function (typeSet) {
 		start();
 		equal(typeSet, jBinary.Repo.BMP);
+	});
+});
+
+//-----------------------------------------------------------------
+
+module('Loading data');
+
+asyncTest('loadData from data-URI', function () {
+	jBinary.loadData('data:text/plain,123', function (err, data) {
+		start();
+		ok(!err);
+		equal(new jDataView(data).getString(), '123');
+	});
+});
+
+asyncTest('loadData from base-64 data-URI', function () {
+	jBinary.loadData('data:text/plain;base64,MTIz', function (err, data) {
+		start();
+		ok(!err);
+		equal(new jDataView(data).getString(), '123');
+	});
+});
+
+if ('Blob' in this) {
+	asyncTest('loadData from HTML5 Blob', function () {
+		var blob = new Blob(['123']);
+		jBinary.loadData(blob, function (err, data) {
+			start();
+			ok(!err);
+			equal(new jDataView(data).getString(), '123');
+		});
+	});
+}
+
+asyncTest('loadData from local file', function () {
+	jBinary.loadData('123.tar', function (err, data) {
+		start();
+		ok(!err);
+		equal(data.byteLength || data.length, 512);
+	});
+});
+
+asyncTest('load with given typeSet', function () {
+	jBinary.load('123.tar', 'tar', function (err, binary) {
+		start();
+		ok(!err);
+		equal(binary.view.byteLength, 512);
+		equal(binary.typeSet.File, jBinary.Repo.TAR.File);
+	});
+});
+
+asyncTest('load with auto-detection by file name extension', function () {
+	jBinary.load('123.tar', function (err, binary) {
+		start();
+		ok(!err);
+		equal(binary.view.byteLength, 512);
+		equal(binary.typeSet.File, jBinary.Repo.TAR.File);
+	});
+});
+
+asyncTest('load with auto-detection by mime-type', function () {
+	jBinary.load('data:application/x-tar;base64,MTIzLnR4dAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAwMDA2NDQAMDAwMDc2NAAwMDAxMDQwADAwMDAwMDAwMDAwADEyMTY0MTY0NzUzADAxMzYyMwAgMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB1c3RhciAgAFJSZXZlcnNlcgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQWRtaW5pc3RyYXRvcnMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', function (err, binary) {
+		start();
+		ok(!err);
+		equal(binary.view.byteLength, 512);
+		equal(binary.typeSet.File, jBinary.Repo.TAR.File);
 	});
 });
 
