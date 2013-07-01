@@ -36,6 +36,62 @@ jBinary Methods
   * `skip(count)`: Advance in the file by `count` bytes.
   * `slice(start, end, forceCopy = false)`: Returns sliced version of current binary with same type set. If `forceCopy` set to true, underlying jDataView will be created on copy of original data not linked to it.
 
+Typesets
+========
+
+Typesets normally contain dictionary of `typeName => type` pairs, but they may also contain special config values that set some global options or modes for entire typeset.
+
+As for now, such options are:
+
+  * `jBinary.littleEndian` - sets endianness for this format.
+  * `jBinary.mimeType` - sets mime-type which should be used for saving data from this typeset (i.e., when calling `toURI` without argument).
+
+The Repo
+--------
+
+jBinary provides special [Repo](https://jdataview.github.io/jBinary.Repo/) for popular file formats and corresponding demos.
+
+Using standard typesets is easy - just make [require](http://requirejs.org/docs/api.html)-like call to `jBinary.Repo` async loader method.
+
+You can call it with one typeset name:
+
+```javascript
+jBinary.Repo('bmp', function (BMP) {
+  var binary = new jBinary(data, BMP);
+});
+```
+
+Or with list of names:
+
+```javascript
+jBinary.Repo(['tar', 'gzip'], function (TAR, GZIP) {
+  // your code goes here ;)
+});
+```
+
+All the typesets that are already loaded, are stored inside `jBinary.Repo` itself with upper-case names of typesets used as keys (like `jBinary.Repo.BMP`).
+
+If you know some popular format structure and can write own typeset, you're welcome [to contribute](https://github.com/jDataView/jBinary.Repo/#readme)!
+
+Typeset associations
+--------------------
+
+Inside the Repo, there is also [associations.js](https://github.com/jDataView/jBinary.Repo/blob/gh-pages/associations.js) file which provides associations between typesets and corresponding file name extensions & mime types.
+
+jBinary uses those associations for loading data from external sources when typeset is not specified explicitly.
+
+If you want your typeset to be associated with special file extensions or some mime-types, simply add entry into `descriptors` object in this file like:
+
+```javascript
+var descriptors = {
+  // ...
+  tar: {
+    extensions: ['tar'],
+    mimeTypes: ['application/tar', 'application/x-tar', 'applicaton/x-gtar', 'multipart/x-tar']
+  }
+};
+```
+
 Loading/saving data
 -------------------
 
@@ -45,13 +101,41 @@ So you need to get this data from some external source and show result when you 
 
 And `jBinary` provides handy methods for that:
 
-  * `jBinary.loadData(source, callback)` (static method): Loads data from given `source` and returns it in Node.js-like `callback(error, data)`. Source can be one of (if supported on current engine):
+  * `jBinary.loadData(source, callback)` (static method):
+
+    Loads data from given `source` and returns it in Node.js-like `callback(error, data)`.
+
+    Source can be one of (if supported on current engine):
+
     * [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob) / [File](https://developer.mozilla.org/en-US/docs/Web/API/File) instance ([HTML5 File API](http://www.w3.org/TR/FileAPI/)).
     * HTTP(S) URL (should be on the same host or allowed by [CORS](http://www.w3.org/TR/cors/) if called from browser).
     * [Data-URI](https://developer.mozilla.org/en-US/docs/data_URIs) (simple or base64-encoded).
     * Node.js local file path.
     * Node.js [Readable stream](http://nodejs.org/api/stream.html#stream_class_stream_readable).
-  * `toURI(mimeType = 'application/octet-stream')`: Returns URI suitable for usage in DOM elements (uses `Blob` URIs where supported, data-URIs in other cases, so may be problematic when using with big data in old browsers).
+
+  * `jBinary.load(source, [typeSet,] callback)` (static method):
+
+  Loads data from given `source` using `jBinary.loadData`, detects typeset using Repo associations if it's not specified explicitly, creates `jBinary` instance on this data and typeset and returns it in `callback(error, binary)`.
+
+
+  * `toURI(mimeType = 'application/octet-stream')`
+
+  Returns URI suitable for usage in DOM elements (uses `Blob` URIs where supported, data-URIs in other cases, so may be problematic when creating from big data in old browsers).
+
+**Example**:
+
+```javascript
+jBinary.load('sample.tar', function (error, binary) {
+  if (error) {
+    return console.log(error);
+  }
+
+  // here TAR format is auto-detected and used by `binary`
+  var tar = binary.read('File');
+
+  // ... more code ...
+});
+```
 
 Internal Methods (useful for custom types)
 ------------------------------------------
