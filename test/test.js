@@ -56,6 +56,8 @@ if (typeof JSHINT !== 'undefined') {
 						}
 						ok(false, 'Line ' + error.line + ', character ' + error.character + ': ' + error.reason);
 						console.log(error);
+					} else {
+						errorCount--;
 					}
 				}
 				if (!errorCount) {
@@ -233,6 +235,38 @@ asyncTest('Cached type', function () {
 			start();
 			equal(BMP, BMP2);
 		});
+	});
+});
+
+module('File associations');
+
+asyncTest('Loading list', function () {
+	jBinary.Repo.getAssociations(function (assoc) {
+		start();
+		ok(assoc);
+		ok(assoc.extensions);
+		ok(assoc.mimeTypes);
+
+		// check caching
+		stop();
+		jBinary.Repo.getAssociations(function (assoc2) {
+			start();
+			equal(assoc, assoc2);
+		});
+	});
+});
+
+asyncTest('By file extension', function () {
+	jBinary.Repo.getAssociation({fileName: 'sample.mp3'}, function (typeSet) {
+		start();
+		equal(typeSet, jBinary.Repo.MP3);
+	});
+});
+
+asyncTest('By mime-type', function () {
+	jBinary.Repo.getAssociation({mimeType: 'image/bmp'}, function (typeSet) {
+		start();
+		equal(typeSet, jBinary.Repo.BMP);
 	});
 });
 
