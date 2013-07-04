@@ -77,7 +77,7 @@ if (defineProperty) {
 }
 
 if (!defineProperty) {
-	var alterDefineProperty = defineProperty = function (obj, key, descriptor, allowVisible) {
+	defineProperty = function (obj, key, descriptor, allowVisible) {
 		if (allowVisible) {
 			obj[key] = descriptor.value;
 		}
@@ -274,7 +274,7 @@ proto.typeSet = {
 	}),
 	'array': jBinary.Template({
 		params: ['baseType', 'length'],
-		read: function (context) {
+		read: function () {
 			var length = this.toValue(this.length);
 			if (this.baseType === proto.typeSet.uint8) {
 				return this.binary.view.getBytes(length, undefined, true, true);
@@ -283,23 +283,23 @@ proto.typeSet = {
 			if (length !== undefined) {
 				results = new Array(length);
 				for (var i = 0; i < length; i++) {
-					results[i] = this.baseRead(context);
+					results[i] = this.baseRead();
 				}
 			} else {
 				var end = this.binary.view.byteLength;
 				results = [];
 				while (this.binary.tell() < end) {
-					results.push(this.baseRead(context));
+					results.push(this.baseRead());
 				}
 			}
 			return results;
 		},
-		write: function (values, context) {
+		write: function (values) {
 			if (this.baseType === proto.typeSet.uint8) {
 				return this.binary.view.writeBytes(values);
 			}
 			for (var i = 0, length = values.length; i < length; i++) {
-				this.baseWrite(values[i], context);
+				this.baseWrite(values[i]);
 			}
 		}
 	}),
@@ -460,7 +460,45 @@ proto.typeSet = {
 			return new jBinary(view, this.typeSet);
 		},
 		write: function (binary) {
-			this.binary.write('blob', binary instanceof jBinary ? binary.read('blob', 0) : binary);
+			this.binary.write('blob', binary.read('blob', 0));
+		}
+	}),
+	'lazy': jBinary.Template({
+		marker: 'jBinary.Lazy',
+		params: ['innerType'],
+		setParams: function (innerType, length) {
+			this.baseType = ['binary', length];
+		},
+		resolve: function (getType) {
+			this.innerType = getType(this.innerType);
+		},
+		read: function () {
+			var accessor = function (newValue) {
+				if (arguments.length === 0) {
+					// returning cached or resolving value
+					return 'value' in accessor ? accessor.value : (accessor.value = accessor.binary.read(accessor.innerType));
+				} else {
+					// marking resolver as dirty for `write` method
+					return extend(accessor, {
+						wasChanged: true,
+						value: newValue
+					}).value;
+				}
+			};
+			accessor[this.marker] = true;
+			return extend(accessor, {
+				binary: this.baseRead(),
+				innerType: this.innerType
+			});
+		},
+		write: function (accessor) {
+			if (accessor.wasChanged || !accessor[this.marker]) {
+				// resolving value if it was changed or given accessor is external
+				this.binary.write(this.innerType, accessor());
+			} else {
+				// copying blob from original binary slice otherwise
+				this.baseWrite(accessor.binary);
+			}
 		}
 	})
 };
@@ -602,6 +640,8 @@ proto.slice = function (start, end, forceCopy) {
 };
 
 jBinary.load = function (source, typeSet, callback) {
+	// jshint expr:true
+
 	function withTypeSet(typeSet) {
 		jBinary.loadData(source, function (err, data) {
 			err ? callback(err) : callback(null, new jBinary(data, typeSet));
@@ -613,14 +653,11 @@ jBinary.load = function (source, typeSet, callback) {
 		var srcInfo;
 
 		if ('Blob' in global && source instanceof Blob) {
-			srcInfo = {mimeType: source.type};
-			if (source instanceof File) {
-				srcInfo.fileName = source.name;
-			}
+			srcInfo = source;
 		} else
 		if (typeof source === 'string') {
 			var dataParts = source.match(/^data:(.+?)(;base64)?,/);
-			srcInfo = dataParts ? {mimeType: dataParts[1]} : {fileName: source};
+			srcInfo = dataParts ? {type: dataParts[1]} : {name: source};
 		}
 
 		if (srcInfo) {
@@ -834,34 +871,39 @@ repo.getAssociations = function (callback) {
 
 repo.getAssociation =  function (source, _callback) {
 	var callback = function (typeSetName) {
-		repo(typeSetName, _callback);
+		if (typeSetName) {
+			repo(typeSetName, _callback);
+			return true;
+		} else {
+			return false;
+		}
 	};
 
 	repo.getAssociations(function (assoc) {
-		if (source.fileName) {
+		if (source.name) {
 			// extracting only longest extension part
-			var longExtension = source.fileName.match(/^(.*\/)?.*?(\.|$)(.*)$/)[3].toLowerCase();
+			var longExtension = source.name.match(/^(.*\/)?.*?(\.|$)(.*)$/)[3].toLowerCase();
 
 			if (longExtension) {
 				var fileParts = longExtension.split('.');
+
 				// trying everything from longest possible extension to shortest one
 				for (var i = 0, length = fileParts.length; i < length; i++) {
-					var extension = fileParts.slice(i).join('.'),
-						typeSetName = assoc.extensions[extension];
+					var extension = fileParts.slice(i).join('.');
 
-					if (typeSetName) {
-						return callback(typeSetName);
+					if (callback(assoc.extensions[extension])) {
+						return;
 					}
 				}
 			}
 		}
-		if (source.mimeType) {
-			var typeSetName = assoc.mimeTypes[source.mimeType];
 
-			if (typeSetName) {
-				return callback(typeSetName);
+		if (source.type) {
+			if (callback(assoc.mimeTypes[source.type])) {
+				return;
 			}
 		}
+
 		_callback();
 	});
 };

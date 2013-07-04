@@ -1,6 +1,6 @@
 {
   "name": "jbinary",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "High-level I/O for binary data.",
   "keywords": ["parse", "edit", "buffer", "binary", "file", "read", "write", "manipulate"],
   "author": "RReverser <me@rreverser.com> (http://rreverser.com/)",

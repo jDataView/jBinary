@@ -259,15 +259,17 @@ asyncTest('Loading list', function () {
 });
 
 asyncTest('By file extension', function () {
-	jBinary.Repo.getAssociation({fileName: 'sample.mp3'}, function (typeSet) {
+	jBinary.Repo.getAssociation({name: 'sample.mp3'}, function (typeSet) {
 		start();
+		ok(typeSet);
 		equal(typeSet, jBinary.Repo.MP3);
 	});
 });
 
 asyncTest('By mime-type', function () {
-	jBinary.Repo.getAssociation({mimeType: 'image/bmp'}, function (typeSet) {
+	jBinary.Repo.getAssociation({type: 'image/bmp'}, function (typeSet) {
 		start();
+		ok(typeSet);
 		equal(typeSet, jBinary.Repo.BMP);
 	});
 });
@@ -308,6 +310,14 @@ asyncTest('loadData from local file', function () {
 		start();
 		ok(!err);
 		equal(data.byteLength || data.length, 512);
+	});
+});
+
+asyncTest('loadData from non-existent local file', function () {
+	jBinary.loadData('__NON_EXISTENT__', function (err, data) {
+		start();
+		ok(err);
+		ok(!data);
 	});
 });
 
@@ -588,6 +598,47 @@ testGetters('binary', [{
 	}
 }]);
 
+typeSet.lazy.isTested.getter = true;
+test('lazy', function () {
+	var innerType = 'uint32',
+		length = 4,
+		lazyType = ['lazy', innerType, length],
+		lazy,
+		readCount,
+		innerValue = binary.read(innerType, 0);
+
+	function resetAccessor() {
+		lazy = binary.read(lazyType, 0);
+		ok(!('value' in lazy));
+		readCount = 0;
+		var read = lazy.binary.read;
+		lazy.binary.read = function () {
+			readCount++;
+			return read.apply(this, arguments);
+		};
+	}
+
+	function checkState(expectedChangeState, expectedReadCount) {
+		equal(!!lazy.wasChanged, expectedChangeState);
+		for (var counter = 2; counter--;) {
+			equal(lazy(), innerValue);
+		}
+		equal(readCount, expectedReadCount);
+		equal(lazy.value, innerValue);
+	}
+	
+	resetAccessor();
+	checkState(false, 1);
+
+	innerValue = 5489408;
+	lazy(innerValue);
+	checkState(true, 1);
+
+	resetAccessor();
+	lazy(innerValue);
+	checkState(true, 0);
+});
+
 //-----------------------------------------------------------------
 
 module('Value Write', {
@@ -805,17 +856,31 @@ testSetters('binary', [
 			deepEqual(readBinary.read(['array', 'uint8'], 0), writeBinary.read(['array', 'uint8'], 0));
 			equal(readBinary.view.buffer, binary.view.buffer);
 		}
-	},
-	{
-		args: [3],
-		value: [0x12, 0x34, 0x56],
-		check: function (subBinary, values) {
-			deepEqual(subBinary.read(['array', 'uint8'], 0), values);
-			deepEqual(binary.read(['array', 'uint8', 3], 0), values);
-			equal(subBinary.view.buffer, binary.view.buffer);
-		}
 	}
 ]);
+
+typeSet.lazy.isTested.setter = true;
+test('lazy', function () {
+	var innerType = 'uint32',
+		length = 4,
+		lazyType = ['lazy', innerType, length],
+		blobType = ['array', 'uint8', length],
+		newBinary = new jBinary(length),
+		nativeAccessor = binary.read(lazyType, 0),
+		externalValue = 7849234,
+		externalAccessor = function () {
+			return externalValue;
+		};
+
+	newBinary.write(lazyType, nativeAccessor);
+	equal(newBinary.tell(), length);
+	ok(!('value' in nativeAccessor));
+	deepEqual(binary.read(blobType, 0), newBinary.read(blobType, 0));
+
+	newBinary.seek(0);
+	newBinary.write(lazyType, externalAccessor);
+	deepEqual(newBinary.read(innerType, 0), externalValue);
+});
 
 test('slice', function () {
 	try {
