@@ -129,26 +129,43 @@ jBinary.Type = function (config) {
 
 jBinary.Type.prototype = {
 	inherit: function (args, getType) {
-		if (!this.setParams && !this.resolve && (!this.params || args.length === 0)) {
-			return this;
+		var _type = this, type;
+
+		function withProp(name, callback) {
+			var value = _type[name];
+			if (value) {
+				if (!type) {
+					type = inherit(_type);
+				}
+				callback.call(type, value);
+				type[name] = null;
+			}
 		}
 
-		var type = inherit(this);
-		if (type.params) {
-			for (var i = 0, length = Math.min(type.params.length, args.length); i < length; i++) {
-				type[this.params[i]] = args[i];
+		withProp('params', function (params) {
+			for (var i = 0, length = Math.min(params.length, args.length); i < length; i++) {
+				this[params[i]] = args[i];
 			}
-			type.params = null;
-		}
-		if (type.setParams) {
-			type.setParams.apply(type, args || []);
-			type.setParams = null;
-		}
-		if (type.resolve) {
-			type.resolve(getType);
-			type.resolve = null;
-		}
-		return type;
+		});
+
+		withProp('setParams', function (setParams) {
+			setParams.apply(this, args);
+		});
+
+		withProp('typeParams', function (typeParams) {
+			for (var i = 0, length = typeParams.length; i < length; i++) {
+				var param = typeParams[i], descriptor = this[param];
+				if (descriptor) {
+					this[param] = getType(descriptor);
+				}
+			}
+		});
+
+		withProp('resolve', function (resolve) {
+			resolve.call(this, getType);
+		});
+
+		return type || _type;
 	},
 	createProperty: function (binary) {
 		return inherit(this, {binary: binary});
@@ -174,9 +191,9 @@ jBinary.Template = function (config) {
 };
 
 jBinary.Template.prototype = inherit(jBinary.Type.prototype, {
-	resolve: function (getType) {
+	setParams: function () {
 		if (this.baseType) {
-			this.baseType = getType(this.baseType);
+			this.typeParams = ['baseType'].concat(this.typeParams || []);
 		}
 	},
 	baseRead: function () {
@@ -405,10 +422,7 @@ proto.typeSet = {
 	}),
 	'if': jBinary.Template({
 		params: ['condition', 'trueType', 'falseType'],
-		resolve: function (getType) {
-			this.trueType = getType(this.trueType);
-			this.falseType = getType(this.falseType);
-		},
+		typeParams: ['trueType', 'falseType'],
 		getBaseType: function (context) {
 			return this.toValue(this.condition) ? this.trueType : this.falseType;
 		}
@@ -469,9 +483,7 @@ proto.typeSet = {
 		setParams: function (innerType, length) {
 			this.baseType = ['binary', length];
 		},
-		resolve: function (getType) {
-			this.innerType = getType(this.innerType);
-		},
+		typeParams: ['innerType'],
 		read: function () {
 			var accessor = function (newValue) {
 				if (arguments.length === 0) {

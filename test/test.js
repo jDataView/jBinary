@@ -203,6 +203,12 @@ function testCoverage(typeName) {
 	});
 }
 
+test('getType', function () {
+	var type = binary.getType('uint32');
+	ok(type instanceof jBinary.Type);
+	equal(binary.getType([type]), type);
+});
+
 //-----------------------------------------------------------------
 
 module('Loading from Repo', {
