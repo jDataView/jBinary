@@ -298,7 +298,7 @@ asyncTest('loadData from base-64 data-URI', function () {
 	});
 });
 
-if ('Blob' in this) {
+if (typeof Blob !== 'undefined') {
 	asyncTest('loadData from HTML5 Blob', function () {
 		var blob = new Blob(['123']);
 		jBinary.loadData(blob, function (err, data) {
@@ -324,6 +324,21 @@ asyncTest('loadData from non-existent local file', function () {
 		ok(!data);
 	});
 });
+
+if (typeof require !== 'undefined') {
+	asyncTest('Node.js readable stream', function () {
+		var stream = require('stream').Readable(), i = 0;
+		stream._read = function () {
+			i++;
+			this.push(i <= 3 ? new Buffer([i]) : null);
+		};
+		jBinary.loadData(stream, function (err, data) {
+			start();
+			ok(!err);
+			deepEqual(Array.prototype.slice.call(data), [1, 2, 3]);
+		});
+	});
+}
 
 asyncTest('load with given typeSet', function () {
 	jBinary.load('123.tar', 'tar', function (err, binary) {

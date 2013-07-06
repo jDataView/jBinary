@@ -687,20 +687,15 @@ jBinary.loadData = function (source, callback) {
 		var reader = new FileReader();
 		reader.onload = reader.onerror = function() { callback(this.error, this.result) };
 		reader.readAsArrayBuffer(source);
+	} else
+	if (hasRequire && source instanceof require('stream').Readable) {
+		var buffers = [];
+
+		source
+		.on('readable', function () { buffers.push(this.read()) })
+		.on('end', function () { callback(null, Buffer.concat(buffers)) })
+		.on('error', callback);
 	} else {
-		if (typeof source === 'object') {
-			if (hasRequire && source instanceof require('stream').Readable) {
-				var buffers = [];
-
-				source
-				.on('readable', function () { buffers.push(this.read()) })
-				.on('end', function () { callback(null, Buffer.concat(buffers)) })
-				.on('error', callback);
-
-				return;
-			}
-		}
-
 		if (typeof source !== 'string') {
 			return callback(new TypeError('Unsupported source type.'));
 		}
