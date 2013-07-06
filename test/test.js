@@ -147,6 +147,8 @@ function testGetters(typeName, getters) {
 	typeSet[typeName].isTested.getter = true;
 
 	test(typeName, function () {
+		binary.seek(0);
+
 		for (var i = 0; i < getters.length; i++) {
 			var getter = getters[i];
 
@@ -211,11 +213,7 @@ test('getType', function () {
 
 //-----------------------------------------------------------------
 
-module('Loading from Repo', {
-	teardown: function () {
-		binary.seek(0);
-	}
-});
+module('Loading from Repo');
 
 asyncTest('List of names', function () {
 	jBinary.Repo(['bmp', 'mp3', '__UNKNOWN__'], function (BMP, MP3, __UNKNOWN__) {
@@ -356,11 +354,7 @@ asyncTest('load with auto-detection by mime-type', function () {
 
 //-----------------------------------------------------------------
 
-module('Value Read', {
-	teardown: function () {
-		binary.seek(0);
-	}
-});
+module('Value Read');
 
 testGetters('blob', [
 	{offset: 1, args: [2], value: [0xfe, 0xfd], check: compareBytes},
@@ -759,6 +753,7 @@ testSetters('uint64', [
 
 typeSet.skip.isTested.setter = true;
 test('skip', function () {
+	binary.seek(0);
 	binary.write(['skip', 2]);
 	equal(binary.tell(), 2);
 	binary.write(['skip', 1]);
