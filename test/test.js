@@ -1,4 +1,6 @@
-if (typeof require !== 'undefined') {
+var hasNodeRequire = typeof require === 'function' && !require.isBrowser;
+
+if (hasNodeRequire) {
 	if (typeof jDataView === 'undefined') {
 		jDataView = require('jDataView');
 	}
@@ -9,6 +11,10 @@ if (typeof require !== 'undefined') {
 
 	if (typeof JSHINT === 'undefined') {
 		JSHINT = require('jshint').JSHINT;
+	}
+
+	if (typeof requirejs === 'undefined') {
+		requirejs = require('requirejs');
 	}
 }
 
@@ -86,6 +92,22 @@ if (typeof JSHINT !== 'undefined') {
 		}
 	});
 }
+
+asyncTest('require.js', function () {
+	requirejs.config({
+		baseUrl: '../..',
+		paths: {
+			jBinary: 'jBinary/src/jBinary',
+			jDataView: 'jDataView/src/jDataView'
+		}
+	});
+
+	requirejs(['jBinary'], function (module) {
+		start();
+		ok(module);
+		equal(module.name, 'jBinary');
+	});
+});
 
 var
 	module = QUnit.module,
@@ -325,7 +347,7 @@ asyncTest('loadData from non-existent local file', function () {
 	});
 });
 
-if (typeof require !== 'undefined') {
+if (hasNodeRequire) {
 	asyncTest('Node.js readable stream', function () {
 		var stream = require('stream').Readable(), i = 0;
 		stream._read = function () {

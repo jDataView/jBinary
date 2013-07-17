@@ -8,7 +8,9 @@ if (!('atob' in global) || !('btoa' in global)) {
 (function(){var t=global,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n=function(){try{document.createElement("$")}catch(t){return t}}();t.btoa||(t.btoa=function(t){for(var o,e,a=0,c=r,f="";t.charAt(0|a)||(c="=",a%1);f+=c.charAt(63&o>>8-8*(a%1))){if(e=t.charCodeAt(a+=.75),e>255)throw n;o=o<<8|e}return f}),t.atob||(t.atob=function(t){if(t=t.replace(/=+$/,""),1==t.length%4)throw n;for(var o,e,a=0,c=0,f="";e=t.charAt(c++);~e&&(o=a%4?64*o+e:e,a++%4)?f+=String.fromCharCode(255&o>>(6&-2*a)):0)e=r.indexOf(e);return f})})();
 }
 
-var hasRequire = typeof require === 'function';
+function hasNodeRequire(name) {
+	return typeof require === 'function' && !require.isBrowser && require(name);
+}
 
 var jDataView;
 
@@ -688,7 +690,7 @@ jBinary.loadData = function (source, callback) {
 		reader.onload = reader.onerror = function() { callback(this.error, this.result) };
 		reader.readAsArrayBuffer(source);
 	} else
-	if (hasRequire && source instanceof require('stream').Readable) {
+	if (hasNodeRequire('stream') && source instanceof require('stream').Readable) {
 		var buffers = [];
 
 		source
@@ -758,9 +760,10 @@ jBinary.loadData = function (source, callback) {
 			};
 
 			xhr.send();
-		} else
-		if (hasRequire) {
-			if (/^(https?):\/\//.test(source)) {
+		} else {
+			var isHTTP = /^(https?):\/\//.test(source);
+
+			if (isHTTP && hasNodeRequire('request')) {
 				require('request').get({
 					uri: source,
 					encoding: null
@@ -771,11 +774,12 @@ jBinary.loadData = function (source, callback) {
 					}
 					callback(error, body);
 				});
-			} else {
+			} else
+			if (!isHTTP && hasNodeRequire('fs')) {
 				require('fs').readFile(source, callback);
+			} else {
+				callback(new TypeError('Unsupported source type.'));
 			}
-		} else {
-			callback(new TypeError('Unsupported source type.'));
 		}
 	}
 };
@@ -815,10 +819,8 @@ var getScript = (function () {
 			head.appendChild(script);
 		};
 	} else {
-		var request = require('request');
-
 		return function (url, callback) {
-			request.get(url, function (error, response, body) {
+			require('request').get(url, function (error, response, body) {
 				if (!error && response.statusCode === 200) {
 					// yes, eval is evil, but we are in Node.js and in strict mode, so let's use this
 					// jshint:skipline
@@ -915,22 +917,25 @@ repo.getAssociation =  function (source, _callback) {
 	});
 };
 
+function setJDataView(_jDataView) {
+	jDataView = _jDataView;
+	jDataView.prototype.toBinary = function (typeSet) {
+		return new jBinary(this, typeSet);
+	};
+}
+
 if (typeof module === 'object' && module && typeof module.exports === 'object') {
-	jDataView = require('jDataView');
+	setJDataView(require('jDataView'));
 	module.exports = jBinary;
 } else
 if (typeof define === 'function' && define.amd) {
 	define('jBinary', ['jDataView'], function (_jDataView) {
-		jDataView = _jDataView;
+		setJDataView(_jDataView);
 		return jBinary;
 	});
 } else {
-	jDataView = global.jDataView;
+	setJDataView(global.jDataView);
 	global.jBinary = jBinary;
 }
-
-jDataView.prototype.toBinary = function (typeSet) {
-	return new jBinary(this, typeSet);
-};
 
 })((function () { /* jshint strict: false */ return this })());
