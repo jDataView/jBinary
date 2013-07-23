@@ -765,7 +765,7 @@ if (typeof module === 'object' && module && typeof module.exports === 'object') 
 	module.exports = jBinary;
 } else
 if (typeof define === 'function' && define.amd) {
-	define('jBinary', ['jDataView'], function (_jDataView) {
+	define(['jDataView'], function (_jDataView) {
 		setJDataView(_jDataView);
 		return jBinary;
 	});
