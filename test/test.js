@@ -2,7 +2,7 @@ var hasNodeRequire = typeof require === 'function' && !require.isBrowser;
 
 if (hasNodeRequire) {
 	if (typeof jDataView === 'undefined') {
-		jDataView = require('jDataView');
+		jDataView = require('jdataview');
 	}
 
 	if (typeof jBinary === 'undefined') {

@@ -653,13 +653,15 @@ proto.slice = function (start, end, forceCopy) {
 	return new jBinary(this.view.slice(start, end, forceCopy), this.typeSet);
 };
 
+var hasStreamSupport = hasNodeRequire('stream') && require('stream').Readable;
+
 jBinary.loadData = function (source, callback) {
 	if ('Blob' in global && source instanceof Blob) {
 		var reader = new FileReader();
 		reader.onload = reader.onerror = function() { callback(this.error, this.result) };
 		reader.readAsArrayBuffer(source);
 	} else
-	if (hasNodeRequire('stream') && source instanceof require('stream').Readable) {
+	if (hasStreamSupport && source instanceof require('stream').Readable) {
 		var buffers = [];
 
 		source
@@ -761,7 +763,7 @@ function setJDataView(_jDataView) {
 }
 
 if (typeof module === 'object' && module && typeof module.exports === 'object') {
-	setJDataView(require('jDataView'));
+	setJDataView(require('jdataview'));
 	module.exports = jBinary;
 } else
 if (typeof define === 'function' && define.amd) {
