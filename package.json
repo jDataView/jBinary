@@ -25,6 +25,7 @@
   "devDependencies": {
     "qunit": "*",
     "jshint": ">= 2.1.0",
+    "requirejs": "*",
     "npm": "*"
   }
 }
