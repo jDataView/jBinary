@@ -1,4 +1,4 @@
-jBinary - High-level I/O for binary data.
+[![Build Status](https://travis-ci.org/jDataView/jBinary.png?branch=master)](https://travis-ci.org/jDataView/jBinary) jBinary - High-level I/O for binary data.
 =========================================
 
 jBinary makes it easy to work with binary files in JavaScript.
