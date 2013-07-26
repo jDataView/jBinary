@@ -19,7 +19,7 @@ if (hasNodeRequire) {
 }
 
 if (typeof JSHINT !== 'undefined') {
-	asyncTest('JSHint', function () {
+	asyncTest('JSHint', function (done) {
 		var paths = {
 			source: '../src/jbinary.js',
 			options: '../src/.jshintrc'
@@ -28,8 +28,8 @@ if (typeof JSHINT !== 'undefined') {
 
 		function onLoad(err, name, text) {
 			if (err) {
-				start();
-				return ok(false, 'Error while loading ' + name + ': ' + err);
+				ok(false, 'Error while loading ' + name + ': ' + err);
+				return done();
 			}
 
 			contents[name] = text;
@@ -41,8 +41,6 @@ if (typeof JSHINT !== 'undefined') {
 
 			var options = JSON.parse(contents.options), globals = options.globals;
 			delete options.globals;
-
-			start();
 
 			if (JSHINT(contents.source, options, globals)) {
 				ok(true);
@@ -70,6 +68,8 @@ if (typeof JSHINT !== 'undefined') {
 					ok(true);
 				}
 			}
+
+			done();
 		}
 
 		function load(name) {
@@ -93,7 +93,7 @@ if (typeof JSHINT !== 'undefined') {
 	});
 }
 
-asyncTest('require.js', function () {
+asyncTest('require.js', function (done) {
 	requirejs.config({
 		baseUrl: '../..',
 		paths: {
@@ -103,8 +103,8 @@ asyncTest('require.js', function () {
 	});
 
 	requirejs(['jbinary'], function (module) {
-		start();
 		ok(module);
+		done();
 	});
 });
 
@@ -237,60 +237,60 @@ test('getType', function () {
 
 module('Loading data');
 
-asyncTest('loadData from data-URI', function () {
+asyncTest('loadData from data-URI', function (done) {
 	jBinary.loadData('data:text/plain,123', function (err, data) {
-		start();
 		ok(!err);
 		equal(new jDataView(data).getString(), '123');
+		done();
 	});
 });
 
-asyncTest('loadData from base-64 data-URI', function () {
+asyncTest('loadData from base-64 data-URI', function (done) {
 	jBinary.loadData('data:text/plain;base64,MTIz', function (err, data) {
-		start();
 		ok(!err);
 		equal(new jDataView(data).getString(), '123');
+		done();
 	});
 });
 
 if (typeof Blob !== 'undefined') {
-	asyncTest('loadData from HTML5 Blob', function () {
+	asyncTest('loadData from HTML5 Blob', function (done) {
 		var blob = new Blob(['123']);
 		jBinary.loadData(blob, function (err, data) {
-			start();
 			ok(!err);
 			equal(new jDataView(data).getString(), '123');
+			done();
 		});
 	});
 }
 
-asyncTest('loadData from local file', function () {
+asyncTest('loadData from local file', function (done) {
 	jBinary.loadData('123.tar', function (err, data) {
-		start();
 		ok(!err);
 		equal(data.byteLength || data.length, 512);
+		done();
 	});
 });
 
-asyncTest('loadData from non-existent local file', function () {
+asyncTest('loadData from non-existent local file', function (done) {
 	jBinary.loadData('__NON_EXISTENT__', function (err, data) {
-		start();
 		ok(err);
 		ok(!data);
+		done();
 	});
 });
 
 if (hasNodeRequire) {
-	asyncTest('Node.js readable stream', function () {
+	asyncTest('Node.js readable stream', function (done) {
 		var stream = require('stream').Readable(), i = 0;
 		stream._read = function () {
 			i++;
 			this.push(i <= 3 ? new Buffer([i]) : null);
 		};
 		jBinary.loadData(stream, function (err, data) {
-			start();
 			ok(!err);
 			deepEqual(Array.prototype.slice.call(data), [1, 2, 3]);
+			done();
 		});
 	});
 }
