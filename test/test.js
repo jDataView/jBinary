@@ -108,11 +108,9 @@ test('require.js', function (done) {
 	});
 });
 
-var
-	module = suite,
-	chr = String.fromCharCode,
+var chr = String.fromCharCode,
 	// workaround for http://code.google.com/p/v8/issues/detail?id=2578
-	_isNaN = Number.isNaN || window.isNaN,
+	_isNaN = Number.isNaN || (function () { return this })().isNaN,
 	isNaN = function (obj) {
 		return _isNaN(obj) || (typeof obj === 'number' && obj.toString() === 'NaN');
 	},
@@ -235,7 +233,7 @@ test('getType', function () {
 
 //-----------------------------------------------------------------
 
-module('Loading data');
+suite('Loading data');
 
 test('loadData from data-URI', function (done) {
 	jBinary.loadData('data:text/plain,123', function (err, data) {
@@ -297,7 +295,7 @@ if (hasNodeRequire && require('stream').Readable) {
 
 //-----------------------------------------------------------------
 
-module('Value Read');
+suite('Value Read');
 
 testGetters('blob', [
 	{offset: 1, args: [2], value: [0xfe, 0xfd], check: compareBytes},
@@ -584,7 +582,7 @@ test('lazy', function () {
 
 //-----------------------------------------------------------------
 
-module('Value Write', {
+suite('Value Write', {
 	teardown: function () {
 		binary.write('blob', dataBytes.slice(dataStart), 0);
 	}
@@ -850,7 +848,7 @@ test('slice', function () {
 
 //-----------------------------------------------------------------
 
-module('Type Coverage');
+suite('Type Coverage');
 
 for (var typeName in typeSet) {
 	testCoverage(typeName);
