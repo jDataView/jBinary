@@ -1,6 +1,6 @@
 var npm = require('npm'), env = process.env;
 
-if (env.TRAVIS_JOB_NUMBER && env.TRAVIS_JOB_NUMBER.slice(-2) !== '.1') {
+if ((env.TRAVIS_JOB_NUMBER && env.TRAVIS_JOB_NUMBER.slice(-2) !== '.1') || !['USERNAME', 'PASSWORD', 'EMAIL'].every(function (name) { return env['NPM_' + name] })) {
 	console.log('Node ' + process.version + ' is not configured for publish.');
 	process.exit();
 }

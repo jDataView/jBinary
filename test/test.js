@@ -21,7 +21,7 @@ if (hasNodeRequire) {
 if (typeof JSHINT !== 'undefined') {
 	asyncTest('JSHint', function () {
 		var paths = {
-			source: '../src/jBinary.js',
+			source: '../src/jbinary.js',
 			options: '../src/.jshintrc'
 		},
 		contents = {};
@@ -97,19 +97,19 @@ asyncTest('require.js', function () {
 	requirejs.config({
 		baseUrl: '../..',
 		paths: {
-			jBinary: 'jBinary/src/jBinary',
-			jDataView: 'jDataView/src/jDataView'
+			jbinary: 'jBinary/src/jbinary',
+			jdataview: 'jDataView/src/jdataview'
 		}
 	});
 
-	requirejs(['jBinary'], function (module) {
+	requirejs(['jbinary'], function (module) {
 		start();
 		ok(module);
 	});
 });
 
 var
-	module = QUnit.module,
+	module = suite,
 	chr = String.fromCharCode,
 	// workaround for http://code.google.com/p/v8/issues/detail?id=2578
 	_isNaN = Number.isNaN || window.isNaN,
@@ -142,9 +142,10 @@ for (var typeName in typeSet) {
 	typeSet[typeName].isTested = {getter: false, setter: false};
 }
 
-function test(name) {
+var _test = test;
+test = function(name) {
 	name = name.replace(/(^|_)(.)/g, function (m, p, c) { return c.toUpperCase() });
-	QUnit.test.apply(null, arguments);
+	_test.apply(null, arguments);
 }
 
 function b() {
