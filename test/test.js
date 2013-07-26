@@ -19,7 +19,7 @@ if (hasNodeRequire) {
 }
 
 if (typeof JSHINT !== 'undefined') {
-	asyncTest('JSHint', function (done) {
+	test('JSHint', function (done) {
 		var paths = {
 			source: '../src/jbinary.js',
 			options: '../src/.jshintrc'
@@ -93,7 +93,7 @@ if (typeof JSHINT !== 'undefined') {
 	});
 }
 
-asyncTest('require.js', function (done) {
+test('require.js', function (done) {
 	requirejs.config({
 		baseUrl: '../..',
 		paths: {
@@ -237,42 +237,42 @@ test('getType', function () {
 
 module('Loading data');
 
-asyncTest('loadData from data-URI', function (done) {
+test('loadData from data-URI', function (done) {
 	jBinary.loadData('data:text/plain,123', function (err, data) {
-		ok(!err);
+		ok(!err, err);
 		equal(new jDataView(data).getString(), '123');
 		done();
 	});
 });
 
-asyncTest('loadData from base-64 data-URI', function (done) {
+test('loadData from base-64 data-URI', function (done) {
 	jBinary.loadData('data:text/plain;base64,MTIz', function (err, data) {
-		ok(!err);
+		ok(!err, err);
 		equal(new jDataView(data).getString(), '123');
 		done();
 	});
 });
 
 if (typeof Blob !== 'undefined') {
-	asyncTest('loadData from HTML5 Blob', function (done) {
+	test('loadData from HTML5 Blob', function (done) {
 		var blob = new Blob(['123']);
 		jBinary.loadData(blob, function (err, data) {
-			ok(!err);
+			ok(!err, err);
 			equal(new jDataView(data).getString(), '123');
 			done();
 		});
 	});
 }
 
-asyncTest('loadData from local file', function (done) {
+test('loadData from local file', function (done) {
 	jBinary.loadData('123.tar', function (err, data) {
-		ok(!err);
+		ok(!err, err);
 		equal(data.byteLength || data.length, 512);
 		done();
 	});
 });
 
-asyncTest('loadData from non-existent local file', function (done) {
+test('loadData from non-existent local file', function (done) {
 	jBinary.loadData('__NON_EXISTENT__', function (err, data) {
 		ok(err);
 		ok(!data);
@@ -280,15 +280,15 @@ asyncTest('loadData from non-existent local file', function (done) {
 	});
 });
 
-if (hasNodeRequire) {
-	asyncTest('Node.js readable stream', function (done) {
+if (hasNodeRequire && require('stream').Readable) {
+	test('Node.js readable stream', function (done) {
 		var stream = require('stream').Readable(), i = 0;
 		stream._read = function () {
 			i++;
 			this.push(i <= 3 ? new Buffer([i]) : null);
 		};
 		jBinary.loadData(stream, function (err, data) {
-			ok(!err);
+			ok(!err, err);
 			deepEqual(Array.prototype.slice.call(data), [1, 2, 3]);
 			done();
 		});
