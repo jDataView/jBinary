@@ -204,6 +204,11 @@ body {
   z-index: 1;
 }
 
+*+html #mocha-stats {
+  position: relative;
+  top: -30px;
+}
+
 #mocha-stats .progress {
   float: right;
   padding-top: 0;

@@ -18,6 +18,8 @@ if (hasNodeRequire) {
 	}
 }
 
+suite('Self-test');
+
 if (typeof JSHINT !== 'undefined') {
 	test('JSHint', function (done) {
 		var paths = {
@@ -140,12 +142,6 @@ for (var typeName in typeSet) {
 	typeSet[typeName].isTested = {getter: false, setter: false};
 }
 
-var _test = test;
-test = function(name) {
-	name = name.replace(/(^|_)(.)/g, function (m, p, c) { return c.toUpperCase() });
-	_test.apply(null, arguments);
-}
-
 function b() {
 	return new jBinary(arguments);
 }
@@ -235,7 +231,7 @@ test('getType', function () {
 
 suite('Loading data');
 
-test('loadData from data-URI', function (done) {
+test('from data-URI', function (done) {
 	jBinary.loadData('data:text/plain,123', function (err, data) {
 		ok(!err, err);
 		equal(new jDataView(data).getString(), '123');
@@ -243,7 +239,7 @@ test('loadData from data-URI', function (done) {
 	});
 });
 
-test('loadData from base-64 data-URI', function (done) {
+test('from base-64 data-URI', function (done) {
 	jBinary.loadData('data:text/plain;base64,MTIz', function (err, data) {
 		ok(!err, err);
 		equal(new jDataView(data).getString(), '123');
@@ -252,7 +248,7 @@ test('loadData from base-64 data-URI', function (done) {
 });
 
 if (typeof Blob !== 'undefined') {
-	test('loadData from HTML5 Blob', function (done) {
+	test('from HTML5 Blob', function (done) {
 		var blob = new Blob(['123']);
 		jBinary.loadData(blob, function (err, data) {
 			ok(!err, err);
@@ -262,7 +258,7 @@ if (typeof Blob !== 'undefined') {
 	});
 }
 
-test('loadData from local file', function (done) {
+test('from local file', function (done) {
 	jBinary.loadData('123.tar', function (err, data) {
 		ok(!err, err);
 		equal(data.byteLength || data.length, 512);
@@ -279,7 +275,7 @@ test('loadData from non-existent local file', function (done) {
 });
 
 if (hasNodeRequire && require('stream').Readable) {
-	test('Node.js readable stream', function (done) {
+	test('from Node.js readable stream', function (done) {
 		var stream = require('stream').Readable(), i = 0;
 		stream._read = function () {
 			i++;
@@ -293,9 +289,15 @@ if (hasNodeRequire && require('stream').Readable) {
 	});
 }
 
+var _test = test;
+test = function(name) {
+	name = name.replace(/(^|_)(.)/g, function (m, p, c) { return c.toUpperCase() });
+	_test.apply(null, arguments);
+}
+
 //-----------------------------------------------------------------
 
-suite('Value Read');
+suite('Reading');
 
 testGetters('blob', [
 	{offset: 1, args: [2], value: [0xfe, 0xfd], check: compareBytes},
@@ -582,7 +584,7 @@ test('lazy', function () {
 
 //-----------------------------------------------------------------
 
-suite('Value Write', {
+suite('Writing', {
 	teardown: function () {
 		binary.write('blob', dataBytes.slice(dataStart), 0);
 	}
@@ -848,7 +850,7 @@ test('slice', function () {
 
 //-----------------------------------------------------------------
 
-suite('Type Coverage');
+suite('Test coverage of type');
 
 for (var typeName in typeSet) {
 	testCoverage(typeName);
