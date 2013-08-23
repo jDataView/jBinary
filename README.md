@@ -29,7 +29,9 @@ jBinary Methods
 ---------------
 
   * `read(type, offset = binary.tell())`: Read value of specified type. If `offset` given, read it from custom position, otherwise read it from current position and move pointer forward (streaming mode).
+  * `readAll()`: Read entire data as value of type specified by `'jBinary.offset'` key in typeset.
   * `write(type, data, offset = binary.tell())`: Write value of specified type. Same `offset` behavior.
+  * `writeAll(data)`: Write entire data as value of type specified by `'jBinary.offset'` key in typeset.
   * `tell()`: Return the current position.
   * `seek(position)`: Go to `position`.
   * `seek(position, callback)`: Go to `position`, execute the `callback` and return to the previous position.

@@ -574,12 +574,20 @@ proto.read = function (type, offset) {
 	);
 };
 
+proto.readAll = function () {
+	return this.read('jBinary.all', 0);
+};
+
 proto.write = function (type, data, offset) {
 	this._action(
 		type,
 		offset,
 		function () { this.createProperty(type).write(data, this.contexts[0]) }
 	);
+};
+
+proto.writeAll = function (data) {
+	this.write('jBinary.all', data, 0);
 };
 
 proto._toURI =
@@ -594,7 +602,7 @@ proto._toURI =
 	};
 
 proto.toURI = function (mimeType) {
-	return this._toURI(mimeType || this.typeSet['jBinary.mimeType']);
+	return this._toURI(mimeType || this.typeSet['jBinary.mimeType'] || 'application/octet-stream');
 };
 
 proto.slice = function (start, end, forceCopy) {
