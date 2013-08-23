@@ -119,6 +119,7 @@ And `jBinary` provides handy methods for that:
 
   Loads data from given `source` using `jBinary.loadData`, detects typeset using Repo associations if it's not specified explicitly, creates `jBinary` instance on this data and typeset and returns it in `callback(error, binary)`.
 
+  If Repo is not used, `jBinary.load` would accept only explicit typeset objects (no loading by name nor file format auto-detection).
 
   * `toURI(mimeType = 'application/octet-stream')`
 

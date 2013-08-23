@@ -226,7 +226,7 @@ describe('Loading data', function () {
 		});
 	});
 
-	it('loadData from non-existent local file', function (done) {
+	it('from non-existent local file', function (done) {
 		jBinary.loadData('__NON_EXISTENT__', function (err, data) {
 			ok(err);
 			ok(!data);
@@ -248,6 +248,20 @@ describe('Loading data', function () {
 			});
 		});
 	}
+
+	it('with explicit typeset object', function (done) {
+		var typeSet = {
+			IS_CORRECT_TYPESET: true
+		};
+
+		jBinary.load('123.tar', typeSet, function (err, binary) {
+			ok(!err);
+			ok(binary instanceof jBinary);
+			equal(binary.view.byteLength, 512);
+			ok(typeSet.IS_CORRECT_TYPESET);
+			done();
+		});
+	});
 });
 
 //-----------------------------------------------------------------
