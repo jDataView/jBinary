@@ -53,7 +53,6 @@ function jBinary(view, typeSet) {
 	
 	this.view = view;
 	this.view.seek(0);
-	this._bitShift = 0;
 	this.contexts = [];
 	
 	if (typeSet) {
@@ -365,61 +364,10 @@ proto.typeSet = {
 	'bitfield': jBinary.Type({
 		params: ['bitSize'],
 		read: function () {
-			var bitSize = this.bitSize,
-				binary = this.binary,
-				fieldValue = 0;
-
-			if (binary._bitShift < 0 || binary._bitShift >= 8) {
-				var byteShift = binary._bitShift >> 3; // Math.floor(_bitShift / 8)
-				binary.skip(byteShift);
-				binary._bitShift &= 7; // _bitShift + 8 * Math.floor(_bitShift / 8)
-			}
-			if (binary._bitShift > 0 && bitSize >= 8 - binary._bitShift) {
-				fieldValue = binary.view.getUint8() & ~(-1 << (8 - binary._bitShift));
-				bitSize -= 8 - binary._bitShift;
-				binary._bitShift = 0;
-			}
-			while (bitSize >= 8) {
-				fieldValue = binary.view.getUint8() | (fieldValue << 8);
-				bitSize -= 8;
-			}
-			if (bitSize > 0) {
-				fieldValue = ((binary.view.getUint8() >>> (8 - (binary._bitShift + bitSize))) & ~(-1 << bitSize)) | (fieldValue << bitSize);
-				binary._bitShift += bitSize - 8; // passing negative value for next pass
-			}
-
-			return fieldValue >>> 0;
+			return this.binary.view.getUnsigned(this.bitSize);
 		},
 		write: function (value) {
-			var bitSize = this.bitSize,
-				binary = this.binary,
-				pos,
-				curByte;
-
-			if (binary._bitShift < 0 || binary._bitShift >= 8) {
-				var byteShift = binary._bitShift >> 3; // Math.floor(_bitShift / 8)
-				binary.skip(byteShift);
-				binary._bitShift &= 7; // _bitShift + 8 * Math.floor(_bitShift / 8)
-			}
-			if (binary._bitShift > 0 && bitSize >= 8 - binary._bitShift) {
-				pos = binary.tell();
-				curByte = binary.view.getUint8(pos) & (-1 << (8 - binary._bitShift));
-				curByte |= value >>> (bitSize - (8 - binary._bitShift));
-				binary.view.setUint8(pos, curByte);
-				bitSize -= 8 - binary._bitShift;
-				binary._bitShift = 0;
-			}
-			while (bitSize >= 8) {
-				binary.view.writeUint8((value >>> (bitSize - 8)) & 0xff);
-				bitSize -= 8;
-			}
-			if (bitSize > 0) {
-				pos = binary.tell();
-				curByte = binary.view.getUint8(pos) & ~(~(-1 << bitSize) << (8 - (binary._bitShift + bitSize)));
-				curByte |= (value & ~(-1 << bitSize)) << (8 - (binary._bitShift + bitSize));
-				binary.view.setUint8(pos, curByte);
-				binary._bitShift += bitSize - 8; // passing negative value for next pass
-			}
+			this.binary.view.writeUnsigned(value, this.bitSize);
 		}
 	}),
 	'if': jBinary.Template({
