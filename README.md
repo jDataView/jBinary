@@ -17,14 +17,24 @@ Typical scenario
 
 Documentation
 -------------
-  * [General API](https://github.com/jDataView/jBinary/wiki/General-API)
+  * General API
+    * [jBinary Constructor](https://github.com/jDataView/jBinary/wiki/jBinary-Constructor)
+    * [jBinary Methods](https://github.com/jDataView/jBinary/wiki/jBinary-Methods)
+    * [Internal jBinary Methods (useful for custom types)](https://github.com/jDataView/jBinary/wiki/Internal-jBinary-Methods)
   * [Loading/saving data](https://github.com/jDataView/jBinary/wiki/Loading-and-saving-data)
   * [Typesets](https://github.com/jDataView/jBinary/wiki/Typesets)
     * [Standard types](https://github.com/jDataView/jBinary/wiki/Standard-types)
     * Custom types
-      * [jBinary.Type](https://github.com/jDataView/jBinary/wiki/jBinary.Type)
-      * [jBinary.Template](https://github.com/jDataView/jBinary/wiki/jBinary.Template)
-  * [Usage](https://github.com/jDataView/jBinary/wiki/Usage)
+      * [Simple types with jBinary.Type](https://github.com/jDataView/jBinary/wiki/jBinary.Type)
+      * [Type wrappers with jBinary.Template](https://github.com/jDataView/jBinary/wiki/jBinary.Template)
+      * [Caveats](Caveats)
+    * Ready-to-use typesets
+      * [The Repo](https://github.com/jDataView/jBinary/wiki/The-Repo)
+      * [Typeset associations](https://github.com/jDataView/jBinary/wiki/Typeset-associations)
+  * Usage
+    * [Node.js](https://github.com/jDataView/jBinary/wiki/Usage-in-Node.js)
+    * [Browser](https://github.com/jDataView/jBinary/wiki/Usage-in-Browser)
+    * [AMD](https://github.com/jDataView/jBinary/wiki/Usage-with-AMD)
     * [Type usage syntax](https://github.com/jDataView/jBinary/wiki/Type-usage-syntax)
 
 Demos
