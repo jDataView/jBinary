@@ -27,7 +27,7 @@ Documentation
     * Custom types
       * [Simple types with jBinary.Type](https://github.com/jDataView/jBinary/wiki/jBinary.Type)
       * [Type wrappers with jBinary.Template](https://github.com/jDataView/jBinary/wiki/jBinary.Template)
-      * [Caveats](Caveats)
+      * [Caveats](https://github.com/jDataView/jBinary/wiki/Caveats)
     * Ready-to-use typesets
       * [The Repo](https://github.com/jDataView/jBinary/wiki/The-Repo)
       * [Typeset associations](https://github.com/jDataView/jBinary/wiki/Typeset-associations)
