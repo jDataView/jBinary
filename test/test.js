@@ -1,4 +1,4 @@
-var hasNodeRequire = typeof require === 'function' && !require.isBrowser;
+var hasNodeRequire = typeof require === 'function' && typeof window === 'undefined';
 
 if (hasNodeRequire) {
 	if (typeof jDataView === 'undefined') {
@@ -247,6 +247,16 @@ describe('Loading data', function () {
 				done();
 			});
 		});
+
+		it('from remote URL', function (done) {
+			this.timeout(30000);
+
+			jBinary.loadData('http://github.com/jDataView/jBinary/raw/master/test/123.tar', function (err, data) {
+				ok(!err, err);
+				equal(data.byteLength || data.length, 512);
+				done();
+			});
+		});
 	}
 
 	it('with explicit typeset object', function (done) {
@@ -255,7 +265,7 @@ describe('Loading data', function () {
 		};
 
 		jBinary.load('123.tar', typeSet, function (err, binary) {
-			ok(!err);
+			ok(!err, err);
 			ok(binary instanceof jBinary);
 			equal(binary.view.byteLength, 512);
 			ok(typeSet.IS_CORRECT_TYPESET);
@@ -265,7 +275,7 @@ describe('Loading data', function () {
 
 	it('with implicitly empty typeset object', function (done) {
 		jBinary.load('123.tar', function (err, binary) {
-			ok(!err);
+			ok(!err, err);
 			ok(binary instanceof jBinary);
 			equal(binary.view.byteLength, 512);
 			equal(binary.typeSet, jBinary.prototype.typeSet);
