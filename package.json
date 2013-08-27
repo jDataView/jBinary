@@ -29,6 +29,7 @@
     "type": "git",
     "url": "git://github.com/jDataView/jBinary.git"
   },
+  "license": "MIT",
   "dependencies": {
     "jdataview": "*",
     "request": "*"
