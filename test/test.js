@@ -262,6 +262,16 @@ describe('Loading data', function () {
 			done();
 		});
 	});
+
+	it('with implicitly empty typeset object', function (done) {
+		jBinary.load('123.tar', function (err, binary) {
+			ok(!err);
+			ok(binary instanceof jBinary);
+			equal(binary.view.byteLength, 512);
+			equal(binary.typeSet, jBinary.prototype.typeSet);
+			done();
+		});
+	});
 });
 
 //-----------------------------------------------------------------

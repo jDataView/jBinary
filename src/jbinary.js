@@ -712,6 +712,11 @@ jBinary.loadData = function (source, callback) {
 };
 
 jBinary.load = function (source, typeSet, callback) {
+	if (arguments.length < 3) {
+		callback = typeSet;
+		typeSet = undefined;
+	}
+	
 	jBinary.loadData(source, function (err, data) {
 		/* jshint expr: true */
 		err ? callback(err) : callback(null, new jBinary(data, typeSet));
