@@ -8,7 +8,7 @@ It works on top of [jDataView](https://github.com/jDataView/jDataView) binary pr
 Was inspired by [jParser](https://github.com/vjeux/jParser) and derived as new library with full set of I/O operations for manipulations on binary data in JavaScript.
 
 Typical scenario
-----------------
+================
 
   * Create your custom types using `jBinary.Type` (if needed).
   * Describe type set with JavaScript-compatible declarative syntax.
@@ -16,7 +16,8 @@ Typical scenario
   * Use it!
 
 Documentation
--------------
+=============
+
   * General API
     * [jBinary Constructor](https://github.com/jDataView/jBinary/wiki/jBinary-Constructor)
     * [jBinary Methods](https://github.com/jDataView/jBinary/wiki/jBinary-Methods)
@@ -38,11 +39,11 @@ Documentation
     * [Type usage syntax](https://github.com/jDataView/jBinary/wiki/Type-usage-syntax)
 
 Demos
------
+=====
 
 Please check out [jBinary.Repo](https://jDataView.github.io/jBinary.Repo/) for advanced usage and demos of some popular format. Feel free to submit more!
 
 License
--------
+=======
 
 This library is provided under [MIT license](https://raw.github.com/jDataView/jBinary/master/MIT-license.txt).
