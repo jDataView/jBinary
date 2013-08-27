@@ -727,7 +727,7 @@ function getJBinary(_jDataView) {
 	return jBinary;
 }
 
-if (typeof module === 'object' && module && typeof module.exports === 'object') {
+if (typeof module !== 'undefined' && typeof module.exports === 'object') {
 	module.exports = getJBinary(require('jdataview'));
 } else
 if (typeof define === 'function' && define.amd) {
