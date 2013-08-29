@@ -51,11 +51,8 @@ function jBinary(view, typeSet) {
 	this.view = view;
 	this.view.seek(0);
 	this.contexts = [];
-	
-	if (typeSet) {
-		this.typeSet = (proto.typeSet === typeSet || proto.typeSet.isPrototypeOf(typeSet)) ? typeSet : inherit(proto.typeSet, typeSet);
-		this.cacheKey = this._getCached(typeSet, function () { return proto.cacheKey + '.' + (++proto.id) }, true);
-	}
+
+	return this.as(typeSet, true);
 }
 
 var proto = jBinary.prototype;
@@ -460,6 +457,15 @@ proto.typeSet = {
 			}
 		}
 	})
+};
+
+proto.as = function (typeSet, modifyOriginal) {
+	var binary = modifyOriginal ? this : inherit(this);
+	if (typeSet) {
+		binary.typeSet = (proto.typeSet === typeSet || proto.typeSet.isPrototypeOf(typeSet)) ? typeSet : inherit(proto.typeSet, typeSet);
+		binary.cacheKey = binary._getCached(typeSet, function () { return proto.cacheKey + '.' + (++proto.id) }, true);
+	}
+	return binary;
 };
 
 var dataTypes = [

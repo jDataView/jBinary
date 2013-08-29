@@ -186,6 +186,25 @@ describe('Common operations:', function () {
 		notEqual(binary.read('char', 1), chr(1));
 		equal(pointerCopy.typeSet, binary.typeSet);
 	});
+
+	describe('as (cast)', function () {
+		var typeSet = binary.typeSet,
+			typeSet2 = {MY_TYPESET: true};
+
+		it('with inheritance from original binary', function () {
+			var binary2 = binary.as(typeSet2);
+			ok(binary.isPrototypeOf(binary2));
+			equal(binary.typeSet, typeSet);
+			ok(binary2.typeSet.MY_TYPESET);
+		});
+
+		it('with modification of original binary', function () {
+			var binary2 = binary.as(typeSet2, true);
+			equal(binary, binary2);
+			ok(binary.typeSet.MY_TYPESET);
+			binary.typeSet = typeSet;
+		});
+	});
 });
 
 //-----------------------------------------------------------------
