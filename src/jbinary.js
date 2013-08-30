@@ -39,6 +39,10 @@ function toValue(obj, binary, value) {
 }
 
 function jBinary(view, typeSet) {
+	if (view instanceof jBinary) {
+		return view.as(typeSet);
+	}
+
 	/* jshint validthis:true */
 	if (!(view instanceof jDataView)) {
 		view = new jDataView(view, undefined, undefined, typeSet ? typeSet['jBinary.littleEndian'] : undefined);
@@ -461,10 +465,10 @@ proto.typeSet = {
 
 proto.as = function (typeSet, modifyOriginal) {
 	var binary = modifyOriginal ? this : inherit(this);
-	if (typeSet) {
-		binary.typeSet = (proto.typeSet === typeSet || proto.typeSet.isPrototypeOf(typeSet)) ? typeSet : inherit(proto.typeSet, typeSet);
-		binary.cacheKey = binary._getCached(typeSet, function () { return proto.cacheKey + '.' + (++proto.id) }, true);
-	}
+	typeSet = typeSet || proto.typeSet;
+	binary.typeSet = (proto.typeSet === typeSet || proto.typeSet.isPrototypeOf(typeSet)) ? typeSet : inherit(proto.typeSet, typeSet);
+	binary.cacheKey = proto.cacheKey;
+	binary.cacheKey = binary._getCached(typeSet, function () { return proto.cacheKey + '.' + (++proto.id) }, true);
 	return binary;
 };
 
