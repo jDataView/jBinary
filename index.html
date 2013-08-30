@@ -59,10 +59,10 @@
             Binary in JavaScript
             ====================
 
-            * `charset=x-user-defined` (`XMLHttpRequest`)
+            * `charset=x-user-defined` (`XMLHttpRequest`) => `Array`
             * `CanvasPixelArray` (`<canvas />`)
             * `ArrayBuffer` (WebGL) + typed arrays (`Int32Array`, `Float64Array`, ...)
-            * `Buffer`
+            * `Buffer` (Node.js)
             * `DataView`
           </script>
           </section>
@@ -109,13 +109,23 @@
           </section>
           <section data-markdown>
           <script type="text/template">
-            Sequential write
+            Sequential write (jDataView only)
             ----------------
 
             * `write(I|Ui)nt8(value)`
             * `write(I|Ui)nt16(value, littleEndian)`
             * `write(I|Ui)nt32(value, littleEndian)`
             * `writeFloat32(value, littleEndian)`, `writeFloat64(value, littleEndian)`
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+            Bitfields (jDataView only)
+            ----------------
+
+            * `get(S|Uns)igned(bitLength, byteOffset)`
+            * `set(S|Uns)igned(byteOffset, value, bitLength)`
+            * `write(S|Uns)igned(value, bitLength)`
           </script>
           </section>
           <section data-markdown>
@@ -254,7 +264,7 @@ var char = view.getChar(); // a
 
             * `read(type, offset = binary.tell())`
             * `write(type, data, offset = binary.tell())`
-            * `slice(start, end, forceCopy = false)`
+            * `as(typeSet, modifyOriginal = false)`
           </script>
           </section>
           <section data-markdown>
@@ -263,6 +273,7 @@ var char = view.getChar(); // a
             * `seek(position)`
             * `seek(position, callback)`
             * `skip(count)`
+            * `slice(start, end, forceCopy = false)`
           </script>
           </section>
           <section>
@@ -307,8 +318,16 @@ if (shouldBeSame !== 12384) {
               * File instance (File API)
               * HTTP(S) URL
               * Data-URI (simple or base64-encoded)
-              * Node.js local file path.
+              * Node.js local file path
               * Node.js [Readable stream](http://nodejs.org/api/stream.html#stream_class_stream_readable).
+          </script>
+          </section>
+          <section data-markdown>
+          <script type="text/template">
+          Loading/saving data
+          -------------------
+
+            * `jBinary.load(source, [typeSet,] callback)`
             * `toURI(mimeType = 'application/octet-stream')`
           </script>
           </section>
@@ -358,7 +377,7 @@ if (shouldBeSame !== 12384) {
           -------
 
             * `char`
-            * `string(@length, encoding = 'binary')` - string of given length in binary or 'utf8' encoding; reads/writes to the end if length is not given
+            * `string(@length, encoding = 'binary')` - string of given length in binary or 'utf8' encoding; falls to `string0` if `length` is not given
             * `string0(@length, encoding = 'binary')` - null-terminated string stored in given number of bytes; treated as dynamic null-terminated string if `length` is not given
           </script>
           </section>
@@ -555,31 +574,10 @@ var byteArray = binary.read('byteArray'); // [0x04, 0x05, 0x06]
           ---------------
 
             * Include `jDataView` + `jBinary` scripts in browser.
+              <img src="img/component.png" height="50" />
             * Use as Node.js module.
             * Load in AMD style.
           </script>
-          </section>
-          <section>
-            <h3>Ready-to-go structures in official repo:<br /><a href="https://github.com/jDataView/jBinary.Repo"><small>(feel free to submit own!)</small></a></h3>
-            <ul id="fileFormats"></ul>
-            <script>
-              function listItems(response) {
-                var ul = document.getElementById('fileFormats');
-                var items = response.data;
-                for (var i = 0; i < items.length; i++) {
-                  var item = items[i];
-                  if (item.type !== 'dir') {
-                    continue;
-                  }
-                  var link = document.createElement('a');
-                  link.innerHTML = link.href = item.name;
-                  var li = document.createElement('li');
-                  li.appendChild(link);
-                  ul.appendChild(li);
-                }
-              }
-            </script>
-            <script src="https://api.github.com/repos/jDataView/jBinary.Repo/contents/?callback=listItems"></script>
           </section>
           <section>
             More questions?<br />Don't hesitate to ask <a href="https://twitter.com/RReverser">in Twitter</a> or <a href="mailto:me+jdataview@rreverser.com">via e-mail</a>!
@@ -632,7 +630,6 @@ var byteArray = binary.read('byteArray'); // [0x04, 0x05, 0x06]
         ]
       });
 
-      /*
       var demoVideoSlide = document.getElementById('demoVideo');
       var demoVideoContainer = document.getElementById('demoVideoContainer');
       var videoSrc = demoVideoContainer.src;
@@ -641,10 +638,11 @@ var byteArray = binary.read('byteArray'); // [0x04, 0x05, 0x06]
         demoVideoContainer.src = slide === demoVideoSlide ? videoSrc : '';
       }
 
+      onSlide();
+
       Reveal.addEventListener('slidechanged', function(event) {
         onSlide(event.currentSlide);
       });
-      */
     </script>
 
   </body>
