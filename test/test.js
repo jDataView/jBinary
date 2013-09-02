@@ -627,7 +627,7 @@ describe('Writing', function () {
 	});
 
 	// setter = value || {value, args?, check?}
-	function testSetters(typeName, setters) {
+	function testSetters(typeName, setters, stdSize) {
 		it(typeName, function () {
 			for (var i = 0; i < setters.length; i++) {
 				var setter = setters[i];
@@ -641,15 +641,16 @@ describe('Writing', function () {
 					check = setter.check || equal,
 					value = setter.value;
 
-				binary.write(type, value, 0);
+				var writtenSize = binary.write(type, value, 0);
+				equal('size' in setter ? setter.size : stdSize, writtenSize, 'writtenSize = ' + writtenSize + ' != ' + setter.size);
 				check(binary.read(type, 0), value);
 			}
 		});
 	}
 
 	testSetters('blob', [
-		{args: [2], value: [0xfe, 0xfd], check: compareBytes},
-		{args: [3], value: [0xfd, 0xfe, 0xff], check: compareBytes}
+		{args: [2], value: [0xfe, 0xfd], size: 2, check: compareBytes},
+		{args: [3], value: [0xfd, 0xfe, 0xff], size: 3, check: compareBytes}
 	]);
 
 	testSetters('char', [
@@ -657,20 +658,20 @@ describe('Writing', function () {
 		chr(0x03),
 		chr(0x00),
 		chr(0xff)
-	]);
+	], 1);
 
 	testSetters('string', [
-		{args: [3], value: chr(1) + chr(2) + chr(3)},
-		{args: [2], value: chr(8) + chr(9)},
-		{args: [6, 'utf8'], value: chr(1092) + chr(1099) + chr(1074)}
+		{args: [3], value: chr(1) + chr(2) + chr(3), size: 3},
+		{args: [2], value: chr(8) + chr(9), size: 2},
+		{args: [6, 'utf8'], value: chr(1092) + chr(1099) + chr(1074), size: 6}
 	]);
 
 	testSetters('string0', [
-		{args: [4], value: chr(0xff) + chr(0xfe) + chr(0xfd), check: function (value, expected) {
+		{args: [4], value: chr(0xff) + chr(0xfe) + chr(0xfd), size: 3 + 1, check: function (value, expected) {
 			equal(value, expected);
 			equal(binary.read('uint8', value.length), 0);
 		}},
-		{value: chr(127) + chr(0) + chr(1) + chr(65) + chr(66), check: function (value, expected) {
+		{value: chr(127) + chr(0) + chr(1) + chr(65) + chr(66), size: 5 + 1, check: function (value, expected) {
 			equal(value, expected.slice(0, value.length));
 			equal(binary.read('uint8', value.length), 0);
 		}}
@@ -679,7 +680,7 @@ describe('Writing', function () {
 	testSetters('int8', [
 		-10,
 		29
-	]);
+	], 1);
 
 	testSetters('uint8', [
 		19,
@@ -687,27 +688,27 @@ describe('Writing', function () {
 		0,
 		255,
 		254
-	]);
+	], 1);
 
 	testSetters('int16', [
 		-17593,
 		23784
-	]);
+	], 2);
 
 	testSetters('uint16', [
 		39571,
 		35
-	]);
+	], 2);
 
 	testSetters('int32', [
 		-1238748268,
 		69359465
-	]);
+	], 4);
 
 	testSetters('uint32', [
 		3592756249,
 		257391
-	]);
+	], 4);
 
 	testSetters('float32', [
 		Math.pow(2, -149),
@@ -723,7 +724,7 @@ describe('Writing', function () {
 		-Infinity,
 		0,
 		{value: NaN, check: compareWithNaN}
-	]);
+	], 4);
 
 	testSetters('float64', [
 		Math.pow(2, -1074),
@@ -738,18 +739,18 @@ describe('Writing', function () {
 		1.0000000000000004,
 		-2,
 		{value: NaN, check: compareWithNaN}
-	]);
+	], 8);
 
 	testSetters('int64', [
 		{value: -283686985483775, check: compareInt64},
 		{value: -2, check: compareInt64},
 		{value: 4822678189205111, check: compareInt64}
-	]);
+	], 8);
 
 	testSetters('uint64', [
 		{value: 29273397577908224, check: compareInt64},
 		{value: 4822678189205111, check: compareInt64}
-	]);
+	], 8);
 
 	it('skip', function () {
 		binary.seek(0);
@@ -762,18 +763,19 @@ describe('Writing', function () {
 	testSetters('enum', [
 		{args: ['uint8', {'0': false, '1': true}], value: false},
 		{args: ['uint8', ['false', 'true']], value: 'true'}
-	]);
+	], 1);
 
 	testSetters('array', [
-		{args: ['uint16', 2], value: [65279, 64765], check: deepEqual},
-		{args: ['uint8', 3], value: [0x00, 0xba, 0x01], check: deepEqual}
+		{args: ['uint16', 2], value: [65279, 64765], size: 2 * 2, check: deepEqual},
+		{args: ['uint8', 3], value: [0x00, 0xba, 0x01], size: 1 * 3, check: deepEqual}
 	]);
 
 	it('const', function () {
-		var type = ['const', 'uint16', 123, true];
+		var type = ['const', 'uint16', 123, true],
+			size = 2;
 
 		try {
-			binary.write(type.slice(0, -1), 10, 0);
+			equal(binary.write(type.slice(0, -1), 10, 0), size);
 			binary.read(type, 0);
 			ok(false);
 		} catch (e) {
@@ -781,7 +783,7 @@ describe('Writing', function () {
 		}
 
 		try {
-			binary.write(type, 10, 0);
+			equal(binary.write(type, 10, 0), size);
 			equal(binary.read(type, 0), 123);
 		} catch (e) {
 			ok(false);
@@ -789,13 +791,13 @@ describe('Writing', function () {
 	});
 
 	testSetters('if', [
-		{args: [true, 'uint8'], value: 123},
-		{args: [function () { return false }, 'uint8', 'uint16'], value: 17893}
+		{args: [true, 'uint8'], value: 123, size: 1},
+		{args: [function () { return false }, 'uint8', 'uint16'], value: 17893, size: 2}
 	]);
 
 	testSetters('if_not', [
-		{args: [false, 'uint8'], value: 123},
-		{args: [function () { return false }, 'uint16', 'uint8'], value: 17893}
+		{args: [false, 'uint8'], value: 123, size: 1},
+		{args: [function () { return false }, 'uint16', 'uint8'], value: 17893, size: 2}
 	]);
 
 	// setter = {value, bitLength}
@@ -852,6 +854,7 @@ describe('Writing', function () {
 				}
 			]
 		},
+		size: 7,
 		check: deepEqual
 	}]);
 
@@ -872,6 +875,7 @@ describe('Writing', function () {
 			],
 			extraByte: 0x10
 		},
+		size: 7 + 1,
 		check: deepEqual
 	}]);
 
@@ -879,6 +883,7 @@ describe('Writing', function () {
 		{
 			args: [2],
 			value: new jBinary([0x12, 0x34]),
+			size: 2,
 			check: function (readBinary, writeBinary) {
 				deepEqual(readBinary.read(['array', 'uint8'], 0), writeBinary.read(['array', 'uint8'], 0));
 				equal(readBinary.view.buffer, binary.view.buffer);
@@ -898,13 +903,14 @@ describe('Writing', function () {
 				return externalValue;
 			};
 
-		newBinary.write(lazyType, nativeAccessor);
+		equal(newBinary.write(lazyType, nativeAccessor), length);
 		equal(newBinary.tell(), length);
 		ok(!('value' in nativeAccessor));
 		deepEqual(binary.read(blobType, 0), newBinary.read(blobType, 0));
 
 		newBinary.seek(0);
-		newBinary.write(lazyType, externalAccessor);
+		equal(newBinary.write(lazyType, externalAccessor), length);
+		equal(newBinary.tell(), length);
 		deepEqual(newBinary.read(innerType, 0), externalValue);
 	});
 

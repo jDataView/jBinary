@@ -586,15 +586,19 @@ proto.readAll = function () {
 };
 
 proto.write = function (type, data, offset) {
-	this._action(
+	return this._action(
 		type,
 		offset,
-		function () { this.createProperty(type).write(data, this.contexts[0]) }
+		function () {
+			var start = this.tell();
+			this.createProperty(type).write(data, this.contexts[0]);
+			return this.tell() - start;
+		}
 	);
 };
 
 proto.writeAll = function (data) {
-	this.write('jBinary.all', data, 0);
+	return this.write('jBinary.all', data, 0);
 };
 
 proto._toURI =
