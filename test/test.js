@@ -146,16 +146,18 @@ function b() {
 	return new jBinary(arguments);
 }
 
-function compareInt64(value, expected) {
-	equal(Number(value), expected);
+function compareInt64(value, expected, message) {
+	value = Number(value);
+	equal(value, expected, message || (value + ' != ' + expected));
 }
 
-function compareBytes(value, expected) {
-	deepEqual(Array.prototype.slice.call(value), expected);
+function compareBytes(value, expected, message) {
+	value = Array.prototype.slice.call(value);
+	deepEqual(value, expected, message || '[' + value + '] != [' + expected + ']');
 }
 
-function compareWithNaN(value) {
-	ok(isNaN(value));
+function compareWithNaN(value, expected, message) {
+	ok(isNaN(value), message || value + ' != NaN');
 }
 
 describe('Common operations:', function () {
@@ -165,26 +167,47 @@ describe('Common operations:', function () {
 		equal(binary.getType([type]), type);
 	});
 
-	it('slice', function () {
-		try {
-			binary.slice(5, 10);
-			ok(false);
-		} catch(e) {
-			ok(true);
-		}
+	describe('slice', function () {
+		it('with bound check', function () {
+			try {
+				binary.slice(5, 10);
+				ok(false);
+			} catch(e) {
+				ok(true);
+			}
+		});
 
-		var pointerCopy = binary.slice(1, 4);
-		compareBytes(pointerCopy.read('blob'), [0xfe, 0xfd, 0xfc]);
-		pointerCopy.write('char', chr(1), 0);
-		equal(binary.read('char', 1), chr(1));
-		pointerCopy.write('char', chr(0xfe), 0);
-		equal(pointerCopy.typeSet, binary.typeSet);
+		it('as pointer to original data', function () {
+			var pointerCopy = binary.slice(1, 4);
+			compareBytes(pointerCopy.read('blob'), [0xfe, 0xfd, 0xfc]);
+			pointerCopy.write('char', chr(1), 0);
+			equal(binary.read('char', 1), chr(1));
+			pointerCopy.write('char', chr(0xfe), 0);
+			equal(pointerCopy.typeSet, binary.typeSet);
+		});
 
-		var copy = binary.slice(1, 4, true);
-		compareBytes(copy.read('blob'), [0xfe, 0xfd, 0xfc]);
-		copy.write('char', chr(1), 0);
-		notEqual(binary.read('char', 1), chr(1));
-		equal(pointerCopy.typeSet, binary.typeSet);
+		it('as copy of original data', function () {
+			var copy = binary.slice(1, 4, true);
+			compareBytes(copy.read('blob'), [0xfe, 0xfd, 0xfc]);
+			copy.write('char', chr(1), 0);
+			notEqual(binary.read('char', 1), chr(1));
+			equal(copy.typeSet, binary.typeSet);
+		});
+
+		it('with only start offset argument given', function () {
+			var pointerCopy = binary.slice(1);
+			compareBytes(pointerCopy.read('blob'), [0xfe, 0xfd, 0xfc, 0xfa, 0x00, 0xba, 0x01]);
+		});
+
+		it('with negative start offset given', function () {
+			var pointerCopy = binary.slice(-2);
+			compareBytes(pointerCopy.read('blob'), [0xba, 0x01]);
+		});
+
+		it('with negative end offset given', function () {
+			var pointerCopy = binary.slice(1, -2);
+			compareBytes(pointerCopy.read('blob'), [0xfe, 0xfd, 0xfc, 0xfa, 0x00]);
+		});
 	});
 
 	describe('as (cast)', function () {
