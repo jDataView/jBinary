@@ -11,4 +11,5 @@ env:
   - secure: oeGwEBKblxEvnJEnvB2kRTrgp5FJbN9XiCXifmKThf4YHpYCoAfvfWbi6mfxkD65eZorbCSGOz9g384+8R1+cK5dstjoZRq2wpHGPu7nOX4GXmodqAWqjN2dB/nnd+jq1LWatuXXUbouWo51ll+Fi08wVlvHN6a1obGZLyn49f4=
 matrix:
   include:
+    - before_script: "git clone https://github.com/jDataView/jDataView.git ../jDataView"
     - script: "phantomjs --local-to-remote-url-access=true --web-security=false test/phantom-mocha.js test/index.html"
