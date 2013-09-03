@@ -48,8 +48,8 @@ part('Publishing to GitHub', function (fs, rimraf) {
 			var exec = child_process.exec,
 				distRepo = process.argv[2];
 
-			exec('git clone https://' + env.GH_TOKEN + '@github.com/' + distRepo + '.git dist', function (err) {
-				if (err) return console.error(err);
+			exec('git clone https://' + env.GH_TOKEN + '@github.com/' + distRepo + '.git dist', function (err, stdout, stderr) {
+				if (err) return console.error(stderr);
 
 				var pkgInfo = JSON.parse(fs.readFileSync('package.json')),
 					scriptName = pkgInfo.name + '.js';
@@ -71,8 +71,8 @@ part('Publishing to GitHub', function (fs, rimraf) {
 						'git add .',
 						'git commit -m "Updated ' + scriptName + '"',
 						'git push origin'
-					].join(' && '), {cwd: 'dist'}, function (err) {
-						if (err) return console.error(err);
+					].join(' && '), {cwd: 'dist'}, function (err, stdout, stderr) {
+						if (err) return console.error(stderr);
 						console.log('Pushed to dist repo.');
 					});
 				});
