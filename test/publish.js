@@ -14,7 +14,7 @@ function part(name, exec) {
 		})
 	);
 }
-/*
+
 part('Checking configuration', function () {
 	if (env.TRAVIS_JOB_NUMBER && env.TRAVIS_JOB_NUMBER.slice(-2) !== '.1') {
 		console.error('Node ' + process.version + ' is not configured for publish.');
@@ -41,7 +41,7 @@ part('Publishing to npm', function (npm) {
 		});
 	});
 });
-*/
+
 part('Publishing to GitHub', function (fs, rimraf) {
 	rimraf('dist', function () {
 		part('Cloning dist repo', function (child_process) {
