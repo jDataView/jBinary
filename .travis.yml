@@ -9,6 +9,7 @@ env:
   - secure: iavEdFxn7fNKbkulrS2iQBOjJ9W8qWi6qYhdYdzVII0xYgMHPN10nvYHIA5dMYxC+IfWWz2qMyP9Aurn/VxMQOBDj4RhYflLo9tmrgkDWTpsu3tn88RQmgaBbX9eDUDG8PoFciEXg6ckCHfpjsh/CAUOdufJta9YZJ1vGjLUfVs=
   - secure: ALf9WMMWGLIkqqF+ALMmUosxFstbz7lvyUK3p6/qPmLMtgjqI7eqxL8IFXM+nxjZXNIDqOXGCWhytIzVbfRvN1otJl5zp6Q+PnbgwlsuiuJOTo42t9PmnkGzYIYuquNecqeWDDmluPmrKuRYD0nHXQDd91GDXyDdIrrYU+o19tY=
   - secure: oeGwEBKblxEvnJEnvB2kRTrgp5FJbN9XiCXifmKThf4YHpYCoAfvfWbi6mfxkD65eZorbCSGOz9g384+8R1+cK5dstjoZRq2wpHGPu7nOX4GXmodqAWqjN2dB/nnd+jq1LWatuXXUbouWo51ll+Fi08wVlvHN6a1obGZLyn49f4=
+  - secure: CZr8QDkFtHjiezI6Sr+LZ/lxQj+Txe1tFSlNh42psE6FlhipOrae8dsUS4cffPDyxy5NcUc75GgKy1u4MRg7RuG5UiFVrdul14juXn3L0m6TdYIz/ZvboYby5sjaAOAfzFRJR70+2GCmPf9ijHhPZzdcN+gGr6vmEoSHVY+fmXw=
 matrix:
   include:
     - node_js: '0.10'
