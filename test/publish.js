@@ -49,14 +49,19 @@ part('Publishing to GitHub', function (fs, rimraf) {
 				distRepo = process.argv[2];
 
 			exec('git clone https://' + env.GH_TOKEN + '@github.com/' + distRepo + '.git dist', function (err, stdout, stderr) {
-				if (err) return console.error(stderr);
+				if (err) {
+					console.error('Error: ' + err);
+					console.error('Output (stdout): ' + stdout);
+					console.error('Output (stderr): ' + stderr);
+					return;
+				}
 
 				var pkgInfo = JSON.parse(fs.readFileSync('package.json')),
 					scriptName = pkgInfo.name + '.js';
 					
 				part('Minifying script', function (uglifyJs) {
 					var minified = uglifyJs.minify(pkgInfo.main, {
-						sourceRoot: '//raw.github.com/jDataView/jDataView/master',
+						sourceRoot: '//raw.github.com/' + env.TRAVIS_REPO_SLUG + '/master',
 						outSourceMap: scriptName + '.map'
 					});
 
@@ -72,7 +77,12 @@ part('Publishing to GitHub', function (fs, rimraf) {
 						'git commit -m "Updated ' + scriptName + '"',
 						'git push origin'
 					].join(' && '), {cwd: 'dist'}, function (err, stdout, stderr) {
-						if (err) return console.error(stderr);
+						if (err) {
+							console.error('Error: ' + err);
+							console.error('Output (stdout): ' + stdout);
+							console.error('Output (stderr): ' + stderr);
+							return;
+						}
 						console.log('Pushed to dist repo.');
 					});
 				});
