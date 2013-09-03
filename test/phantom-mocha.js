@@ -74,7 +74,13 @@ page.onResourceReceived = function() {
                     var passes = 0;
                     var failures = 0;
                     runner.on("pass", function() { passes++; });
-                    runner.on("fail", function() { failures++; });
+                    runner.on("fail", function(test) {
+                        failures++;
+                        var current = test, title = [];
+                        do { title.push(current.title) } while (current = current.parent);
+                        title = title.reverse().slice(1).join(' ');
+                        console.log(title + ":\n" + test.err + "\n");
+                    });
                     runner.on("end", function() {
                         var duration = (new Date()).getTime() - start;
                         console.log("Tests passed: " + passes);

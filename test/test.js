@@ -249,7 +249,7 @@ describe('Loading data', function () {
 		});
 	});
 
-	if (typeof Blob !== 'undefined') {
+	if (typeof Blob === 'function') {
 		it('from HTML5 Blob', function (done) {
 			var blob = new Blob(['123']);
 			jBinary.loadData(blob, function (err, data) {

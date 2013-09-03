@@ -684,9 +684,13 @@ jBinary.loadData = function (source, callback) {
 				};
 			}
 
-			xhr.onload = function() {
+			var cbError = function (string) {
+				callback(new Error(string));
+			};
+
+			xhr.onload = function () {
 				if (this.status !== 0 && this.status !== 200) {
-					return callback(new Error('HTTP Error #' + this.status + ': ' + this.statusText));
+					return cbError('HTTP Error #' + this.status + ': ' + this.statusText);
 				}
 
 				// emulating response field for IE9
@@ -697,7 +701,11 @@ jBinary.loadData = function (source, callback) {
 				callback(null, this.response);
 			};
 
-			xhr.send();
+			xhr.onerror = function () {
+				cbError('Network error.');
+			};
+
+			xhr.send(null);
 		} else {
 			var isHTTP = /^(https?):\/\//.test(source);
 
