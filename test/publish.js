@@ -50,7 +50,7 @@ part('Publishing to GitHub', function (fs, rimraf) {
 
 			exec('git clone https://' + env.GH_TOKEN + '@github.com/' + distRepo + '.git dist', function (err, stdout, stderr) {
 				if (err) {
-					console.error('Error: ' + err);
+					console.error(err);
 					console.error('Output (stdout): ' + stdout);
 					console.error('Output (stderr): ' + stderr);
 					return;
@@ -78,7 +78,7 @@ part('Publishing to GitHub', function (fs, rimraf) {
 						'git push origin'
 					].join(' && '), {cwd: 'dist'}, function (err, stdout, stderr) {
 						if (err) {
-							console.error('Error: ' + err);
+							console.error(err);
 							console.error('Output (stdout): ' + stdout);
 							console.error('Output (stderr): ' + stderr);
 							return;
