@@ -1,0 +1,3 @@
+[submodule "publish"]
+	path = publish
+	url = https://github.com/RReverser/travis-publish-js.git
