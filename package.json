@@ -1,6 +1,6 @@
 {
   "name": "jbinary",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "description": "High-level I/O for binary data.",
   "keywords": [
     "parse",
@@ -22,8 +22,7 @@
   ],
   "main": "src/jbinary.js",
   "scripts": {
-    "test": "cd test && node test.runner.js",
-    "posttest": "node test/publish jDataView/dist"
+    "test": "cd test && node test.runner.js"
   },
   "repository": {
     "type": "git",

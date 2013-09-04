@@ -24,7 +24,7 @@ part('Checking configuration', function () {
 	var missingEnv = ['NPM_USERNAME', 'NPM_PASSWORD', 'NPM_EMAIL', 'GH_TOKEN'].filter(function (name) { return !(name in env) });
 
 	if (missingEnv.length) {
-		throw new Error(missingEnv.join() + ' environment variables should be set for publish.');
+		throw new Error(missingEnv.join(', ') + ' environment variables should be set for publish.');
 	}
 });
 

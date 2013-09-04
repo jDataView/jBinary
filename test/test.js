@@ -108,6 +108,17 @@ describe('Library code', function () {
 			done();
 		});
 	});
+
+	if (!hasNodeRequire) {
+		it('should be able to self-remove from global namespace', function () {
+			var realJB = jBinary,
+				jb = jBinary.noConflict();
+
+			equal(jb, realJB);
+			ok(!jBinary);
+			jBinary = realJB;
+		});
+	}
 });
 
 var chr = String.fromCharCode,
