@@ -427,11 +427,10 @@ proto.typeSet = {
 	}),
 	'lazy': jBinary.Template({
 		marker: 'jBinary.Lazy',
-		params: ['innerType'],
-		setParams: function (innerType, length) {
-			this.baseType = ['binary', length];
+		params: ['innerType', 'length'],
+		getBaseType: function () {
+			return ['binary', this.length, this.binary.typeSet];
 		},
-		typeParams: ['innerType'],
 		read: function () {
 			var accessor = function (newValue) {
 				if (arguments.length === 0) {

@@ -635,6 +635,8 @@ describe('Reading', function () {
 		resetAccessor();
 		lazy(innerValue);
 		checkState(true, 0);
+
+		equal(lazy.binary.typeSet, binary.typeSet);
 	});
 
 	this.tests.forEach(function (test) {
