@@ -446,7 +446,9 @@ proto.typeSet = {
 			};
 			accessor[this.marker] = true;
 			return extend(accessor, {
-				binary: this.baseRead(),
+				binary: extend(this.baseRead(), {
+					contexts: this.binary.contexts.slice()
+				}),
 				innerType: this.innerType
 			});
 		},

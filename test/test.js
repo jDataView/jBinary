@@ -648,6 +648,22 @@ describe('Reading', function () {
 		checkState(true, 0);
 
 		equal(lazy.binary.typeSet, binary.typeSet);
+
+		var obj = {
+			innerObj: {
+				someLazy: ['lazy', jBinary.Type({
+					read: function (context) {
+						ok(context);
+						ok('someLazy' in context);
+						var parentContext = this.binary.getContext(1);
+						ok(parentContext);
+						equal(parentContext.innerObj, context);
+					}
+				}), 0]
+			}
+		};
+
+		binary.read(obj).innerObj.someLazy();
 	});
 
 	this.tests.forEach(function (test) {
