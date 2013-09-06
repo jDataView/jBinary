@@ -22,8 +22,7 @@
   ],
   "main": "src/jbinary.js",
   "scripts": {
-    "test": "cd test && node test.runner.js",
-    "posttest": "node test/publish"
+    "test": "cd test && node test.runner.js"
   },
   "repository": {
     "type": "git",
@@ -42,6 +41,8 @@
     "requirejs": "*",
     "npm": "*",
     "mocha": "~1.12.0",
-    "qunit-mocha-ui": "*"
+    "qunit-mocha-ui": "*",
+    "uglify-js": "~2.4.0",
+    "rimraf": "~2.2.2"
   }
 }

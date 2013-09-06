@@ -754,7 +754,11 @@ if (typeof module !== 'undefined' && typeof module.exports === 'object') {
 if (typeof define === 'function' && define.amd) {
 	define(['jdataview'], getJBinary);
 } else {
-	global.jBinary = getJBinary(global.jDataView);
+	var oldGlobal = global.jBinary;
+	(global.jBinary = getJBinary(global.jDataView)).noConflict = function () {
+		global.jBinary = oldGlobal;
+		return this;
+	};
 }
 
 })((function () { /* jshint strict: false */ return this })());
