@@ -34,7 +34,7 @@ try {
     // otherwise, assume PhantomJS 1.4
     args = phantom.args;
     lengthOkay = (args.length === 1);
-    appName = 'phantom-qunit.js'
+    appName = 'phantom-mocha.js'
     url = args[0];
 }
 
@@ -49,57 +49,30 @@ function printError(message) {
 
 var page = require("webpage").create();
 
-var attachedDoneCallback = false;
+function isPhantomAttached() {
+    return page.evaluate(function() {return window.phantomAttached})
+}
+
 page.onResourceReceived = function() {
-    // Without this guard, I was occasionally seeing the done handler
-    // pushed onto the array multiple times -- it looks like the
-    // function was queued up several times, depending on the server.
-    if (!attachedDoneCallback) {
-        attachedDoneCallback = page.evaluate(function() {
-            if (window.mocha) {
-                // Unfortunately, there's no easy hook into Mocha's results
-                // like there is in QUnit or Jasmine.  But, since mocha.run
-                // returns the runner (after it's been started), we can wrap
-                // the original mocha.run and tap into the runner to set up our
-                // hooks.  This has the side effect of making this script
-                // useless if the test doesn't use mocha.run to start the
-                // tests.
-                var oldRun = window.mocha.run;
-                window.mocha.run = function(fn) {
-                    var runner = oldRun(fn);
+    //attach the end event handler to all mocha.Runner instances
+    page.evaluate(function() {
+        if (!window.mocha || window.phantomAttached) return;
 
-                    // runner has already started by the time we get here...
-                    // but only barely, so just store the current time
-                    var start = (new Date()).getTime();
-                    var passes = 0;
-                    var failures = 0;
-                    runner.on("pass", function() { passes++; });
-                    runner.on("fail", function(test) {
-                        failures++;
-                        var current = test, title = [];
-                        do { title.push(current.title) } while (current = current.parent);
-                        title = title.reverse().slice(1).join(' ');
-                        console.log(title + ":\n" + test.err + "\n");
-                    });
-                    runner.on("end", function() {
-                        var duration = (new Date()).getTime() - start;
-                        console.log("Tests passed: " + passes);
-                        console.log("Tests failed: " + failures);
-                        console.log("Total tests:  " + (passes + failures));
-                        console.log("Runtime (ms): " + duration);
-                        window.phantomComplete = true;
-                        window.phantomResults = {
-                            failed: failures
-                        };
-                    });
-                }
+        (function () {
+            this.on("fail", function (test, err) {
+                var current = test, title = [];
+                do { title.push(current.title) } while (current = current.parent);
+                title = title.reverse().slice(1).join(' ');
+                console.log(title + ":\n" + err + "\n");
+            });
+            this.on("end", function() {
+                window.phantomComplete = true;
+                window.phantomResults = this.stats;
+            });
+        }).call(/* new version */ ((window.Mocha && window.Mocha.Runner) || /* old version */ window.mocha.Runner).prototype);
 
-                return true;
-            }
-
-            return false;
-        });
-    }
+        window.phantomAttached = true;
+    });
 }
 
 page.onConsoleMessage = function(message) {
@@ -108,14 +81,21 @@ page.onConsoleMessage = function(message) {
 
 page.open(url, function(success) {
     if (success === "success") {
-        if (!attachedDoneCallback) {
+        if (!isPhantomAttached()) {
             printError("Phantom callbacks not attached in time.  See http://github.com/mark-rushakoff/OpenPhantomScripts/issues/1");
             phantom.exit(1);
         }
 
         setInterval(function() {
             if (page.evaluate(function() {return window.phantomComplete;})) {
-                var failures = page.evaluate(function() {return window.phantomResults.failed;});
+                var failures = page.evaluate(function() {
+                    var stats = window.phantomResults;
+                    console.log("Tests passed: " + stats.passes);
+                    console.log("Tests failed: " + stats.failures);
+                    console.log("Total tests:  " + stats.tests);
+                    console.log("Runtime (ms): " + stats.duration);
+                    return stats.failures;
+                });
                 phantom.exit(failures);
             }
         }, 250);
