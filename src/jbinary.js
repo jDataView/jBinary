@@ -756,11 +756,34 @@ if (typeof module !== 'undefined' && typeof module.exports === 'object') {
 if (typeof define === 'function' && define.amd) {
 	define(['jdataview'], getJBinary);
 } else {
-	var oldGlobal = global.jBinary;
-	(global.jBinary = getJBinary(global.jDataView)).noConflict = function () {
-		global.jBinary = oldGlobal;
-		return this;
-	};
+	(function (useGlobal) {
+		if ('jDataView' in global) {
+			useGlobal();
+		} else {
+			var tempKey = 'jBinary_activate';
+			
+			global[tempKey] = function () {
+				try {
+					delete global[tempKey];
+				} catch (e) {
+					// hello, old IE!
+					global[tempKey] = undefined;
+				}
+
+				useGlobal();
+			};
+
+			// yes, document.write is evil but looks like the only way to block execution of further scripts until external jDataView will be loaded
+			/* jshint evil: true */
+			document.write('<script src="//jdataview.github.io/dist/jdataview.js"></script><script>' + tempKey + '()</script>');
+		}
+	})(function () {
+		var oldGlobal = global.jBinary;
+		(global.jBinary = getJBinary(global.jDataView)).noConflict = function () {
+			global.jBinary = oldGlobal;
+			return this;
+		};
+	});
 }
 
 })((function () { /* jshint strict: false */ return this })());
