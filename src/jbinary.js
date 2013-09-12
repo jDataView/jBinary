@@ -754,6 +754,12 @@ if (typeof module !== 'undefined' && typeof module.exports === 'object') {
 	module.exports = getJBinary(require('jdataview'));
 } else
 if (typeof define === 'function' && define.amd) {
+	require.config({
+		paths: {
+			jdataview: [require.toUrl('jdataview'), '//jdataview.github.io/dist/jdataview']
+		}
+	});
+
 	define(['jdataview'], getJBinary);
 } else {
 	(function (useGlobal) {
@@ -761,7 +767,7 @@ if (typeof define === 'function' && define.amd) {
 			useGlobal();
 		} else {
 			var tempKey = 'jBinary_activate';
-			
+
 			global[tempKey] = function () {
 				try {
 					delete global[tempKey];
