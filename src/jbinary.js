@@ -8,7 +8,7 @@ if (!('atob' in global) || !('btoa' in global)) {
 (function(){var t=global,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n=function(){try{document.createElement("$")}catch(t){return t}}();t.btoa||(t.btoa=function(t){for(var o,e,a=0,c=r,f="";t.charAt(0|a)||(c="=",a%1);f+=c.charAt(63&o>>8-8*(a%1))){if(e=t.charCodeAt(a+=.75),e>255)throw n;o=o<<8|e}return f}),t.atob||(t.atob=function(t){if(t=t.replace(/=+$/,""),1==t.length%4)throw n;for(var o,e,a=0,c=0,f="";e=t.charAt(c++);~e&&(o=a%4?64*o+e:e,a++%4)?f+=String.fromCharCode(255&o>>(6&-2*a)):0)e=r.indexOf(e);return f})})();
 }
 
-var hasNodeRequire = typeof require === 'function' && !('window' in global) ? require : function () {},
+var NODEJS = Object.prototype.toString.call(global.process) === '[object process]',
 	jDataView;
 
 function extend(obj) {
@@ -621,45 +621,47 @@ proto.slice = function (start, end, forceCopy) {
 	return new jBinary(this.view.slice(start, end, forceCopy), this.typeSet);
 };
 
-var hasStreamSupport = hasNodeRequire('stream') && require('stream').Readable;
+var ReadableStream = NODEJS && require('stream').Readable;
 
 jBinary.loadData = function (source, callback) {
-	if ('Blob' in global && source instanceof Blob) {
-		var reader = new FileReader();
-		reader.onload = reader.onerror = function() { callback(this.error, this.result) };
-		reader.readAsArrayBuffer(source);
-	} else
-	if (hasStreamSupport && source instanceof require('stream').Readable) {
-		var buffers = [];
+	var dataParts;
 
-		source
-		.on('readable', function () { buffers.push(this.read()) })
-		.on('end', function () { callback(null, Buffer.concat(buffers)) })
-		.on('error', callback);
-	} else {
-		if (typeof source !== 'string') {
+	switch (true) {
+		case 'Blob' in global && source instanceof Blob:
+			var reader = new FileReader();
+			reader.onload = reader.onerror = function() { callback(this.error, this.result) };
+			reader.readAsArrayBuffer(source);
+			return;
+
+		case !!ReadableStream && source instanceof ReadableStream:
+			var buffers = [];
+			source
+				.on('readable', function () { buffers.push(this.read()) })
+				.on('end', function () { callback(null, Buffer.concat(buffers)) })
+				.on('error', callback)
+			;
+			return;
+
+		case typeof source !== 'string':
 			return callback(new TypeError('Unsupported source type.'));
-		}
 
-		var dataParts = source.match(/^data:(.+?)(;base64)?,(.*)$/);
-		if (dataParts) {
-			var isBase64 = dataParts[2],
-				content = dataParts[3];
-
+		case !!(dataParts = source.match(/^data:(.+?)(;base64)?,(.*)$/)):
 			try {
-				callback(
-					null,
-					(
-						(isBase64 && jDataView.prototype.compatibility.NodeBuffer)
+				var isBase64 = dataParts[2],
+					content = dataParts[3];
+
+				callback(null, (
+					(isBase64 && jDataView.prototype.compatibility.NodeBuffer)
 						? new Buffer(content, 'base64')
 						: (isBase64 ? atob : decodeURIComponent)(content)
-					)
-				);
+				));
 			} catch (e) {
 				callback(e);
 			}
-		} else
-		if ('XMLHttpRequest' in global) {
+
+			break;
+
+		case 'XMLHttpRequest' in global:
 			var xhr = new XMLHttpRequest();
 			xhr.open('GET', source, true);
 
@@ -707,27 +709,27 @@ jBinary.loadData = function (source, callback) {
 			};
 
 			xhr.send(null);
-		} else {
-			var isHTTP = /^(https?):\/\//.test(source);
 
-			if (isHTTP && hasNodeRequire('request')) {
-				require('request').get({
-					uri: source,
-					encoding: null
-				}, function (error, response, body) {
-					if (!error && response.statusCode !== 200) {
-						var statusText = require('http').STATUS_CODES[response.statusCode];
-						error = new Error('HTTP Error #' + response.statusCode + ': ' + statusText);
-					}
-					callback(error, body);
-				});
-			} else
-			if (!isHTTP && hasNodeRequire('fs')) {
-				require('fs').readFile(source, callback);
-			} else {
-				callback(new TypeError('Unsupported source type.'));
-			}
-		}
+			break;
+
+		case !NODEJS:
+			return callback(new TypeError('Unsupported source type.'));
+
+		case /^(https?):\/\//.test(source):
+			require('request').get({
+				uri: source,
+				encoding: null
+			}, function (error, response, body) {
+				if (!error && response.statusCode !== 200) {
+					var statusText = require('http').STATUS_CODES[response.statusCode];
+					error = new Error('HTTP Error #' + response.statusCode + ': ' + statusText);
+				}
+				callback(error, body);
+			});
+			break;
+
+		default:
+			require('fs').readFile(source, callback);
 	}
 };
 
