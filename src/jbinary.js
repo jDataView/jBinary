@@ -650,11 +650,14 @@ jBinary.loadData = function (source, callback) {
 				var isBase64 = dataParts[2],
 					content = dataParts[3];
 
-				callback(null, (
-					(isBase64 && jDataView.prototype.compatibility.NodeBuffer)
+				callback(
+					null,
+					(
+						(isBase64 && jDataView.prototype.compatibility.NodeBuffer)
 						? new Buffer(content, 'base64')
 						: (isBase64 ? atob : decodeURIComponent)(content)
-				));
+					)
+				);
 			} catch (e) {
 				callback(e);
 			}
