@@ -8,7 +8,7 @@ if (!('atob' in global) || !('btoa' in global)) {
 (function(){var t=global,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n=function(){try{document.createElement("$")}catch(t){return t}}();t.btoa||(t.btoa=function(t){for(var o,e,a=0,c=r,f="";t.charAt(0|a)||(c="=",a%1);f+=c.charAt(63&o>>8-8*(a%1))){if(e=t.charCodeAt(a+=.75),e>255)throw n;o=o<<8|e}return f}),t.atob||(t.atob=function(t){if(t=t.replace(/=+$/,""),1==t.length%4)throw n;for(var o,e,a=0,c=0,f="";e=t.charAt(c++);~e&&(o=a%4?64*o+e:e,a++%4)?f+=String.fromCharCode(255&o>>(6&-2*a)):0)e=r.indexOf(e);return f})})();
 }
 
-var NODEJS = Object.prototype.toString.call(global.process) === '[object process]',
+var NODEJS = Object.prototype.toString.call(global.global) === '[object global]',
 	jDataView;
 
 function extend(obj) {
@@ -662,7 +662,7 @@ jBinary.loadData = function (source, callback) {
 				callback(e);
 			}
 
-			break;
+			return;
 
 		case 'XMLHttpRequest' in global:
 			var xhr = new XMLHttpRequest();
@@ -713,7 +713,7 @@ jBinary.loadData = function (source, callback) {
 
 			xhr.send(null);
 
-			break;
+			return;
 
 		case !NODEJS:
 			return callback(new TypeError('Unsupported source type.'));
@@ -729,7 +729,7 @@ jBinary.loadData = function (source, callback) {
 				}
 				callback(error, body);
 			});
-			break;
+			return;
 
 		default:
 			require('fs').readFile(source, callback);
