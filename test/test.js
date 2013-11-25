@@ -335,6 +335,51 @@ describe('Loading data', function () {
 			done();
 		});
 	});
+
+	describe('Promise', function() {
+		it('jBinary.loadData from data-URI', function (done) {
+			jBinary.loadData('data:text/plain,123').then(function(res) {
+				equal(new jDataView(res).getString(), '123');
+				done();
+			}, function(err) {
+				ok(false);
+				done();
+			});
+		});
+		it('JBinary.load with explicit typeset object', function (done) {
+			var typeSet = {
+				IS_CORRECT_TYPESET: true
+			};
+
+			jBinary.load('123.tar', typeSet).then(function (binary) {
+				ok(binary instanceof jBinary);
+				equal(binary.view.byteLength, 512);
+				ok(typeSet.IS_CORRECT_TYPESET);
+				done();
+			}, function(err) {
+				ok(false);
+				done();
+			});
+		});
+		it('jBinary.loadData should reject the promise', function(done) {
+			jBinary.loadData('123').then(function(res) {
+				ok(false);
+				done();
+			}, function(err) {
+				ok(err instanceof Error);
+				done();
+			});
+		});
+		it('jBinary.load should reject the promise', function(done) {
+			jBinary.load('123').then(function(res) {
+				ok(false);
+				done();
+			}, function(err) {
+				ok(err instanceof Error);
+				done();
+			});
+		});
+	});
 });
 
 //-----------------------------------------------------------------

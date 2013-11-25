@@ -626,6 +626,17 @@ var ReadableStream = NODEJS && require('stream').Readable;
 jBinary.loadData = function (source, callback) {
 	var dataParts;
 
+	if (typeof callback === 'undefined') {
+		return {
+			then: function(resolveFn, rejectFn) {
+				var callback = function(err, res) {
+					return err ? rejectFn(err) : resolveFn(res);
+				};
+				return jBinary.loadData(source, callback);
+			}
+		};
+	}
+
 	switch (true) {
 		case 'Blob' in global && source instanceof Blob:
 			var reader = new FileReader();
@@ -737,11 +748,22 @@ jBinary.loadData = function (source, callback) {
 };
 
 jBinary.load = function (source, typeSet, callback) {
-	if (arguments.length < 3) {
+	if (typeof typeSet === 'function' && !callback) {
 		callback = typeSet;
 		typeSet = undefined;
 	}
 	
+	if (!callback) {
+		return {
+			then: function(resolveFn, rejectFn) {
+				var callback = function(err, res) {
+					return err ? rejectFn(err) : resolveFn(res);
+				};
+				return jBinary.load(source, typeSet, callback);
+			}
+		};
+	}
+
 	jBinary.loadData(source, function (err, data) {
 		/* jshint expr: true */
 		err ? callback(err) : callback(null, new jBinary(data, typeSet));
