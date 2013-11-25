@@ -337,10 +337,6 @@ describe('Loading data', function () {
 	});
 
 	describe('Promise', function() {
-		it('should return a promise', function() {
-			equal(typeof jBinary.loadData('data:text/plain,123').then, 'function');
-			equal(typeof jBinary.load('data:text/plain,123').then, 'function');
-		});
 		it('jBinary.loadData from data-URI', function (done) {
 			jBinary.loadData('data:text/plain,123').then(function(res) {
 				equal(new jDataView(res).getString(), '123');
@@ -365,14 +361,20 @@ describe('Loading data', function () {
 				done();
 			});
 		});
-		it('jBinary.loadData should throw error', function(done) {
-			jBinary.loadData('123').then(function(res) {}, function(err) {
+		it('jBinary.loadData should reject the promise', function(done) {
+			jBinary.loadData('123').then(function(res) {
+				ok(false);
+				done();
+			}, function(err) {
 				ok(err instanceof Error);
 				done();
 			});
 		});
-		it('jBinary.load should throw error', function(done) {
-			jBinary.load('123').then(function(res) {}, function(err) {
+		it('jBinary.load should reject the promise', function(done) {
+			jBinary.load('123').then(function(res) {
+				ok(false);
+				done();
+			}, function(err) {
 				ok(err instanceof Error);
 				done();
 			});
