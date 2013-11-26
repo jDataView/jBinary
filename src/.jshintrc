@@ -8,7 +8,8 @@
 		"URL": false,
 		"File": false,
 		"VBArray": false,
-		"NODEJS": false,
+		"jDataView": false,
+		"NODE": false,
 		"BROWSER": false
 	},
 	"camelcase": true,
@@ -26,7 +27,6 @@
 	"nonew": true,
 	"quotmark": "single",
 	"smarttabs": true,
-	"strict": true,
 	"trailing": true,
 	"undef": true,
 	"white": true

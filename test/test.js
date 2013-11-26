@@ -6,22 +6,9 @@ if (hasNodeRequire) {
 	}
 
 	if (typeof jBinary === 'undefined') {
-		jBinary = require('../dist/jbinary.node.js');
+		jBinary = require('..');
 	}
 }
-
-describe('Library code', function () {
-	if (!hasNodeRequire) {
-		it('should be able to self-remove from global namespace', function () {
-			var realJB = jBinary,
-				jb = jBinary.noConflict();
-
-			equal(jb, realJB);
-			ok(!jBinary);
-			jBinary = realJB;
-		});
-	}
-});
 
 var chr = String.fromCharCode,
 	// workaround for http://code.google.com/p/v8/issues/detail?id=2578

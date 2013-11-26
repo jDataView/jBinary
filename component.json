@@ -13,9 +13,9 @@
     "manipulate"
   ],
   "repo": "jDataView/jBinary",
-  "main": "dist/jbinary.js",
+  "main": "dist/browser/jbinary.js",
   "scripts": [
-    "dist/jbinary.js"
+    "dist/browser/jbinary.js"
   ],
   "license": "MIT"
 }

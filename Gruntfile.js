@@ -1,20 +1,27 @@
 module.exports = function (grunt) {
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
-		repo: 'jDataView/jBinary',
+		libName: 'jBinary',
+		repo: 'jDataView/<%= libName %>',
 		jshint: {
 			options: {
 				jshintrc: true
 			},
-			files: ['src/**/*.js']
+			all: ['src/**/*.js']
 		},
-		mochaTest: {
-			options: {
-				reporter: 'spec',
-				require: './test/bdd-qunit-mocha-ui',
-				ui: 'bdd-qunit-mocha-ui'
-			},
-			src: ['test/test.js']
+		umd: {
+			all: {
+				src: 'src/<%= pkg.name %>.js',
+				dest: 'dist/<%= pkg.name %>.js',
+				template: 'strict-umd.hbs',
+				objectToExport: '<%= libName %>',
+				globalAlias: '<%= libName %>',
+				deps: {
+					'default': ['jDataView'],
+					amd: ['jdataview'],
+					cjs: ['jdataview']
+				}
+			}
 		},
 		uglify: {
 			options: {
@@ -25,30 +32,38 @@ module.exports = function (grunt) {
 			browser: {
 				options: {
 					compress: {
-						global_defs: {NODEJS: false, BROWSER: true}
+						global_defs: {NODE: false, BROWSER: true}
 					},
-					sourceMap: 'dist/<%= pkg.name %>.js.map',
-					sourceMapRoot: '..',
+					sourceMap: 'dist/browser/<%= pkg.name %>.js.map',
+					sourceMapRoot: '../..',
 					sourceMappingURL: '<%= pkg.name %>.js.map'
 				},
 				files: {
-					'dist/<%= pkg.name %>.js': ['src/<%= pkg.name %>.js']
+					'dist/browser/<%= pkg.name %>.js': ['dist/<%= pkg.name %>.js']
 				}
 			},
 			node: {
 				options: {
 					compress: {
-						global_defs: {NODEJS: true, BROWSER: false}
+						global_defs: {NODE: true, BROWSER: false}
 					}
 				},
 				files: {
-					'dist/<%= pkg.name %>.node.js': ['src/<%= pkg.name %>.js']
+					'dist/node/<%= pkg.name %>.js': ['dist/<%= pkg.name %>.js']
 				}
 			}
 		},
+		mochaTest: {
+			options: {
+				reporter: 'spec',
+				require: './test/bdd-qunit-mocha-ui',
+				ui: 'bdd-qunit-mocha-ui'
+			},
+			src: ['test/test.js']
+		},
 		component: {
 			repo: '<%= repo %>',
-			main: 'dist/<%= pkg.name %>.js',
+			main: 'dist/browser/<%= pkg.name %>.js',
 			scripts: ['<%= component.main %>'],
 			license: '<%= pkg.licenses[0].type %>'
 		},
@@ -82,12 +97,14 @@ module.exports = function (grunt) {
 
 	require('load-grunt-tasks')(grunt);
 
+	grunt.registerTask('prebuild', ['jshint', 'umd']);
+
 	grunt.registerTask('build:browser', ['uglify:browser', 'component']);
 	grunt.registerTask('build:node', ['uglify:node', 'mochaTest']);
 
-	grunt.registerTask('browser', ['jshint', 'build:browser']);
-	grunt.registerTask('node', ['jshint', 'build:node']);
-	grunt.registerTask('default', ['jshint', 'build:browser', 'build:node']);
+	grunt.registerTask('browser', ['prebuild', 'build:browser']);
+	grunt.registerTask('node', ['prebuild', 'build:node']);
+	grunt.registerTask('default', ['prebuild', 'build:browser', 'build:node']);
 	
 	grunt.registerTask('publish', ['default', 'release']);
 };
