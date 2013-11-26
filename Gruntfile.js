@@ -65,7 +65,10 @@ module.exports = function (grunt) {
 			repo: '<%= repo %>',
 			main: 'dist/browser/<%= pkg.name %>.js',
 			scripts: ['<%= component.main %>'],
-			license: '<%= pkg.licenses[0].type %>'
+			license: '<%= pkg.licenses[0].type %>',
+			dependencies: {
+				'jDataView/jDataView': '*'
+			}
 		},
 		release: {
 			options: {

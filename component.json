@@ -17,5 +17,8 @@
   "scripts": [
     "dist/browser/jbinary.js"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "jDataView/jDataView": "*"
+  }
 }
