@@ -4,12 +4,10 @@
 
 // https://github.com/davidchambers/Base64.js (modified)
 if (!('atob' in global) || !('btoa' in global)) {
-// jshint:skipline
-(function(){var t=global,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n=function(){try{document.createElement("$")}catch(t){return t}}();t.btoa||(t.btoa=function(t){for(var o,e,a=0,c=r,f="";t.charAt(0|a)||(c="=",a%1);f+=c.charAt(63&o>>8-8*(a%1))){if(e=t.charCodeAt(a+=.75),e>255)throw n;o=o<<8|e}return f}),t.atob||(t.atob=function(t){if(t=t.replace(/=+$/,""),1==t.length%4)throw n;for(var o,e,a=0,c=0,f="";e=t.charAt(c++);~e&&(o=a%4?64*o+e:e,a++%4)?f+=String.fromCharCode(255&o>>(6&-2*a)):0)e=r.indexOf(e);return f})})();
+	(function(){var t=global,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n=function(){try{document.createElement("$")}catch(t){return t}}();t.btoa||(t.btoa=function(t){for(var o,e,a=0,c=r,f="";t.charAt(0|a)||(c="=",a%1);f+=c.charAt(63&o>>8-8*(a%1))){if(e=t.charCodeAt(a+=.75),e>255)throw n;o=o<<8|e}return f}),t.atob||(t.atob=function(t){if(t=t.replace(/=+$/,""),1==t.length%4)throw n;for(var o,e,a=0,c=0,f="";e=t.charAt(c++);~e&&(o=a%4?64*o+e:e,a++%4)?f+=String.fromCharCode(255&o>>(6&-2*a)):0)e=r.indexOf(e);return f})})(); // jshint ignore:line
 }
 
-var NODEJS = Object.prototype.toString.call(global.global) === '[object global]',
-	jDataView;
+var jDataView;
 
 function extend(obj) {
 	for (var i = 1, length = arguments.length; i < length; ++i) {
@@ -66,7 +64,7 @@ proto.id = 0;
 
 var defineProperty = Object.defineProperty;
 
-if (defineProperty) {
+if (defineProperty && BROWSER) {
 	// this is needed to detect DOM-only version of Object.defineProperty in IE8:
 	try {
 		defineProperty({}, 'x', {});
@@ -603,14 +601,14 @@ proto.writeAll = function (data) {
 };
 
 proto._toURI =
-	('URL' in global && 'createObjectURL' in URL)
+	(BROWSER && 'URL' in global && 'createObjectURL' in URL)
 	? function (type) {
 		var data = this.seek(0, function () { return this.view.getBytes() });
 		return URL.createObjectURL(new Blob([data], {type: type}));
 	}
 	: function (type) {
-		var string = this.seek(0, function () { return this.view.getString(undefined, undefined, this.view._isNodeBuffer ? 'base64' : 'binary') });
-		return 'data:' + type + ';base64,' + (this.view._isNodeBuffer ? string : btoa(string));
+		var string = this.seek(0, function () { return this.view.getString(undefined, undefined, NODEJS && this.view._isNodeBuffer ? 'base64' : 'binary') });
+		return 'data:' + type + ';base64,' + (NODEJS && this.view._isNodeBuffer ? string : btoa(string));
 	};
 
 proto.toURI = function (mimeType) {
@@ -638,13 +636,13 @@ jBinary.loadData = function (source, callback) {
 	}
 
 	switch (true) {
-		case 'Blob' in global && source instanceof Blob:
+		case BROWSER && 'Blob' in global && source instanceof Blob:
 			var reader = new FileReader();
 			reader.onload = reader.onerror = function() { callback(this.error, this.result) };
 			reader.readAsArrayBuffer(source);
 			return;
 
-		case !!ReadableStream && source instanceof ReadableStream:
+		case NODEJS && !!ReadableStream && source instanceof ReadableStream:
 			var buffers = [];
 			source
 				.on('readable', function () { buffers.push(this.read()) })
@@ -664,7 +662,7 @@ jBinary.loadData = function (source, callback) {
 				callback(
 					null,
 					(
-						(isBase64 && jDataView.prototype.compatibility.NodeBuffer)
+						(isBase64 && NODEJS && jDataView.prototype.compatibility.NodeBuffer)
 						? new Buffer(content, 'base64')
 						: (isBase64 ? atob : decodeURIComponent)(content)
 					)
@@ -675,7 +673,7 @@ jBinary.loadData = function (source, callback) {
 
 			return;
 
-		case 'XMLHttpRequest' in global:
+		case BROWSER && 'XMLHttpRequest' in global:
 			var xhr = new XMLHttpRequest();
 			xhr.open('GET', source, true);
 
@@ -726,10 +724,10 @@ jBinary.loadData = function (source, callback) {
 
 			return;
 
-		case !NODEJS:
+		case BROWSER:
 			return callback(new TypeError('Unsupported source type.'));
 
-		case /^(https?):\/\//.test(source):
+		case NODEJS && /^(https?):\/\//.test(source):
 			require('request').get({
 				uri: source,
 				encoding: null
@@ -742,12 +740,12 @@ jBinary.loadData = function (source, callback) {
 			});
 			return;
 
-		default:
+		case NODEJS:
 			require('fs').readFile(source, callback);
 	}
 };
 
-jBinary.load = function (source, typeSet, callback) {
+jBinary.load = function load(source, typeSet, callback) {
 	if (typeof typeSet === 'function' && !callback) {
 		callback = typeSet;
 		typeSet = undefined;
@@ -755,11 +753,11 @@ jBinary.load = function (source, typeSet, callback) {
 	
 	if (!callback) {
 		return {
-			then: function(resolveFn, rejectFn) {
+			then: function (resolveFn, rejectFn) {
 				var callback = function(err, res) {
 					return err ? rejectFn(err) : resolveFn(res);
 				};
-				return jBinary.load(source, typeSet, callback);
+				return load(source, typeSet, callback);
 			}
 		};
 	}

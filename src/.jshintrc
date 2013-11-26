@@ -3,8 +3,14 @@
 	"node": true,
 	"nonstandard": true,
 	"worker": true,
-	"globals": {"define": false, "URL": false, "File": false, "VBArray": false},
-
+	"globals": {
+		"define": false,
+		"URL": false,
+		"File": false,
+		"VBArray": false,
+		"NODEJS": false,
+		"BROWSER": false
+	},
 	"camelcase": true,
 	"curly": true,
 	"eqeqeq": true,

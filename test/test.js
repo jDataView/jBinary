@@ -6,109 +6,11 @@ if (hasNodeRequire) {
 	}
 
 	if (typeof jBinary === 'undefined') {
-		jBinary = require('..');
-	}
-
-	if (typeof JSHINT === 'undefined') {
-		JSHINT = require('jshint').JSHINT;
-	}
-
-	if (typeof requirejs === 'undefined') {
-		requirejs = require('requirejs');
+		jBinary = require('../dist/jbinary.node.js');
 	}
 }
 
 describe('Library code', function () {
-	if (typeof JSHINT !== 'undefined') {
-		it('should pass JSHint tests', function (done) {
-			var paths = {
-				source: '../src/jbinary.js',
-				options: '../src/.jshintrc'
-			},
-			contents = {};
-
-			function onLoad(err, name, text) {
-				if (err) {
-					ok(false, 'Error while loading ' + name + ': ' + err);
-					return done();
-				}
-
-				contents[name] = text;
-				for (var name in paths) {
-					if (!(name in contents)) {
-						return;
-					}
-				}
-
-				var options = JSON.parse(contents.options), globals = options.globals;
-				delete options.globals;
-
-				if (JSHINT(contents.source, options, globals)) {
-					ok(true);
-				} else {
-					var errors = JSHINT.errors, skipLines = [], errorCount = errors.length;
-					for (var i = 0, length = errors.length; i < length; i++) {
-						var error = errors[i];
-						if (error) {
-							if (error.code === 'E001' && /\/\/\s*jshint:\s*skipline/.test(error.evidence)) {
-								skipLines.push(error.line + 1);
-								errorCount--;
-								continue;
-							}
-							if (skipLines.indexOf(error.line) >= 0) {
-								errorCount--;
-								continue;
-							}
-							ok(false, 'Line ' + error.line + ', character ' + error.character + ': ' + error.reason);
-							console.log(error);
-						} else {
-							errorCount--;
-						}
-					}
-					if (!errorCount) {
-						ok(true);
-					}
-				}
-
-				done();
-			}
-
-			function load(name) {
-				if (typeof XMLHttpRequest !== 'undefined') {
-					var ajax = new XMLHttpRequest();
-					ajax.onload = function () {
-						(this.status === 0 || this.status === 200) ? onLoad(null, name, this.responseText) : onLoad(this.statusText, name);
-					};
-					ajax.open('GET', paths[name], true);
-					ajax.send();
-				} else {
-					require('fs').readFile(paths[name], function (err, data) {
-						onLoad(err, name, String(data));
-					});
-				}
-			}
-
-			for (var name in paths) {
-				load(name);
-			}
-		});
-	}
-
-	it('should be loadable with require.js', function (done) {
-		requirejs.config({
-			baseUrl: '../..',
-			paths: {
-				jbinary: 'jBinary/src/jbinary',
-				jdataview: 'jDataView/src/jdataview'
-			}
-		});
-
-		requirejs(['jbinary'], function (module) {
-			ok(module);
-			done();
-		});
-	});
-
 	if (!hasNodeRequire) {
 		it('should be able to self-remove from global namespace', function () {
 			var realJB = jBinary,
@@ -244,6 +146,8 @@ describe('Common operations:', function () {
 //-----------------------------------------------------------------
 
 describe('Loading data', function () {
+	var localFileName = __dirname + '/123.tar';
+
 	it('from data-URI', function (done) {
 		jBinary.loadData('data:text/plain,123', function (err, data) {
 			ok(!err, err);
@@ -272,7 +176,7 @@ describe('Loading data', function () {
 	}
 
 	it('from local file', function (done) {
-		jBinary.loadData('123.tar', function (err, data) {
+		jBinary.loadData(localFileName, function (err, data) {
 			ok(!err, err);
 			equal(data.byteLength || data.length, 512);
 			done();
@@ -317,7 +221,7 @@ describe('Loading data', function () {
 			IS_CORRECT_TYPESET: true
 		};
 
-		jBinary.load('123.tar', typeSet, function (err, binary) {
+		jBinary.load(localFileName, typeSet, function (err, binary) {
 			ok(!err, err);
 			ok(binary instanceof jBinary);
 			equal(binary.view.byteLength, 512);
@@ -327,7 +231,7 @@ describe('Loading data', function () {
 	});
 
 	it('with implicitly empty typeset object', function (done) {
-		jBinary.load('123.tar', function (err, binary) {
+		jBinary.load(localFileName, function (err, binary) {
 			ok(!err, err);
 			ok(binary instanceof jBinary);
 			equal(binary.view.byteLength, 512);
@@ -351,7 +255,7 @@ describe('Loading data', function () {
 				IS_CORRECT_TYPESET: true
 			};
 
-			jBinary.load('123.tar', typeSet).then(function (binary) {
+			jBinary.load(localFileName, typeSet).then(function (binary) {
 				ok(binary instanceof jBinary);
 				equal(binary.view.byteLength, 512);
 				ok(typeSet.IS_CORRECT_TYPESET);
