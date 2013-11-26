@@ -28,5 +28,6 @@
 	"smarttabs": true,
 	"strict": true,
 	"trailing": true,
-	"undef": true
+	"undef": true,
+	"white": true
 }

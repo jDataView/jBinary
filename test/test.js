@@ -250,6 +250,7 @@ describe('Loading data', function () {
 				done();
 			});
 		});
+		
 		it('JBinary.load with explicit typeset object', function (done) {
 			var typeSet = {
 				IS_CORRECT_TYPESET: true
@@ -265,8 +266,9 @@ describe('Loading data', function () {
 				done();
 			});
 		});
+
 		it('jBinary.loadData should reject the promise', function(done) {
-			jBinary.loadData('123').then(function(res) {
+			jBinary.loadData('__NON_EXISTENT__').then(function(res) {
 				ok(false);
 				done();
 			}, function(err) {
@@ -274,8 +276,9 @@ describe('Loading data', function () {
 				done();
 			});
 		});
+
 		it('jBinary.load should reject the promise', function(done) {
-			jBinary.load('123').then(function(res) {
+			jBinary.load('__NON_EXISTENT__').then(function(res) {
 				ok(false);
 				done();
 			}, function(err) {

@@ -28,7 +28,7 @@ module.exports = function (grunt) {
 						global_defs: {NODEJS: false, BROWSER: true}
 					},
 					sourceMap: 'dist/<%= pkg.name %>.js.map',
-					sourceMapRoot: '//raw.github.com/<%= repo %>/master',
+					sourceMapRoot: '..',
 					sourceMappingURL: '<%= pkg.name %>.js.map'
 				},
 				files: {

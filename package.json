@@ -18,9 +18,9 @@
     "Vjeux <vjeuxx@gmail.com> (http://blog.vjeux.com/)"
   ],
   "files": [
-    "src/jbinary.js"
+    "dist/jbinary.node.js"
   ],
-  "main": "src/jbinary.js",
+  "main": "dist/jbinary.node.js",
   "scripts": {
     "test": "cd test && node test.runner.js"
   },
