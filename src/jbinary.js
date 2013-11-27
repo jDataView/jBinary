@@ -615,7 +615,7 @@ proto.writeAll = function (data) {
 };
 
 proto._toURI =
-	('URL' in global && 'createObjectURL' in URL)
+	(BROWSER && 'URL' in global && 'createObjectURL' in URL)
 	? function (type) {
 		var data = this.seek(0, function () { return this.view.getBytes() });
 		return URL.createObjectURL(new Blob([data], {type: type}));
