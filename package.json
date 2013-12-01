@@ -1,6 +1,6 @@
 {
   "name": "jbinary",
-  "version": "1.5.6",
+  "version": "1.6.0",
   "description": "High-level I/O for binary data.",
   "keywords": [
     "parse",
@@ -18,9 +18,9 @@
     "Vjeux <vjeuxx@gmail.com> (http://blog.vjeux.com/)"
   ],
   "files": [
-    "src/jbinary.js"
+    "dist/node/jbinary.js"
   ],
-  "main": "src/jbinary.js",
+  "main": "dist/node/jbinary.js",
   "scripts": {
     "test": "cd test && node test.runner.js"
   },
@@ -28,21 +28,25 @@
     "type": "git",
     "url": "git://github.com/jDataView/jBinary.git"
   },
-  "licenses": [{
-    "type": "MIT",
-    "url": "https://raw.github.com/jDataView/jBinary/master/MIT-license.txt"
-  }],
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://raw.github.com/jDataView/jBinary/master/MIT-license.txt"
+    }
+  ],
   "dependencies": {
     "jdataview": "*",
     "request": "*"
   },
   "devDependencies": {
-    "jshint": ">= 2.1.0",
-    "requirejs": "*",
-    "npm": "*",
-    "mocha": "~1.12.0",
-    "qunit-mocha-ui": "*",
-    "uglify-js": "~2.4.0",
-    "rimraf": "~2.2.2"
+    "grunt": "~0.4.2",
+    "grunt-release": "~0.6.0",
+    "uglify-js": ">= 2.4.4",
+    "grunt-contrib-uglify": "~0.2.7",
+    "grunt-contrib-jshint": "~0.7.2",
+    "load-grunt-tasks": "~0.2.0",
+    "qunit-mocha-ui": "0.0.4",
+    "grunt-mocha-test": "~0.7.0",
+    "grunt-umd": "~1.3.0"
   }
 }

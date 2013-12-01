@@ -1,3 +1,23 @@
+(function (factory) {
+	var root = (function () { return this })();
+
+	if (typeof exports === 'object') {
+		module.exports = factory.call(root, require('jdataview'));
+	} else
+	if (typeof define === 'function' && define.amd) {
+		define(['jdataview'], function () {
+			factory.apply(root, arguments);
+		});
+	}
+	else {
+		root['jBinary'] = factory.call(root, root.jDataView);
+	}
+}(function(jDataView) {
+
+'use strict';
+
+var global = this;
+
 /* jshint ignore:start */
 // https://github.com/davidchambers/Base64.js (modified)
 if (!('atob' in global) || !('btoa' in global)) {
@@ -781,3 +801,7 @@ jBinary.load = function load(source, typeSet, callback) {
 		err ? callback(err) : callback(null, new jBinary(data, typeSet));
 	});
 };
+
+return jBinary;
+
+}));
