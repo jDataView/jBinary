@@ -3,11 +3,29 @@ module.exports = function (grunt) {
 		pkg: grunt.file.readJSON('package.json'),
 		libName: 'jBinary',
 		repo: 'jDataView/<%= libName %>',
+		concat: {
+			sources: {
+				src: [
+					'src/shim.js',
+					'src/utils.js',
+					'src/core.js',
+					'src/proto/context.js',
+					'src/type.js',
+					'src/template.js',
+					'src/proto/typeset.js',
+					'src/proto/as.js',
+					'src/datatypes.js',
+					'src/proto/helpers.js',
+					'src/io/load.js'
+				],
+				dest: 'src/jbinary.js'
+			}
+		},
 		jshint: {
 			options: {
 				jshintrc: true
 			},
-			all: ['src/**/*.js']
+			all: ['src/jbinary.js']
 		},
 		umd: {
 			all: {
@@ -51,6 +69,11 @@ module.exports = function (grunt) {
 				files: {
 					'dist/node/<%= pkg.name %>.js': ['dist/<%= pkg.name %>.js']
 				}
+			}
+		},
+		clean: {
+			build: {
+				src: 'src/jbinary.js'
 			}
 		},
 		mochaTest: {
@@ -100,14 +123,14 @@ module.exports = function (grunt) {
 
 	require('load-grunt-tasks')(grunt);
 
-	grunt.registerTask('prebuild', ['jshint', 'umd']);
+	grunt.registerTask('prebuild', ['concat', 'jshint', 'umd']);
 
 	grunt.registerTask('build:browser', ['uglify:browser', 'component']);
 	grunt.registerTask('build:node', ['uglify:node', 'mochaTest']);
 
-	grunt.registerTask('browser', ['prebuild', 'build:browser']);
-	grunt.registerTask('node', ['prebuild', 'build:node']);
-	grunt.registerTask('default', ['prebuild', 'build:browser', 'build:node']);
+	grunt.registerTask('browser', ['prebuild', 'build:browser', 'clean']);
+	grunt.registerTask('node', ['prebuild', 'build:node', 'clean']);
+	grunt.registerTask('default', ['prebuild', 'build:browser', 'build:node', 'clean']);
 	
 	grunt.registerTask('publish', ['default', 'release']);
 };

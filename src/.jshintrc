@@ -29,5 +29,6 @@
 	"smarttabs": true,
 	"trailing": true,
 	"undef": true,
-	"white": true
+	"white": true,
+	"indent": 2
 }
