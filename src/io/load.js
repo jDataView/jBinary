@@ -1,4 +1,3 @@
-
 var ReadableStream = NODE && require('stream').Readable;
 
 jBinary.loadData = function loadData(source, callback) {

@@ -1,4 +1,3 @@
-
 proto.as = function (typeSet, modifyOriginal) {
 	var binary = modifyOriginal ? this : inherit(this);
 	typeSet = typeSet || proto.typeSet;

@@ -1,4 +1,3 @@
-
 var proto = jBinary.prototype;
 
 proto.cacheKey = 'jBinary.Cache';
