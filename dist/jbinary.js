@@ -70,6 +70,24 @@ function toValue(obj, binary, value) {
 	return value instanceof Function ? value.call(obj, binary.contexts[0]) : value;
 }
 
+var defineProperty = Object.defineProperty;
+
+if (defineProperty && BROWSER) {
+	// this is needed to detect DOM-only version of Object.defineProperty in IE8:
+	try {
+		defineProperty({}, 'x', {});
+	} catch (e) {
+		defineProperty = null;
+	}
+}
+
+if (!defineProperty) {
+	defineProperty = function (obj, key, descriptor, allowVisible) {
+		if (allowVisible) {
+			obj[key] = descriptor.value;
+		}
+	};
+}
 function jBinary(view, typeSet) {
 	if (view instanceof jBinary) {
 		return view.as(typeSet);
@@ -95,25 +113,6 @@ var proto = jBinary.prototype;
 
 proto.cacheKey = 'jBinary.Cache';
 proto.id = 0;
-
-var defineProperty = Object.defineProperty;
-
-if (defineProperty && BROWSER) {
-	// this is needed to detect DOM-only version of Object.defineProperty in IE8:
-	try {
-		defineProperty({}, 'x', {});
-	} catch (e) {
-		defineProperty = null;
-	}
-}
-
-if (!defineProperty) {
-	defineProperty = function (obj, key, descriptor, allowVisible) {
-		if (allowVisible) {
-			obj[key] = descriptor.value;
-		}
-	};
-}
 
 proto._getCached = function (obj, valueAccessor, allowVisible) {
 	if (!obj.hasOwnProperty(this.cacheKey)) {
@@ -208,7 +207,6 @@ jBinary.Type.prototype = {
 		return toValue(this, this.binary, val);
 	}
 };
-
 jBinary.Template = function (config) {
 	return inherit(jBinary.Template.prototype, config, {
 		createProperty: function (binary) {
@@ -236,7 +234,6 @@ jBinary.Template.prototype = inherit(jBinary.Type.prototype, {
 });
 jBinary.Template.prototype.read = jBinary.Template.prototype.baseRead;
 jBinary.Template.prototype.write = jBinary.Template.prototype.baseWrite;
-
 proto.typeSet = {
 	'extend': jBinary.Type({
 		setParams: function () {
@@ -504,7 +501,6 @@ proto.as = function (typeSet, modifyOriginal) {
 	binary.cacheKey = binary._getCached(typeSet, function () { return proto.cacheKey + '.' + (++proto.id) }, true);
 	return binary;
 };
-
 var simpleType = jBinary.Type({
 	params: ['littleEndian'],
 	read: function () {
@@ -652,6 +648,7 @@ proto.toURI = function (mimeType) {
 proto.slice = function (start, end, forceCopy) {
 	return new jBinary(this.view.slice(start, end, forceCopy), this.typeSet);
 };
+
 
 var ReadableStream = NODE && require('stream').Readable;
 
@@ -801,7 +798,6 @@ jBinary.load = function load(source, typeSet, callback) {
 		err ? callback(err) : callback(null, new jBinary(data, typeSet));
 	});
 };
-
 return jBinary;
 
 }));
