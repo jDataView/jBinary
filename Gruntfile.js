@@ -18,19 +18,18 @@ module.exports = function (grunt) {
 					'src/proto/helpers.js',
 					'src/io/load.js'
 				],
-				dest: 'src/jbinary.js'
+				dest: 'dist/<%= pkg.name %>.js'
 			}
 		},
 		jshint: {
 			options: {
-				jshintrc: true
+				jshintrc: 'src/.jshintrc'
 			},
-			all: ['src/jbinary.js']
+			all: ['dist/<%= pkg.name %>.js']
 		},
 		umd: {
 			all: {
-				src: 'src/<%= pkg.name %>.js',
-				dest: 'dist/<%= pkg.name %>.js',
+				src: 'dist/<%= pkg.name %>.js',
 				template: 'strict-umd.hbs',
 				objectToExport: '<%= libName %>',
 				globalAlias: '<%= libName %>',
@@ -73,7 +72,7 @@ module.exports = function (grunt) {
 		},
 		clean: {
 			build: {
-				src: 'src/jbinary.js'
+				src: 'dist/<%= pkg.name %>.js'
 			}
 		},
 		mochaTest: {
