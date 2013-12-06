@@ -1,18 +1,7 @@
 var ReadableStream = NODE && require('stream').Readable;
 
-jBinary.loadData = function loadData(source, callback) {
+jBinary.loadData = promising(function (source, callback) {
 	var dataParts;
-
-	if (!callback) {
-		return {
-			then: function (resolveFn, rejectFn) {
-				var callback = function (err, res) {
-					return err ? rejectFn(err) : resolveFn(res);
-				};
-				return loadData(source, callback);
-			}
-		};
-	}
 
 	switch (true) {
 		case BROWSER && 'Blob' in global && source instanceof Blob:
@@ -122,27 +111,16 @@ jBinary.loadData = function loadData(source, callback) {
 		case NODE:
 			require('fs').readFile(source, callback);
 	}
-};
+});
 
-jBinary.load = function load(source, typeSet, callback) {
-	if (!callback) {
-		if (typeof typeSet === 'function') {
-			callback = typeSet;
-			typeSet = undefined;
-		} else {
-			return {
-				then: function (resolveFn, rejectFn) {
-					var callback = function (err, res) {
-						return err ? rejectFn(err) : resolveFn(res);
-					};
-					return load(source, typeSet, callback);
-				}
-			};
-		}
+jBinary.load = promising(function (source, typeSet, callback) {
+	if (typeof typeSet === 'function') {
+		callback = typeSet;
+		typeSet = undefined;
 	}
 
 	jBinary.loadData(source, function (err, data) {
 		/* jshint expr: true */
 		err ? callback(err) : callback(null, new jBinary(data, typeSet));
 	});
-};
+});
