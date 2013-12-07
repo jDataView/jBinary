@@ -40,7 +40,6 @@
   },
   "devDependencies": {
     "grunt": "~0.4.2",
-    "grunt-release": "~0.6.0",
     "uglify-js": ">= 2.4.4",
     "grunt-contrib-uglify": "~0.2.7",
     "grunt-contrib-jshint": "~0.7.2",

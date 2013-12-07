@@ -92,16 +92,6 @@ module.exports = function (grunt) {
 			dependencies: {
 				'jDataView/jDataView': '*'
 			}
-		},
-		release: {
-			options: {
-				tagName: 'v<%= version %>',
-				github: { 
-					repo: '<%= repo %>',
-					usernameVar: 'GITHUB_USERNAME',
-					passwordVar: 'GITHUB_PASSWORD'
-				}
-			}
 		}
 	});
 
@@ -132,5 +122,5 @@ module.exports = function (grunt) {
 	grunt.registerTask('node', ['prebuild', 'build:node']);
 	grunt.registerTask('default', ['prebuild', 'build:browser', 'build:node']);
 	
-	grunt.registerTask('publish', ['default', 'release']);
+	grunt.registerTask('publish', ['default'/*, 'release'*/]);
 };
