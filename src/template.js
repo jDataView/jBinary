@@ -23,5 +23,6 @@ jBinary.Template.prototype = inherit(jBinary.Type.prototype, {
 		return this.binary.write(this.baseType, value);
 	}
 });
+
 jBinary.Template.prototype.read = jBinary.Template.prototype.baseRead;
 jBinary.Template.prototype.write = jBinary.Template.prototype.baseWrite;

@@ -19,6 +19,7 @@
 var global = this;
 
 /* jshint ignore:start */
+
 // https://github.com/davidchambers/Base64.js (modified)
 if (!('atob' in global) || !('btoa' in global)) {
 	(function(){var t=global,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n=function(){try{document.createElement("$")}catch(t){return t}}();t.btoa||(t.btoa=function(t){for(var o,e,a=0,c=r,f="";t.charAt(0|a)||(c="=",a%1);f+=c.charAt(63&o>>8-8*(a%1))){if(e=t.charCodeAt(a+=.75),e>255)throw n;o=o<<8|e}return f}),t.atob||(t.atob=function(t){if(t=t.replace(/=+$/,""),1==t.length%4)throw n;for(var o,e,a=0,c=0,f="";e=t.charAt(c++);~e&&(o=a%4?64*o+e:e,a++%4)?f+=String.fromCharCode(255&o>>(6&-2*a)):0)e=r.indexOf(e);return f})})();
@@ -40,6 +41,7 @@ if (BROWSER && !jDataView) {
 
 	document.write('<script src="//jdataview.github.io/dist/jdataview.js"></script><script>' + tempKey + '()</script>');
 }
+
 /* jshint ignore:end */
 
 function extend(obj) {
@@ -88,6 +90,25 @@ if (!defineProperty) {
 		}
 	};
 }
+
+function promising(func) {
+	return function () {
+		if (typeof arguments[arguments.length - 1] === 'function') {
+			return func.apply(this, arguments);
+		} else {
+			var args = arguments;
+			return {
+				then: function (resolveFn, rejectFn) {
+					Array.prototype.push.call(args, function (err, res) {
+						return err ? rejectFn(err) : resolveFn(res);
+					});
+					return func.apply(this, args);
+				}
+			};
+		}
+	};
+}
+
 function jBinary(view, typeSet) {
 	if (view instanceof jBinary) {
 		return view.as(typeSet);
@@ -207,6 +228,7 @@ jBinary.Type.prototype = {
 		return toValue(this, this.binary, val);
 	}
 };
+
 jBinary.Template = function (config) {
 	return inherit(jBinary.Template.prototype, config, {
 		createProperty: function (binary) {
@@ -232,8 +254,10 @@ jBinary.Template.prototype = inherit(jBinary.Type.prototype, {
 		return this.binary.write(this.baseType, value);
 	}
 });
+
 jBinary.Template.prototype.read = jBinary.Template.prototype.baseRead;
 jBinary.Template.prototype.write = jBinary.Template.prototype.baseWrite;
+
 proto.typeSet = {
 	'extend': jBinary.Type({
 		setParams: function () {
@@ -501,6 +525,7 @@ proto.as = function (typeSet, modifyOriginal) {
 	binary.cacheKey = binary._getCached(typeSet, function () { return proto.cacheKey + '.' + (++proto.id) }, true);
 	return binary;
 };
+
 var simpleType = jBinary.Type({
 	params: ['littleEndian'],
 	read: function () {
@@ -649,22 +674,10 @@ proto.slice = function (start, end, forceCopy) {
 	return new jBinary(this.view.slice(start, end, forceCopy), this.typeSet);
 };
 
-
 var ReadableStream = NODE && require('stream').Readable;
 
-jBinary.loadData = function loadData(source, callback) {
+jBinary.loadData = promising(function (source, callback) {
 	var dataParts;
-
-	if (!callback) {
-		return {
-			then: function (resolveFn, rejectFn) {
-				var callback = function (err, res) {
-					return err ? rejectFn(err) : resolveFn(res);
-				};
-				return loadData(source, callback);
-			}
-		};
-	}
 
 	switch (true) {
 		case BROWSER && 'Blob' in global && source instanceof Blob:
@@ -774,30 +787,19 @@ jBinary.loadData = function loadData(source, callback) {
 		case NODE:
 			require('fs').readFile(source, callback);
 	}
-};
+});
 
-jBinary.load = function load(source, typeSet, callback) {
-	if (!callback) {
-		if (typeof typeSet === 'function') {
-			callback = typeSet;
-			typeSet = undefined;
-		} else {
-			return {
-				then: function (resolveFn, rejectFn) {
-					var callback = function (err, res) {
-						return err ? rejectFn(err) : resolveFn(res);
-					};
-					return load(source, typeSet, callback);
-				}
-			};
-		}
+jBinary.load = promising(function (source, typeSet, callback) {
+	if (typeof typeSet === 'function') {
+		callback = typeSet;
+		typeSet = undefined;
 	}
 
 	jBinary.loadData(source, function (err, data) {
 		/* jshint expr: true */
 		err ? callback(err) : callback(null, new jBinary(data, typeSet));
 	});
-};
+});
 return jBinary;
 
 }));

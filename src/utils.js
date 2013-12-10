@@ -44,3 +44,21 @@ if (!defineProperty) {
 		}
 	};
 }
+
+function promising(func) {
+	return function () {
+		if (typeof arguments[arguments.length - 1] === 'function') {
+			return func.apply(this, arguments);
+		} else {
+			var args = arguments;
+			return {
+				then: function (resolveFn, rejectFn) {
+					Array.prototype.push.call(args, function (err, res) {
+						return err ? rejectFn(err) : resolveFn(res);
+					});
+					return func.apply(this, args);
+				}
+			};
+		}
+	};
+}

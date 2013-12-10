@@ -1,4 +1,3 @@
-
 proto.toValue = function (value) {
 	return toValue(this, this, value);
 };

@@ -4,7 +4,13 @@ module.exports = function (grunt) {
 		libName: 'jBinary',
 		repo: 'jDataView/<%= libName %>',
 		concat: {
-			sources: {
+			options: {
+				process: function (src) {
+					return src.trim();
+				},
+				separator: Array(3).join(grunt.util.linefeed)
+			},
+			all: {
 				src: [
 					'src/shim.js',
 					'src/utils.js',
@@ -14,23 +20,22 @@ module.exports = function (grunt) {
 					'src/template.js',
 					'src/proto/typeset.js',
 					'src/proto/as.js',
-					'src/datatypes.js',
+					'src/simpleTypes.js',
 					'src/proto/helpers.js',
 					'src/io/load.js'
 				],
-				dest: 'src/jbinary.js'
+				dest: 'dist/<%= pkg.name %>.js'
 			}
 		},
 		jshint: {
 			options: {
-				jshintrc: true
+				jshintrc: 'src/.jshintrc'
 			},
-			all: ['src/jbinary.js']
+			all: ['dist/<%= pkg.name %>.js']
 		},
 		umd: {
 			all: {
-				src: 'src/<%= pkg.name %>.js',
-				dest: 'dist/<%= pkg.name %>.js',
+				src: 'dist/<%= pkg.name %>.js',
 				template: 'strict-umd.hbs',
 				objectToExport: '<%= libName %>',
 				globalAlias: '<%= libName %>',
@@ -71,11 +76,6 @@ module.exports = function (grunt) {
 				}
 			}
 		},
-		clean: {
-			build: {
-				src: 'src/jbinary.js'
-			}
-		},
 		mochaTest: {
 			options: {
 				reporter: 'spec',
@@ -91,16 +91,6 @@ module.exports = function (grunt) {
 			license: '<%= pkg.licenses[0].type %>',
 			dependencies: {
 				'jDataView/jDataView': '*'
-			}
-		},
-		release: {
-			options: {
-				tagName: 'v<%= version %>',
-				github: { 
-					repo: '<%= repo %>',
-					usernameVar: 'GITHUB_USERNAME',
-					passwordVar: 'GITHUB_PASSWORD'
-				}
 			}
 		}
 	});
@@ -128,9 +118,9 @@ module.exports = function (grunt) {
 	grunt.registerTask('build:browser', ['uglify:browser', 'component']);
 	grunt.registerTask('build:node', ['uglify:node', 'mochaTest']);
 
-	grunt.registerTask('browser', ['prebuild', 'build:browser', 'clean']);
-	grunt.registerTask('node', ['prebuild', 'build:node', 'clean']);
-	grunt.registerTask('default', ['prebuild', 'build:browser', 'build:node', 'clean']);
+	grunt.registerTask('browser', ['prebuild', 'build:browser']);
+	grunt.registerTask('node', ['prebuild', 'build:node']);
+	grunt.registerTask('default', ['prebuild', 'build:browser', 'build:node']);
 	
-	grunt.registerTask('publish', ['default', 'release']);
+	grunt.registerTask('publish', ['default'/*, 'release'*/]);
 };

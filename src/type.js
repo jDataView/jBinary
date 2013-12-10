@@ -1,4 +1,3 @@
-
 jBinary.Type = function (config) {
 	return inherit(jBinary.Type.prototype, config);
 };
