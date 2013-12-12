@@ -96,13 +96,13 @@ function promising(func) {
 		if (typeof arguments[arguments.length - 1] === 'function') {
 			return func.apply(this, arguments);
 		} else {
-			var args = arguments;
+			var self = this, args = arguments;
 			return {
 				then: function (resolveFn, rejectFn) {
 					Array.prototype.push.call(args, function (err, res) {
 						return err ? rejectFn(err) : resolveFn(res);
 					});
-					return func.apply(this, args);
+					return func.apply(self, args);
 				}
 			};
 		}
