@@ -50,3 +50,7 @@ License
 =======
 
 This library is provided under [MIT license](https://raw.github.com/jDataView/jBinary/master/MIT-license.txt).
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/jDataView/jbinary/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
