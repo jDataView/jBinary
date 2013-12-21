@@ -18,10 +18,10 @@ module.exports = function (grunt) {
 					'src/proto/context.js',
 					'src/type.js',
 					'src/template.js',
-					'src/proto/typeset.js',
+					'src/proto/typeSet.js',
 					'src/proto/as.js',
 					'src/proto/position.js',
-					'src/proto/helpers.js',
+					'src/proto/props.js',
 					'src/simpleTypes.js',
 					'src/io/toURI.js',
 					'src/io/load.js'
