@@ -1,16 +1,16 @@
-jBinary.Template = function (config) {
-	return inherit(jBinary.Template.prototype, config, {
+function Template(config) {
+	return inherit(Template.prototype, config, {
 		createProperty: function (binary) {
-			var property = (config.createProperty || jBinary.Template.prototype.createProperty).apply(this, arguments);
+			var property = (config.createProperty || Template.prototype.createProperty).apply(this, arguments);
 			if (property.getBaseType) {
 				property.baseType = property.binary.getType(property.getBaseType(property.binary.contexts[0]));
 			}
 			return property;
 		}
 	});
-};
+}
 
-jBinary.Template.prototype = inherit(jBinary.Type.prototype, {
+Template.prototype = inherit(Type.prototype, {
 	setParams: function () {
 		if (this.baseType) {
 			this.typeParams = ['baseType'].concat(this.typeParams || []);
@@ -24,5 +24,9 @@ jBinary.Template.prototype = inherit(jBinary.Type.prototype, {
 	}
 });
 
-jBinary.Template.prototype.read = jBinary.Template.prototype.baseRead;
-jBinary.Template.prototype.write = jBinary.Template.prototype.baseWrite;
+extend(Template.prototype, {
+	read: Template.prototype.baseRead,
+	write: Template.prototype.baseWrite
+});
+
+jBinary.Template = Template;

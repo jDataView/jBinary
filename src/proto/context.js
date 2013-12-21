@@ -1,18 +1,3 @@
-var proto = jBinary.prototype;
-
-proto.cacheKey = 'jBinary.Cache';
-proto.id = 0;
-
-proto._getCached = function (obj, valueAccessor, allowVisible) {
-	if (!obj.hasOwnProperty(this.cacheKey)) {
-		var value = valueAccessor.call(this, obj);
-		defineProperty(obj, this.cacheKey, {value: value}, allowVisible);
-		return value;
-	} else {
-		return obj[this.cacheKey];
-	}
-};
-
 proto.getContext = function (filter) {
 	switch (typeof filter) {
 		case 'undefined':

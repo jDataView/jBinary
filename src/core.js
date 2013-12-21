@@ -18,3 +18,22 @@ function jBinary(view, typeSet) {
 
 	return this.as(typeSet, true);
 }
+
+var proto = jBinary.prototype;
+
+proto.cacheKey = 'jBinary.Cache';
+proto.id = 0;
+
+proto._getCached = function (obj, valueAccessor, allowVisible) {
+	if (!obj.hasOwnProperty(this.cacheKey)) {
+		var value = valueAccessor.call(this, obj);
+		defineProperty(obj, this.cacheKey, {value: value}, allowVisible);
+		return value;
+	} else {
+		return obj[this.cacheKey];
+	}
+};
+
+proto.toValue = function (value) {
+	return toValue(this, this, value);
+};

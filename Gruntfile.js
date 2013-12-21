@@ -20,8 +20,10 @@ module.exports = function (grunt) {
 					'src/template.js',
 					'src/proto/typeset.js',
 					'src/proto/as.js',
-					'src/simpleTypes.js',
+					'src/proto/position.js',
 					'src/proto/helpers.js',
+					'src/simpleTypes.js',
+					'src/io/toURI.js',
 					'src/io/load.js'
 				],
 				dest: 'dist/<%= pkg.name %>.js'

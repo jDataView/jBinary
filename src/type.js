@@ -1,8 +1,8 @@
-jBinary.Type = function (config) {
-	return inherit(jBinary.Type.prototype, config);
-};
+function Type(config) {
+	return inherit(Type.prototype, config);
+}
 
-jBinary.Type.prototype = {
+Type.prototype = {
 	inherit: function (args, getType) {
 		var _type = this, type;
 
@@ -43,7 +43,10 @@ jBinary.Type.prototype = {
 		return type || _type;
 	},
 	createProperty: function (binary) {
-		return inherit(this, {binary: binary});
+		return inherit(this, {
+			binary: binary,
+			view: binary.view
+		});
 	},
 	toValue: function (val, allowResolve) {
 		if (allowResolve !== false && typeof val === 'string') {
@@ -52,3 +55,5 @@ jBinary.Type.prototype = {
 		return toValue(this, this.binary, val);
 	}
 };
+
+jBinary.Type = Type;

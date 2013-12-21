@@ -1,5 +1,5 @@
 proto.typeSet = {
-	'extend': jBinary.Type({
+	'extend': Type({
 		setParams: function () {
 			this.parts = arguments;
 		},
@@ -28,7 +28,7 @@ proto.typeSet = {
 			});
 		}
 	}),
-	'enum': jBinary.Template({
+	'enum': Template({
 		params: ['baseType', 'matches'],
 		setParams: function (baseType, matches) {
 			this.backMatches = {};
@@ -44,19 +44,19 @@ proto.typeSet = {
 			this.baseWrite(value in this.backMatches ? this.backMatches[value] : value);
 		}
 	}),
-	'string': jBinary.Template({
+	'string': Template({
 		params: ['length', 'encoding'],
 		read: function () {
-			return this.binary.view.getString(this.toValue(this.length), undefined, this.encoding);
+			return this.view.getString(this.toValue(this.length), undefined, this.encoding);
 		},
 		write: function (value) {
-			this.binary.view.writeString(value, this.encoding);
+			this.view.writeString(value, this.encoding);
 		}
 	}),
-	'string0': jBinary.Type({
+	'string0': Type({
 		params: ['length', 'encoding'],
 		read: function () {
-			var view = this.binary.view, maxLength = this.length;
+			var view = this.view, maxLength = this.length;
 			if (maxLength === undefined) {
 				var startPos = view.tell(), length = 0, code;
 				maxLength = view.byteLength - startPos;
@@ -73,7 +73,7 @@ proto.typeSet = {
 			}
 		},
 		write: function (value) {
-			var view = this.binary.view, zeroLength = this.length === undefined ? 1 : this.length - value.length;
+			var view = this.view, zeroLength = this.length === undefined ? 1 : this.length - value.length;
 			view.writeString(value, undefined, this.encoding);
 			if (zeroLength > 0) {
 				view.writeUint8(0);
@@ -81,12 +81,12 @@ proto.typeSet = {
 			}
 		}
 	}),
-	'array': jBinary.Template({
+	'array': Template({
 		params: ['baseType', 'length'],
 		read: function () {
 			var length = this.toValue(this.length);
 			if (this.baseType === proto.typeSet.uint8) {
-				return this.binary.view.getBytes(length, undefined, true, true);
+				return this.view.getBytes(length, undefined, true, true);
 			}
 			var results;
 			if (length !== undefined) {
@@ -95,7 +95,7 @@ proto.typeSet = {
 					results[i] = this.baseRead();
 				}
 			} else {
-				var end = this.binary.view.byteLength;
+				var end = this.view.byteLength;
 				results = [];
 				while (this.binary.tell() < end) {
 					results.push(this.baseRead());
@@ -105,14 +105,14 @@ proto.typeSet = {
 		},
 		write: function (values) {
 			if (this.baseType === proto.typeSet.uint8) {
-				return this.binary.view.writeBytes(values);
+				return this.view.writeBytes(values);
 			}
 			for (var i = 0, length = values.length; i < length; i++) {
 				this.baseWrite(values[i]);
 			}
 		}
 	}),
-	'object': jBinary.Type({
+	'object': Type({
 		params: ['structure', 'proto'],
 		resolve: function (getType) {
 			var structure = {};
@@ -152,28 +152,28 @@ proto.typeSet = {
 			});
 		}
 	}),
-	'bitfield': jBinary.Type({
+	'bitfield': Type({
 		params: ['bitSize'],
 		read: function () {
-			return this.binary.view.getUnsigned(this.bitSize);
+			return this.view.getUnsigned(this.bitSize);
 		},
 		write: function (value) {
-			this.binary.view.writeUnsigned(value, this.bitSize);
+			this.view.writeUnsigned(value, this.bitSize);
 		}
 	}),
-	'if': jBinary.Template({
+	'if': Template({
 		params: ['condition', 'trueType', 'falseType'],
 		typeParams: ['trueType', 'falseType'],
 		getBaseType: function (context) {
 			return this.toValue(this.condition) ? this.trueType : this.falseType;
 		}
 	}),
-	'if_not': jBinary.Template({
+	'if_not': Template({
 		setParams: function (condition, falseType, trueType) {
 			this.baseType = ['if', condition, trueType, falseType];
 		}
 	}),
-	'const': jBinary.Template({
+	'const': Template({
 		params: ['baseType', 'value', 'strict'],
 		read: function () {
 			var value = this.baseRead();
@@ -190,35 +190,37 @@ proto.typeSet = {
 			this.baseWrite((this.strict || value === undefined) ? this.value : value);
 		}
 	}),
-	'skip': jBinary.Type({
-		setParams: function (length) {
-			this.read = this.write = function () {
-				this.binary.view.skip(this.toValue(length));
-			};
-		}
-	}),
-	'blob': jBinary.Type({
+	'skip': Type({
 		params: ['length'],
 		read: function () {
-			return this.binary.view.getBytes(this.toValue(this.length));
+			this.view.skip(this.toValue(this.length));
 		},
-		write: function (bytes) {
-			this.binary.view.writeBytes(bytes, true);
+		write: function () {
+			this.read();
 		}
 	}),
-	'binary': jBinary.Template({
+	'blob': Type({
+		params: ['length'],
+		read: function () {
+			return this.view.getBytes(this.toValue(this.length));
+		},
+		write: function (bytes) {
+			this.view.writeBytes(bytes, true);
+		}
+	}),
+	'binary': Template({
 		params: ['length', 'typeSet'],
 		read: function () {
 			var startPos = this.binary.tell();
 			var endPos = this.binary.skip(this.toValue(this.length));
-			var view = this.binary.view.slice(startPos, endPos);
+			var view = this.view.slice(startPos, endPos);
 			return new jBinary(view, this.typeSet);
 		},
 		write: function (binary) {
 			this.binary.write('blob', binary.read('blob', 0));
 		}
 	}),
-	'lazy': jBinary.Template({
+	'lazy': Template({
 		marker: 'jBinary.Lazy',
 		params: ['innerType', 'length'],
 		getBaseType: function () {
