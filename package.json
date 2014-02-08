@@ -22,7 +22,7 @@
   ],
   "main": "dist/node/jbinary.js",
   "scripts": {
-    "test": "cd test && node test.runner.js"
+    "test": "grunt node"
   },
   "repository": {
     "type": "git",
