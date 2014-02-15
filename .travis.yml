@@ -3,9 +3,9 @@ branches:
     - v2.0
 language: node_js
 node_js:
+- '0.11'
 - '0.10'
 - '0.8'
-- '0.6'
 env:
   global:
   - secure: iavEdFxn7fNKbkulrS2iQBOjJ9W8qWi6qYhdYdzVII0xYgMHPN10nvYHIA5dMYxC+IfWWz2qMyP9Aurn/VxMQOBDj4RhYflLo9tmrgkDWTpsu3tn88RQmgaBbX9eDUDG8PoFciEXg6ckCHfpjsh/CAUOdufJta9YZJ1vGjLUfVs=
@@ -16,3 +16,6 @@ before_install:
   - npm install -g grunt-cli
 script:
   - grunt
+matrix:
+  allow_failures:
+    - node_js: '0.11'
