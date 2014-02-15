@@ -1,8 +1,7 @@
 module.exports = function (grunt) {
 	grunt.initConfig({
-		pkg: grunt.file.readJSON('package.json'),
 		libName: 'jBinary',
-		repo: 'jDataView/<%= libName %>',
+		pkgName: '<%= libName.toLowerCase() %>',
 		concat: {
 			options: {
 				process: function (src) {
@@ -12,7 +11,7 @@ module.exports = function (grunt) {
 			},
 			all: {
 				files: {
-					'dist/<%= pkg.name %>.js': [
+					'dist/<%= pkgName %>.js': [
 						'src/shim.js',
 						'src/utils.js',
 						'src/core.js',
@@ -34,11 +33,11 @@ module.exports = function (grunt) {
 			options: {
 				jshintrc: 'src/.jshintrc'
 			},
-			all: ['dist/<%= pkg.name %>.js']
+			all: ['dist/<%= pkgName %>.js']
 		},
 		umd: {
 			all: {
-				src: 'dist/<%= pkg.name %>.js',
+				src: 'dist/<%= pkgName %>.js',
 				template: 'strict-umd.hbs',
 				objectToExport: '<%= libName %>',
 				globalAlias: '<%= libName %>',
@@ -60,12 +59,12 @@ module.exports = function (grunt) {
 					compress: {
 						global_defs: {NODE: false, BROWSER: true}
 					},
-					sourceMap: 'dist/browser/<%= pkg.name %>.js.map',
+					sourceMap: 'dist/browser/<%= pkgName %>.js.map',
 					sourceMapRoot: '../..',
-					sourceMappingURL: '<%= pkg.name %>.js.map'
+					sourceMappingURL: '<%= pkgName %>.js.map'
 				},
 				files: {
-					'dist/browser/<%= pkg.name %>.js': 'dist/<%= pkg.name %>.js'
+					'dist/browser/<%= pkgName %>.js': 'dist/<%= pkgName %>.js'
 				}
 			},
 			node: {
@@ -75,7 +74,7 @@ module.exports = function (grunt) {
 					}
 				},
 				files: {
-					'dist/node/<%= pkg.name %>.js': 'dist/<%= pkg.name %>.js'
+					'dist/node/<%= pkgName %>.js': 'dist/<%= pkgName %>.js'
 				}
 			}
 		},
@@ -93,24 +92,34 @@ module.exports = function (grunt) {
 			},
 			browser: {
 				singleRun: true
-			}
-		},
-		update_json: {
-			component: {
-				files: {
-					'component.json': 'package.json'
-				},
-				fields: {
-					name: null,
-					version: null,
-					description: null,
-					keywords: null
-				}
+			},
+			watch: {
+				background: true
 			}
 		},
 		test: {
 			browser: 'karma:browser',
 			node: 'mochaTest:node'
+		},
+		bump: {
+			options: {
+				files: ['package.json', 'component.json'],
+				commitFiles: ['-a']
+			}
+		},
+		watch: {
+			options: {
+				atBegin: true,
+				interrupt: true
+			},
+			all: {
+				files: [
+					'Gruntfile.js',
+					'src/**/*.js',
+					'test/test.js'
+				],
+				tasks: ['build', 'karma:watch:run', 'mochaTest:node']
+			}
 		}
 	});
 
@@ -129,5 +138,13 @@ module.exports = function (grunt) {
 
 	grunt.registerTask('default', ['build', 'test']);
 
-	grunt.registerTask('prepublish', ['default', 'update_json'])
+	grunt.registerTask('live', ['karma:watch:start', 'watch']);
+
+	grunt.registerTask('prepublish', function (changeLevel) {
+		grunt.task.run('default', 'bump:' + changeLevel);
+	});
+
+	grunt.registerTask('publish', function (changeLevel) {
+		grunt.task.run('default', 'bump:' + (changeLevel || 'build'));
+	});
 };
