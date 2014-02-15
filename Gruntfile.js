@@ -11,22 +11,23 @@ module.exports = function (grunt) {
 				separator: Array(3).join(grunt.util.linefeed)
 			},
 			all: {
-				src: [
-					'src/shim.js',
-					'src/utils.js',
-					'src/core.js',
-					'src/proto/context.js',
-					'src/type.js',
-					'src/template.js',
-					'src/proto/typeSet.js',
-					'src/proto/as.js',
-					'src/proto/position.js',
-					'src/proto/props.js',
-					'src/simpleTypes.js',
-					'src/io/toURI.js',
-					'src/io/load.js'
-				],
-				dest: 'dist/<%= pkg.name %>.js'
+				files: {
+					'dist/<%= pkg.name %>.js': [
+						'src/shim.js',
+						'src/utils.js',
+						'src/core.js',
+						'src/proto/context.js',
+						'src/type.js',
+						'src/template.js',
+						'src/proto/typeSet.js',
+						'src/proto/as.js',
+						'src/proto/position.js',
+						'src/proto/props.js',
+						'src/simpleTypes.js',
+						'src/io/toURI.js',
+						'src/io/load.js'
+					]
+				} 
 			}
 		},
 		jshint: {
@@ -64,7 +65,7 @@ module.exports = function (grunt) {
 					sourceMappingURL: '<%= pkg.name %>.js.map'
 				},
 				files: {
-					'dist/browser/<%= pkg.name %>.js': ['dist/<%= pkg.name %>.js']
+					'dist/browser/<%= pkg.name %>.js': 'dist/<%= pkg.name %>.js'
 				}
 			},
 			node: {
@@ -74,55 +75,59 @@ module.exports = function (grunt) {
 					}
 				},
 				files: {
-					'dist/node/<%= pkg.name %>.js': ['dist/<%= pkg.name %>.js']
+					'dist/node/<%= pkg.name %>.js': 'dist/<%= pkg.name %>.js'
 				}
 			}
 		},
 		mochaTest: {
 			options: {
-				reporter: 'spec',
-				require: './test/bdd-qunit-mocha-ui',
-				ui: 'bdd-qunit-mocha-ui'
+				reporter: 'progress'
 			},
-			src: ['test/test.js']
-		},
-		component: {
-			repo: '<%= repo %>',
-			main: 'dist/browser/<%= pkg.name %>.js',
-			scripts: ['<%= component.main %>'],
-			license: '<%= pkg.licenses[0].type %>',
-			dependencies: {
-				'jDataView/jDataView': '*'
+			node: {
+				src: 'test/test.js'
 			}
+		},
+		karma: {
+			options: {
+				configFile: 'test/karma.conf.js'
+			},
+			browser: {
+				singleRun: true
+			}
+		},
+		update_json: {
+			component: {
+				files: {
+					'component.json': 'package.json'
+				},
+				fields: {
+					name: null,
+					version: null,
+					description: null,
+					keywords: null
+				}
+			}
+		},
+		test: {
+			browser: 'karma:browser',
+			node: 'mochaTest:node'
 		}
-	});
-
-	grunt.registerTask('component', 'Build component.json', function () {
-		var component = Object.create(null);
-
-		function mergeOpts(source, keys) {
-			(keys || Object.keys(source)).forEach(function (key) {
-				component[key] = source[key];
-			});
-		}
-
-		mergeOpts(grunt.config('pkg'), ['name', 'description', 'version', 'keywords']);
-		mergeOpts(grunt.config('component'));
-
-		grunt.file.write('component.json', JSON.stringify(component, true, 2));
-		grunt.log.ok('component.json written');
 	});
 
 	require('load-grunt-tasks')(grunt);
 
-	grunt.registerTask('prebuild', ['concat', 'jshint', 'umd']);
+	grunt.registerTask('build', ['concat', 'jshint', 'umd']);
 
-	grunt.registerTask('build:browser', ['uglify:browser', 'component']);
-	grunt.registerTask('build:node', ['uglify:node', 'mochaTest']);
+	grunt.registerMultiTask('test', function (target) {
+		grunt.task.requires('build');
+		grunt.task.run(this.data);
+	});
 
-	grunt.registerTask('browser', ['prebuild', 'build:browser']);
-	grunt.registerTask('node', ['prebuild', 'build:node']);
-	grunt.registerTask('default', ['prebuild', 'build:browser', 'build:node']);
-	
-	grunt.registerTask('publish', ['default'/*, 'release'*/]);
+	['browser', 'node'].forEach(function (target) {
+		grunt.registerTask(target, ['build', 'test:' + target]);
+	});
+
+	grunt.registerTask('default', ['build', 'test']);
+
+	grunt.registerTask('prepublish', ['default', 'update_json'])
 };
