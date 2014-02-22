@@ -6,20 +6,22 @@ node_js:
 - '0.11'
 - '0.10'
 - '0.8'
+matrix:
+  allow_failures:
+  - node_js: '0.11'
 before_install:
 - npm install -g grunt-cli
 script:
 - grunt
-matrix:
-  allow_failures:
-  - node_js: '0.11'
+env:
+  global:
+    secure: d96Eo9anBBvr+Ucwb92yMp5ZCPi262adt6PsC8uLR+KggH2k8hU9ScAVY9OGttMecKN3dy/OevSbracBGl7C9SP/YTLfGSIO9gaPlPctqn/oF8y1xNzpr0E/KoR/uyLgUPtAWXWxUc4SK6SI3VliRFGDz6iRcVva6iWaDkUp9wY=
 deploy:
   provider: npm
   email: me@rreverser.com
   api_key:
-    secure: BuwmsjV3RTZKLS29+VMxenHuEt78xyufOcsQxj0c4bGe2/dsmVXTWSQcWtyw05ExtqT8JYrGf/QmTUndCYk0OXJFOgY9fVtVimm2ezInyCgQ1I4oDdiN3KSQ7NpBju5GdGlc/QvJVoCiFud1xxu37bdZpaIUEeM8VjPkjbnAuLw=
+    secure: EPycJqpKzGoptpxtiKZIE6o/4IDIONwDqyRg9mufeUtP+8d9oawKSaZzDRQ83JaBn5QLon+r/1Qhf7c3663GWhOuyjvfA0dH2VoF6dS9LIv7yOSLENzEVOZo89eBgR7xLbMynI/wzACGUo15NZObFPKJyYsxBauITvW2w4Gbd5I=
   on:
-    tags: true
+    node: '0.10'
     repo: jDataView/jBinary
-    branch: master
-  skip_cleanup: true
+

@@ -1,5 +1,5 @@
 {
-  "name": "jbinary",
+  "name": "jbinary2",
   "version": "2.0.0",
   "description": "High-level I/O for binary data.",
   "keywords": [
@@ -19,6 +19,20 @@
   "main": "dist/node/jbinary.js",
   "scripts": {
     "test": "grunt"
+  },
+  "testling": {
+    "files": "test/test.js",
+    "harness": "mocha",
+    "browsers": [
+      "ie/6..latest",
+      "chrome/latest,canary",
+      "firefox/latest,nightly",
+      "safari/latest",
+      "opera/12..latest",
+      "iphone/6",
+      "ipad/6",
+      "android-browser/latest"
+    ]
   },
   "repository": {
     "type": "git",

@@ -80,7 +80,7 @@ module.exports = function (grunt) {
 		},
 		mochaTest: {
 			options: {
-				reporter: 'progress'
+				reporter: process.env.CI ? 'dot' : 'progress'
 			},
 			node: {
 				src: 'test/test.js'
@@ -104,7 +104,8 @@ module.exports = function (grunt) {
 		bump: {
 			options: {
 				files: ['package.json', 'component.json'],
-				commitFiles: ['-a']
+				commitFiles: ['-a'],
+				pushTo: 'origin'
 			}
 		},
 		watch: {
@@ -125,24 +126,23 @@ module.exports = function (grunt) {
 
 	require('load-grunt-tasks')(grunt);
 
-	grunt.registerTask('build', ['concat', 'jshint', 'umd']);
+	grunt.registerTask('prebuild', ['concat', 'jshint', 'umd']);
 
-	grunt.registerMultiTask('test', function (target) {
-		grunt.task.requires('build');
+	grunt.registerTask('build', function (target) {
+		grunt.task.run('prebuild', 'uglify' + (target ? ':' + target : ''));
+	});
+ 
+	grunt.registerMultiTask('test', function () {
 		grunt.task.run(this.data);
 	});
 
 	['browser', 'node'].forEach(function (target) {
-		grunt.registerTask(target, ['build', 'test:' + target]);
+		grunt.registerTask(target, ['build:' + target, 'test:' + target]);
 	});
 
 	grunt.registerTask('default', ['build', 'test']);
 
 	grunt.registerTask('live', ['karma:watch:start', 'watch']);
-
-	grunt.registerTask('prepublish', function (changeLevel) {
-		grunt.task.run('default', 'bump:' + changeLevel);
-	});
 
 	grunt.registerTask('publish', function (changeLevel) {
 		grunt.task.run('default', 'bump:' + (changeLevel || 'build'));
