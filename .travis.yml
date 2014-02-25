@@ -16,12 +16,9 @@ script:
 env:
   global:
     secure: d96Eo9anBBvr+Ucwb92yMp5ZCPi262adt6PsC8uLR+KggH2k8hU9ScAVY9OGttMecKN3dy/OevSbracBGl7C9SP/YTLfGSIO9gaPlPctqn/oF8y1xNzpr0E/KoR/uyLgUPtAWXWxUc4SK6SI3VliRFGDz6iRcVva6iWaDkUp9wY=
-deploy:
-  provider: npm
-  email: me@rreverser.com
-  api_key:
-    secure: EPycJqpKzGoptpxtiKZIE6o/4IDIONwDqyRg9mufeUtP+8d9oawKSaZzDRQ83JaBn5QLon+r/1Qhf7c3663GWhOuyjvfA0dH2VoF6dS9LIv7yOSLENzEVOZo89eBgR7xLbMynI/wzACGUo15NZObFPKJyYsxBauITvW2w4Gbd5I=
-  on:
-    node: '0.10'
-    repo: jDataView/jBinary
-
+notifications:
+  webhooks:
+    urls:
+      - http://rreverser-travis.azurewebsites.net/
+    on_failure: never
+    on_start: false
