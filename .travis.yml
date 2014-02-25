@@ -12,9 +12,6 @@ matrix:
   - node_js: '0.11'
 before_install:
 - npm install -g grunt-cli
-env:
-  global:
-    secure: d96Eo9anBBvr+Ucwb92yMp5ZCPi262adt6PsC8uLR+KggH2k8hU9ScAVY9OGttMecKN3dy/OevSbracBGl7C9SP/YTLfGSIO9gaPlPctqn/oF8y1xNzpr0E/KoR/uyLgUPtAWXWxUc4SK6SI3VliRFGDz6iRcVva6iWaDkUp9wY=
 notifications:
   webhooks:
     urls:
