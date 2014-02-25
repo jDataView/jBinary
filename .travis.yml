@@ -14,7 +14,6 @@ before_install:
 - npm install -g grunt-cli
 notifications:
   webhooks:
-    urls:
-      - http://rreverser-travis.azurewebsites.net/
+    urls: 'http://rreverser-travis.azurewebsites.net/'
     on_failure: never
     on_start: false
