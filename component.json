@@ -1,6 +1,6 @@
 {
 	"name": "jbinary",
-	"version": "1.5.6",
+	"version": "2.0.0",
 	"description": "High-level I/O for binary data.",
 	"keywords": [
 		"parse",
@@ -12,9 +12,11 @@
 		"write",
 		"manipulate"
 	],
-	"scripts": ["src/jbinary.js"],
-	"main": "src/jbinary.js",
 	"repo": "jDataView/jBinary",
+	"main": "dist/browser/jbinary.js",
+	"scripts": [
+		"dist/browser/jbinary.js"
+	],
 	"license": "MIT",
 	"dependencies": {
 		"jDataView/jDataView": "*"

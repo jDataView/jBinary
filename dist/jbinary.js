@@ -1,15 +1,48 @@
-(function (global) {
+(function (factory) {
+	var root = (function () { return this })();
+
+	if (typeof exports === 'object') {
+		module.exports = factory.call(root, require('jdataview'));
+	} else
+	if (typeof define === 'function' && define.amd) {
+		define(['jdataview'], function () {
+			factory.apply(root, arguments);
+		});
+	}
+	else {
+		root['jBinary'] = factory.call(root, root.jDataView);
+	}
+}(function(jDataView) {
 
 'use strict';
 
+var global = this;
+
+/* jshint ignore:start */
+
 // https://github.com/davidchambers/Base64.js (modified)
 if (!('atob' in global) || !('btoa' in global)) {
-// jshint:skipline
-(function(){var t=global,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n=function(){try{document.createElement("$")}catch(t){return t}}();t.btoa||(t.btoa=function(t){for(var o,e,a=0,c=r,f="";t.charAt(0|a)||(c="=",a%1);f+=c.charAt(63&o>>8-8*(a%1))){if(e=t.charCodeAt(a+=.75),e>255)throw n;o=o<<8|e}return f}),t.atob||(t.atob=function(t){if(t=t.replace(/=+$/,""),1==t.length%4)throw n;for(var o,e,a=0,c=0,f="";e=t.charAt(c++);~e&&(o=a%4?64*o+e:e,a++%4)?f+=String.fromCharCode(255&o>>(6&-2*a)):0)e=r.indexOf(e);return f})})();
+	(function(){var t=global,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n=function(){try{document.createElement("$")}catch(t){return t}}();t.btoa||(t.btoa=function(t){for(var o,e,a=0,c=r,f="";t.charAt(0|a)||(c="=",a%1);f+=c.charAt(63&o>>8-8*(a%1))){if(e=t.charCodeAt(a+=.75),e>255)throw n;o=o<<8|e}return f}),t.atob||(t.atob=function(t){if(t=t.replace(/=+$/,""),1==t.length%4)throw n;for(var o,e,a=0,c=0,f="";e=t.charAt(c++);~e&&(o=a%4?64*o+e:e,a++%4)?f+=String.fromCharCode(255&o>>(6&-2*a)):0)e=r.indexOf(e);return f})})();
 }
 
-var NODEJS = Object.prototype.toString.call(global.global) === '[object global]',
-	jDataView;
+if (BROWSER && !jDataView) {
+	var tempKey = 'jBinary_activate';
+
+	global[tempKey] = function () {
+		try {
+			delete global[tempKey];
+		} catch (e) {
+			// hello, old IE!
+			global[tempKey] = undefined;
+		}
+
+		jDataView = global.jDataView;
+	};
+
+	document.write('<script src="//jdataview.github.io/dist/jdataview.js"></script><script>' + tempKey + '()</script>');
+}
+
+/* jshint ignore:end */
 
 function extend(obj) {
 	for (var i = 1, length = arguments.length; i < length; ++i) {
@@ -30,12 +63,50 @@ var _inherit = Object.create || function (obj) {
 };
 
 function inherit(obj) {
+	'use strict';
 	arguments[0] = _inherit(obj);
 	return extend.apply(null, arguments);
 }
 
 function toValue(obj, binary, value) {
 	return value instanceof Function ? value.call(obj, binary.contexts[0]) : value;
+}
+
+var defineProperty = Object.defineProperty;
+
+if (defineProperty && BROWSER) {
+	// this is needed to detect DOM-only version of Object.defineProperty in IE8:
+	try {
+		defineProperty({}, 'x', {});
+	} catch (e) {
+		defineProperty = null;
+	}
+}
+
+if (!defineProperty) {
+	defineProperty = function (obj, key, descriptor, allowVisible) {
+		if (allowVisible) {
+			obj[key] = descriptor.value;
+		}
+	};
+}
+
+function promising(func) {
+	return function () {
+		if (typeof arguments[arguments.length - 1] === 'function') {
+			return func.apply(this, arguments);
+		} else {
+			var self = this, args = arguments;
+			return {
+				then: function (resolveFn, rejectFn) {
+					Array.prototype.push.call(args, function (err, res) {
+						return err ? rejectFn(err) : resolveFn(res);
+					});
+					return func.apply(self, args);
+				}
+			};
+		}
+	};
 }
 
 function jBinary(view, typeSet) {
@@ -64,25 +135,6 @@ var proto = jBinary.prototype;
 proto.cacheKey = 'jBinary.Cache';
 proto.id = 0;
 
-var defineProperty = Object.defineProperty;
-
-if (defineProperty) {
-	// this is needed to detect DOM-only version of Object.defineProperty in IE8:
-	try {
-		defineProperty({}, 'x', {});
-	} catch (e) {
-		defineProperty = null;
-	}
-}
-
-if (!defineProperty) {
-	defineProperty = function (obj, key, descriptor, allowVisible) {
-		if (allowVisible) {
-			obj[key] = descriptor.value;
-		}
-	};
-}
-
 proto._getCached = function (obj, valueAccessor, allowVisible) {
 	if (!obj.hasOwnProperty(this.cacheKey)) {
 		var value = valueAccessor.call(this, obj);
@@ -91,6 +143,10 @@ proto._getCached = function (obj, valueAccessor, allowVisible) {
 	} else {
 		return obj[this.cacheKey];
 	}
+};
+
+proto.toValue = function (value) {
+	return toValue(this, this, value);
 };
 
 proto.getContext = function (filter) {
@@ -122,11 +178,11 @@ proto.inContext = function (newContext, callback) {
 	return result;
 };
 
-jBinary.Type = function (config) {
-	return inherit(jBinary.Type.prototype, config);
-};
+function Type(config) {
+	return inherit(Type.prototype, config);
+}
 
-jBinary.Type.prototype = {
+Type.prototype = {
 	inherit: function (args, getType) {
 		var _type = this, type;
 
@@ -167,7 +223,10 @@ jBinary.Type.prototype = {
 		return type || _type;
 	},
 	createProperty: function (binary) {
-		return inherit(this, {binary: binary});
+		return inherit(this, {
+			binary: binary,
+			view: binary.view
+		});
 	},
 	toValue: function (val, allowResolve) {
 		if (allowResolve !== false && typeof val === 'string') {
@@ -177,19 +236,21 @@ jBinary.Type.prototype = {
 	}
 };
 
-jBinary.Template = function (config) {
-	return inherit(jBinary.Template.prototype, config, {
+jBinary.Type = Type;
+
+function Template(config) {
+	return inherit(Template.prototype, config, {
 		createProperty: function (binary) {
-			var property = (config.createProperty || jBinary.Template.prototype.createProperty).apply(this, arguments);
+			var property = (config.createProperty || Template.prototype.createProperty).apply(this, arguments);
 			if (property.getBaseType) {
 				property.baseType = property.binary.getType(property.getBaseType(property.binary.contexts[0]));
 			}
 			return property;
 		}
 	});
-};
+}
 
-jBinary.Template.prototype = inherit(jBinary.Type.prototype, {
+Template.prototype = inherit(Type.prototype, {
 	setParams: function () {
 		if (this.baseType) {
 			this.typeParams = ['baseType'].concat(this.typeParams || []);
@@ -202,11 +263,16 @@ jBinary.Template.prototype = inherit(jBinary.Type.prototype, {
 		return this.binary.write(this.baseType, value);
 	}
 });
-jBinary.Template.prototype.read = jBinary.Template.prototype.baseRead;
-jBinary.Template.prototype.write = jBinary.Template.prototype.baseWrite;
+
+extend(Template.prototype, {
+	read: Template.prototype.baseRead,
+	write: Template.prototype.baseWrite
+});
+
+jBinary.Template = Template;
 
 proto.typeSet = {
-	'extend': jBinary.Type({
+	'extend': Type({
 		setParams: function () {
 			this.parts = arguments;
 		},
@@ -235,7 +301,7 @@ proto.typeSet = {
 			});
 		}
 	}),
-	'enum': jBinary.Template({
+	'enum': Template({
 		params: ['baseType', 'matches'],
 		setParams: function (baseType, matches) {
 			this.backMatches = {};
@@ -251,19 +317,19 @@ proto.typeSet = {
 			this.baseWrite(value in this.backMatches ? this.backMatches[value] : value);
 		}
 	}),
-	'string': jBinary.Template({
+	'string': Template({
 		params: ['length', 'encoding'],
 		read: function () {
-			return this.binary.view.getString(this.toValue(this.length), undefined, this.encoding);
+			return this.view.getString(this.toValue(this.length), undefined, this.encoding);
 		},
 		write: function (value) {
-			this.binary.view.writeString(value, this.encoding);
+			this.view.writeString(value, this.encoding);
 		}
 	}),
-	'string0': jBinary.Type({
+	'string0': Type({
 		params: ['length', 'encoding'],
 		read: function () {
-			var view = this.binary.view, maxLength = this.length;
+			var view = this.view, maxLength = this.length;
 			if (maxLength === undefined) {
 				var startPos = view.tell(), length = 0, code;
 				maxLength = view.byteLength - startPos;
@@ -280,7 +346,7 @@ proto.typeSet = {
 			}
 		},
 		write: function (value) {
-			var view = this.binary.view, zeroLength = this.length === undefined ? 1 : this.length - value.length;
+			var view = this.view, zeroLength = this.length === undefined ? 1 : this.length - value.length;
 			view.writeString(value, undefined, this.encoding);
 			if (zeroLength > 0) {
 				view.writeUint8(0);
@@ -288,12 +354,12 @@ proto.typeSet = {
 			}
 		}
 	}),
-	'array': jBinary.Template({
+	'array': Template({
 		params: ['baseType', 'length'],
 		read: function () {
 			var length = this.toValue(this.length);
 			if (this.baseType === proto.typeSet.uint8) {
-				return this.binary.view.getBytes(length, undefined, true, true);
+				return this.view.getBytes(length, undefined, true, true);
 			}
 			var results;
 			if (length !== undefined) {
@@ -302,7 +368,7 @@ proto.typeSet = {
 					results[i] = this.baseRead();
 				}
 			} else {
-				var end = this.binary.view.byteLength;
+				var end = this.view.byteLength;
 				results = [];
 				while (this.binary.tell() < end) {
 					results.push(this.baseRead());
@@ -312,14 +378,14 @@ proto.typeSet = {
 		},
 		write: function (values) {
 			if (this.baseType === proto.typeSet.uint8) {
-				return this.binary.view.writeBytes(values);
+				return this.view.writeBytes(values);
 			}
 			for (var i = 0, length = values.length; i < length; i++) {
 				this.baseWrite(values[i]);
 			}
 		}
 	}),
-	'object': jBinary.Type({
+	'object': Type({
 		params: ['structure', 'proto'],
 		resolve: function (getType) {
 			var structure = {};
@@ -359,28 +425,28 @@ proto.typeSet = {
 			});
 		}
 	}),
-	'bitfield': jBinary.Type({
+	'bitfield': Type({
 		params: ['bitSize'],
 		read: function () {
-			return this.binary.view.getUnsigned(this.bitSize);
+			return this.view.getUnsigned(this.bitSize);
 		},
 		write: function (value) {
-			this.binary.view.writeUnsigned(value, this.bitSize);
+			this.view.writeUnsigned(value, this.bitSize);
 		}
 	}),
-	'if': jBinary.Template({
+	'if': Template({
 		params: ['condition', 'trueType', 'falseType'],
 		typeParams: ['trueType', 'falseType'],
 		getBaseType: function (context) {
 			return this.toValue(this.condition) ? this.trueType : this.falseType;
 		}
 	}),
-	'if_not': jBinary.Template({
+	'if_not': Template({
 		setParams: function (condition, falseType, trueType) {
 			this.baseType = ['if', condition, trueType, falseType];
 		}
 	}),
-	'const': jBinary.Template({
+	'const': Template({
 		params: ['baseType', 'value', 'strict'],
 		read: function () {
 			var value = this.baseRead();
@@ -397,35 +463,37 @@ proto.typeSet = {
 			this.baseWrite((this.strict || value === undefined) ? this.value : value);
 		}
 	}),
-	'skip': jBinary.Type({
-		setParams: function (length) {
-			this.read = this.write = function () {
-				this.binary.view.skip(this.toValue(length));
-			};
-		}
-	}),
-	'blob': jBinary.Type({
+	'skip': Type({
 		params: ['length'],
 		read: function () {
-			return this.binary.view.getBytes(this.toValue(this.length));
+			this.view.skip(this.toValue(this.length));
 		},
-		write: function (bytes) {
-			this.binary.view.writeBytes(bytes, true);
+		write: function () {
+			this.read();
 		}
 	}),
-	'binary': jBinary.Template({
+	'blob': Type({
+		params: ['length'],
+		read: function () {
+			return this.view.getBytes(this.toValue(this.length));
+		},
+		write: function (bytes) {
+			this.view.writeBytes(bytes, true);
+		}
+	}),
+	'binary': Template({
 		params: ['length', 'typeSet'],
 		read: function () {
 			var startPos = this.binary.tell();
 			var endPos = this.binary.skip(this.toValue(this.length));
-			var view = this.binary.view.slice(startPos, endPos);
+			var view = this.view.slice(startPos, endPos);
 			return new jBinary(view, this.typeSet);
 		},
 		write: function (binary) {
 			this.binary.write('blob', binary.read('blob', 0));
 		}
 	}),
-	'lazy': jBinary.Template({
+	'lazy': Template({
 		marker: 'jBinary.Lazy',
 		params: ['innerType', 'length'],
 		getBaseType: function () {
@@ -473,45 +541,6 @@ proto.as = function (typeSet, modifyOriginal) {
 	return binary;
 };
 
-var dataTypes = [
-	'Uint8',
-	'Uint16',
-	'Uint32',
-	'Uint64',
-	'Int8',
-	'Int16',
-	'Int32',
-	'Int64',
-	'Float32',
-	'Float64',
-	'Char'
-];
-
-var simpleType = jBinary.Type({
-	params: ['littleEndian'],
-	read: function () {
-		return this.binary.view['get' + this.dataType](undefined, this.littleEndian);
-	},
-	write: function (value) {
-		this.binary.view['write' + this.dataType](value, this.littleEndian);
-	}
-});
-
-for (var i = 0, length = dataTypes.length; i < length; i++) {
-	var dataType = dataTypes[i];
-	proto.typeSet[dataType.toLowerCase()] = inherit(simpleType, {dataType: dataType});
-}
-
-extend(proto.typeSet, {
-	'byte': proto.typeSet.uint8,
-	'float': proto.typeSet.float32,
-	'double': proto.typeSet.float64
-});
-
-proto.toValue = function (value) {
-	return toValue(this, this, value);
-};
-
 proto.seek = function (position, callback) {
 	position = this.toValue(position);
 	if (callback !== undefined) {
@@ -531,6 +560,10 @@ proto.tell = function () {
 
 proto.skip = function (offset, callback) {
 	return this.seek(this.tell() + this.toValue(offset), callback);
+};
+
+proto.slice = function (start, end, forceCopy) {
+	return new jBinary(this.view.slice(start, end, forceCopy), this.typeSet);
 };
 
 proto.getType = function (type, args) {
@@ -602,215 +635,175 @@ proto.writeAll = function (data) {
 	return this.write('jBinary.all', data, 0);
 };
 
-proto._toURI =
-	('URL' in global && 'createObjectURL' in URL)
+(function (simpleType, dataTypes) {
+	for (var i = 0, length = dataTypes.length; i < length; i++) {
+		var dataType = dataTypes[i];
+		proto.typeSet[dataType.toLowerCase()] = inherit(simpleType, {dataType: dataType});
+	}
+})(
+	Type({
+		params: ['littleEndian'],
+		read: function () {
+			return this.view['get' + this.dataType](undefined, this.littleEndian);
+		},
+		write: function (value) {
+			this.view['write' + this.dataType](value, this.littleEndian);
+		}
+	}),
+	[
+		'Uint8',
+		'Uint16',
+		'Uint32',
+		'Uint64',
+		'Int8',
+		'Int16',
+		'Int32',
+		'Int64',
+		'Float32',
+		'Float64',
+		'Char'
+	]
+);
+
+extend(proto.typeSet, {
+	'byte': proto.typeSet.uint8,
+	'float': proto.typeSet.float32,
+	'double': proto.typeSet.float64
+});
+
+var _toURI =
+	(BROWSER && 'URL' in global && 'createObjectURL' in URL)
 	? function (type) {
 		var data = this.seek(0, function () { return this.view.getBytes() });
 		return URL.createObjectURL(new Blob([data], {type: type}));
 	}
 	: function (type) {
-		var string = this.seek(0, function () { return this.view.getString(undefined, undefined, this.view._isNodeBuffer ? 'base64' : 'binary') });
-		return 'data:' + type + ';base64,' + (this.view._isNodeBuffer ? string : btoa(string));
+		var string = this.seek(0, function () { return this.view.getString(undefined, undefined, NODE && this.view._isNodeBuffer ? 'base64' : 'binary') });
+		return 'data:' + type + ';base64,' + (NODE && this.view._isNodeBuffer ? string : btoa(string));
 	};
 
 proto.toURI = function (mimeType) {
-	return this._toURI(mimeType || this.typeSet['jBinary.mimeType'] || 'application/octet-stream');
+	return _toURI.call(this, mimeType || this.typeSet['jBinary.mimeType'] || 'application/octet-stream');
 };
 
-proto.slice = function (start, end, forceCopy) {
-	return new jBinary(this.view.slice(start, end, forceCopy), this.typeSet);
-};
+var ReadableStream = NODE && require('stream').Readable;
 
-var ReadableStream = NODEJS && require('stream').Readable;
-
-jBinary.loadData = function (source, callback) {
+jBinary.loadData = promising(function (source, callback) {
 	var dataParts;
 
-	if (typeof callback === 'undefined') {
-		return {
-			then: function(resolveFn, rejectFn) {
-				var callback = function(err, res) {
-					return err ? rejectFn(err) : resolveFn(res);
-				};
-				return jBinary.loadData(source, callback);
-			}
+	if (BROWSER && 'Blob' in global && source instanceof Blob) {
+		var reader = new FileReader();
+		reader.onload = reader.onerror = function () { callback(this.error, this.result) };
+		reader.readAsArrayBuffer(source);
+	} else
+	if (NODE && ReadableStream && source instanceof ReadableStream) {
+		var buffers = [];
+		source
+			.on('readable', function () { buffers.push(this.read()) })
+			.on('end', function () { callback(null, Buffer.concat(buffers)) })
+			.on('error', callback)
+		;
+	} else
+	if (typeof source !== 'string') {
+		return callback(new TypeError('Unsupported source type.'));
+	} else
+	if (!!(dataParts = source.match(/^data:(.+?)(;base64)?,(.*)$/))) {
+		try {
+			var isBase64 = dataParts[2],
+				content = dataParts[3];
+
+			callback(
+				null,
+				(
+					(isBase64 && NODE && jDataView.prototype.compatibility.NodeBuffer)
+					? new Buffer(content, 'base64')
+					: (isBase64 ? atob : decodeURIComponent)(content)
+				)
+			);
+		} catch (e) {
+			callback(e);
+		}
+	} else
+	if (BROWSER && 'XMLHttpRequest' in global) {
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', source, true);
+
+		// new browsers (XMLHttpRequest2-compliant)
+		if ('responseType' in xhr) {
+			xhr.responseType = 'arraybuffer';
+		}
+		// old browsers (XMLHttpRequest-compliant)
+		else if ('overrideMimeType' in xhr) {
+			xhr.overrideMimeType('text/plain; charset=x-user-defined');
+		}
+		// IE9 (Microsoft.XMLHTTP-compliant)
+		else {
+			xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
+		}
+
+		// shim for onload for old IE
+		if (!('onload' in xhr)) {
+			xhr.onreadystatechange = function () {
+				if (this.readyState === 4) {
+					this.onload();
+				}
+			};
+		}
+
+		var cbError = function (string) {
+			callback(new Error(string));
 		};
+
+		xhr.onload = function () {
+			if (this.status !== 0 && this.status !== 200) {
+				return cbError('HTTP Error #' + this.status + ': ' + this.statusText);
+			}
+
+			// emulating response field for IE9
+			if (!('response' in this)) {
+				this.response = new VBArray(this.responseBody).toArray();
+			}
+
+			callback(null, this.response);
+		};
+
+		xhr.onerror = function () {
+			cbError('Network error.');
+		};
+
+		xhr.send(null);
+	} else
+	if (BROWSER) {
+		return callback(new TypeError('Unsupported source type.'));
+	} else
+	if (NODE && /^(https?):\/\//.test(source)) {
+		require('request').get({
+			uri: source,
+			encoding: null
+		}, function (error, response, body) {
+			if (!error && response.statusCode !== 200) {
+				var statusText = require('http').STATUS_CODES[response.statusCode];
+				error = new Error('HTTP Error #' + response.statusCode + ': ' + statusText);
+			}
+			callback(error, body);
+		});
+	} else
+	if (NODE) {
+		require('fs').readFile(source, callback);
 	}
+});
 
-	switch (true) {
-		case 'Blob' in global && source instanceof Blob:
-			var reader = new FileReader();
-			reader.onload = reader.onerror = function() { callback(this.error, this.result) };
-			reader.readAsArrayBuffer(source);
-			return;
-
-		case !!ReadableStream && source instanceof ReadableStream:
-			var buffers = [];
-			source
-				.on('readable', function () { buffers.push(this.read()) })
-				.on('end', function () { callback(null, Buffer.concat(buffers)) })
-				.on('error', callback)
-			;
-			return;
-
-		case typeof source !== 'string':
-			return callback(new TypeError('Unsupported source type.'));
-
-		case !!(dataParts = source.match(/^data:(.+?)(;base64)?,(.*)$/)):
-			try {
-				var isBase64 = dataParts[2],
-					content = dataParts[3];
-
-				callback(
-					null,
-					(
-						(isBase64 && jDataView.prototype.compatibility.NodeBuffer)
-						? new Buffer(content, 'base64')
-						: (isBase64 ? atob : decodeURIComponent)(content)
-					)
-				);
-			} catch (e) {
-				callback(e);
-			}
-
-			return;
-
-		case 'XMLHttpRequest' in global:
-			var xhr = new XMLHttpRequest();
-			xhr.open('GET', source, true);
-
-			// new browsers (XMLHttpRequest2-compliant)
-			if ('responseType' in xhr) {
-				xhr.responseType = 'arraybuffer';
-			}
-			// old browsers (XMLHttpRequest-compliant)
-			else if ('overrideMimeType' in xhr) {
-				xhr.overrideMimeType('text/plain; charset=x-user-defined');
-			}
-			// IE9 (Microsoft.XMLHTTP-compliant)
-			else {
-				xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
-			}
-
-			// shim for onload for old IE
-			if (!('onload' in xhr)) {
-				xhr.onreadystatechange = function () {
-					if (this.readyState === 4) {
-						this.onload();
-					}
-				};
-			}
-
-			var cbError = function (string) {
-				callback(new Error(string));
-			};
-
-			xhr.onload = function () {
-				if (this.status !== 0 && this.status !== 200) {
-					return cbError('HTTP Error #' + this.status + ': ' + this.statusText);
-				}
-
-				// emulating response field for IE9
-				if (!('response' in this)) {
-					this.response = new VBArray(this.responseBody).toArray();
-				}
-
-				callback(null, this.response);
-			};
-
-			xhr.onerror = function () {
-				cbError('Network error.');
-			};
-
-			xhr.send(null);
-
-			return;
-
-		case !NODEJS:
-			return callback(new TypeError('Unsupported source type.'));
-
-		case /^(https?):\/\//.test(source):
-			require('request').get({
-				uri: source,
-				encoding: null
-			}, function (error, response, body) {
-				if (!error && response.statusCode !== 200) {
-					var statusText = require('http').STATUS_CODES[response.statusCode];
-					error = new Error('HTTP Error #' + response.statusCode + ': ' + statusText);
-				}
-				callback(error, body);
-			});
-			return;
-
-		default:
-			require('fs').readFile(source, callback);
-	}
-};
-
-jBinary.load = function (source, typeSet, callback) {
-	if (typeof typeSet === 'function' && !callback) {
+jBinary.load = promising(function (source, typeSet, callback) {
+	if (typeof typeSet === 'function') {
 		callback = typeSet;
 		typeSet = undefined;
-	}
-	
-	if (!callback) {
-		return {
-			then: function(resolveFn, rejectFn) {
-				var callback = function(err, res) {
-					return err ? rejectFn(err) : resolveFn(res);
-				};
-				return jBinary.load(source, typeSet, callback);
-			}
-		};
 	}
 
 	jBinary.loadData(source, function (err, data) {
 		/* jshint expr: true */
 		err ? callback(err) : callback(null, new jBinary(data, typeSet));
 	});
-};
+});
+return jBinary;
 
-function getJBinary(_jDataView) {
-	(jDataView = _jDataView).prototype.toBinary = function (typeSet) {
-		return new jBinary(this, typeSet);
-	};
-	return jBinary;
-}
-
-if (typeof module !== 'undefined' && typeof module.exports === 'object') {
-	module.exports = getJBinary(require('jdataview'));
-} else
-if (typeof define === 'function' && define.amd) {
-	define(['jdataview'], getJBinary);
-} else {
-	(function (useGlobal) {
-		if ('jDataView' in global) {
-			useGlobal();
-		} else {
-			var tempKey = 'jBinary_activate';
-			
-			global[tempKey] = function () {
-				try {
-					delete global[tempKey];
-				} catch (e) {
-					// hello, old IE!
-					global[tempKey] = undefined;
-				}
-
-				useGlobal();
-			};
-
-			// yes, document.write is evil but looks like the only way to block execution of further scripts until external jDataView will be loaded
-			/* jshint evil: true */
-			document.write('<script src="//jdataview.github.io/dist/jdataview.js"></script><script>' + tempKey + '()</script>');
-		}
-	})(function () {
-		var oldGlobal = global.jBinary;
-		(global.jBinary = getJBinary(global.jDataView)).noConflict = function () {
-			global.jBinary = oldGlobal;
-			return this;
-		};
-	});
-}
-
-})((function () { /* jshint strict: false */ return this })());
+}));

@@ -3,8 +3,15 @@
 	"node": true,
 	"nonstandard": true,
 	"worker": true,
-	"globals": {"define": false, "URL": false, "File": false, "VBArray": false},
-
+	"globals": {
+		"define": false,
+		"URL": false,
+		"File": false,
+		"VBArray": false,
+		"jDataView": false,
+		"NODE": false,
+		"BROWSER": false
+	},
 	"camelcase": true,
 	"curly": true,
 	"eqeqeq": true,
@@ -20,7 +27,8 @@
 	"nonew": true,
 	"quotmark": "single",
 	"smarttabs": true,
-	"strict": true,
 	"trailing": true,
-	"undef": true
+	"undef": true,
+	"white": true,
+	"indent": 2
 }
