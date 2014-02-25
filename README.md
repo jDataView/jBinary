@@ -1,8 +1,6 @@
 [![Build Status](https://travis-ci.org/jDataView/jBinary.png?branch=master)](https://travis-ci.org/jDataView/jBinary) jBinary - High-level I/O for binary data.
 =========================================
 
-[![browser support](https://ci.testling.com/jDataView/jBinary.png)](https://ci.testling.com/jDataView/jBinary)
-
 jBinary makes it easy to work with binary files in JavaScript.
 
 It works on top of [jDataView](https://github.com/jDataView/jDataView) binary processing library.
