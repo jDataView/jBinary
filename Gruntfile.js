@@ -5,7 +5,7 @@ module.exports = function (grunt) {
 		concat_sourcemap: {
 			options: {
 				separator: Array(3).join(grunt.util.linefeed),
-				sourceRoot: '//raw.github.com/jDataView/jBinary/v2.0/'
+				sourceRoot: process.env.CI ? '//raw.github.com/jDataView/jBinary/' + process.env.TRAVIS_COMMIT : '../..'
 			},
 			all: {
 				files: {
