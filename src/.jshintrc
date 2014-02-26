@@ -17,10 +17,10 @@
 	"eqeqeq": true,
 	"es3": true,
 	"immed": true,
+	"indent": 4,
 	"lastsemic": true,
 	"latedef": true,
 	"laxbreak": true,
-	"loopfunc": true,
 	"newcap": false,
 	"noarg": true,
 	"noempty": true,
@@ -28,7 +28,5 @@
 	"quotmark": "single",
 	"smarttabs": true,
 	"trailing": true,
-	"undef": true,
-	"white": true,
-	"indent": 2
+	"undef": true
 }

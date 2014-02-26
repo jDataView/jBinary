@@ -2,16 +2,16 @@ module.exports = function (grunt) {
 	grunt.initConfig({
 		libName: 'jBinary',
 		pkgName: '<%= libName.toLowerCase() %>',
-		concat: {
+		concat_sourcemap: {
 			options: {
-				process: function (src) {
-					return src.trim();
-				},
-				separator: Array(3).join(grunt.util.linefeed)
+				separator: Array(3).join(grunt.util.linefeed),
+				sourceRoot: '//raw.github.com/jDataView/jBinary/v2.0/'
 			},
 			all: {
 				files: {
 					'dist/<%= pkgName %>.js': [
+						'src/umd/header.js',
+
 						'src/shim.js',
 						'src/utils.js',
 						'src/core.js',
@@ -24,44 +24,43 @@ module.exports = function (grunt) {
 						'src/proto/props.js',
 						'src/simpleTypes.js',
 						'src/io/toURI.js',
-						'src/io/load.js'
+						'src/io/load.js',
+
+						'src/umd/footer.js'
 					]
 				} 
 			}
 		},
 		jshint: {
-			options: {
-				jshintrc: 'src/.jshintrc'
+			options: grunt.file.readJSON('src/.jshintrc'),
+			before_concat: {
+				options: {
+					undef: false
+				},
+				src: ['src/**/*.js', '!src/umd/**']
 			},
-			all: ['dist/<%= pkgName %>.js']
-		},
-		umd: {
-			all: {
-				src: 'dist/<%= pkgName %>.js',
-				template: 'strict-umd.hbs',
-				objectToExport: '<%= libName %>',
-				globalAlias: '<%= libName %>',
-				deps: {
-					'default': ['jDataView'],
-					amd: ['jdataview'],
-					cjs: ['jdataview']
-				}
+			after_concat: {
+				options: {
+					indent: false,
+					'-W034': true
+				},
+				src: 'dist/<%= pkgName %>.js'
 			}
 		},
 		uglify: {
 			options: {
 				compress: {
 					pure_getters: true
-				}
+				},
+				sourceMapIn: 'dist/<%= pkgName %>.js.map'
 			},
 			browser: {
 				options: {
 					compress: {
 						global_defs: {NODE: false, BROWSER: true}
 					},
-					sourceMap: 'dist/browser/<%= pkgName %>.js.map',
-					sourceMapRoot: '../..',
-					sourceMappingURL: '<%= pkgName %>.js.map'
+					sourceMap: true,
+					sourceMapName: function (js) { return js + '.map' }
 				},
 				files: {
 					'dist/browser/<%= pkgName %>.js': 'dist/<%= pkgName %>.js'
@@ -71,7 +70,8 @@ module.exports = function (grunt) {
 				options: {
 					compress: {
 						global_defs: {NODE: true, BROWSER: false}
-					}
+					},
+					mangle: false
 				},
 				files: {
 					'dist/node/<%= pkgName %>.js': 'dist/<%= pkgName %>.js'
@@ -126,7 +126,7 @@ module.exports = function (grunt) {
 
 	require('load-grunt-tasks')(grunt);
 
-	grunt.registerTask('prebuild', ['concat', 'jshint', 'umd']);
+	grunt.registerTask('prebuild', ['jshint:before_concat', 'concat_sourcemap', 'jshint:after_concat']);
 
 	grunt.registerTask('build', function (target) {
 		grunt.task.run('prebuild', 'uglify' + (target ? ':' + target : ''));
