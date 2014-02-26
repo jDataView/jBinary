@@ -129,6 +129,11 @@ module.exports = function (grunt) {
 				add: true
 			},
 			all: ['<%= pkgName %>.js', '<%= pkgName %>.js.map']
+		},
+		'npm-publish': {
+			options: {
+				tag: 'canary'
+			}
 		}
 	});
 
@@ -153,6 +158,6 @@ module.exports = function (grunt) {
 	grunt.registerTask('live', ['karma:watch:start', 'watch']);
 
 	grunt.registerTask('publish', function (changeLevel) {
-		grunt.task.run('default', 'bump:' + (changeLevel || 'build'), 'gh-pages');
+		grunt.task.run('default', 'bump:' + (changeLevel || 'build'), 'gh-pages', 'npm-publish');
 	});
 };
