@@ -125,7 +125,8 @@ module.exports = function (grunt) {
 		'gh-pages': {
 			options: {
 				base: 'dist/browser',
-				repo: 'git@github.com:jDataView/dist2.git'
+				repo: 'git@github.com:jDataView/dist2.git',
+				add: true
 			},
 			all: ['<%= pkgName %>.js', '<%= pkgName %>.js.map']
 		}
