@@ -12,3 +12,34 @@ matrix:
   - node_js: '0.11'
 before_install:
 - npm install -g grunt-cli
+env:
+  global:
+    - EMAIL=me@rreverser.com
+    - secure: n++5XsU9SToUz4iLG6J//CfCoxAPdD91NyHV77pxsOm9C13mtnVPTByxF6DhRgP6MrBUER3MUfz1q4Zj7PxxJ9qOXgpuUcH1F1wMiJ4IemR7ct0qoaV6eCxBN+gg4nAZDA8798IMjnO8RZ5h2sJfWfm61V82Rg9vth7T0j38Lh8=
+after_success:
+  - |
+      if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+        curl -o travis_after_all.py https://raw.github.com/dmakhno/travis_after_all/master/travis_after_all.py
+        python travis_after_all.py
+        export $(cat .to_export_back)
+        if [ "$BUILD_LEADER" = "YES" ]; then
+          if [ "$BUILD_AGGREGATE_STATUS" = "others_succeeded" ]; then
+            echo "Publishing..."
+            git config --global user.name "Travis-CI"
+            git config --global user.email $EMAIL
+            git clone -q https://$GH_PAGES@github.com/jDataView/dist2.git ~/dist
+            cp dist/browser/* ~/dist/
+            pushd ~/dist
+            git add .
+            git commit -m "Travis build $TRAVIS_BUILD_NUMBER"
+            git push -q origin
+            popd
+          else
+            echo "Some of builds were failed."
+          fi
+        fi
+      else
+        echo "Pull request detected, not publishing."
+      fi
+after_script:
+  - echo pull_request=$TRAVIS_PULL_REQUEST leader=$BUILD_LEADER status=$BUILD_AGGREGATE_STATUS

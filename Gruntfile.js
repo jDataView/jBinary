@@ -2,7 +2,6 @@ module.exports = function (grunt) {
 	grunt.initConfig({
 		libName: 'jBinary',
 		pkgName: '<%= libName.toLowerCase() %>',
-		gitHub: 'https://' + process.env.GH_TOKEN + '@github.com/jDataView',
 		concat: {
 			options: {
 				process: function (src) {
@@ -106,7 +105,7 @@ module.exports = function (grunt) {
 			options: {
 				files: ['package.json', 'component.json'],
 				commitFiles: ['-a'],
-				pushTo: '<%= gitHub %>/jBinary.git'
+				pushTo: 'origin'
 			}
 		},
 		watch: {
@@ -121,20 +120,6 @@ module.exports = function (grunt) {
 					'test/test.js'
 				],
 				tasks: ['build', 'karma:watch:run', 'mochaTest:node']
-			}
-		},
-		'gh-pages': {
-			options: {
-				base: 'dist/browser',
-				repo: '<%= gitHub %>/dist2.git',
-				add: true,
-				silent: true
-			},
-			all: ['<%= pkgName %>.js', '<%= pkgName %>.js.map']
-		},
-		'npm-publish': {
-			options: {
-				tag: 'canary'
 			}
 		}
 	});
@@ -158,8 +143,4 @@ module.exports = function (grunt) {
 	grunt.registerTask('default', ['build', 'test']);
 
 	grunt.registerTask('live', ['karma:watch:start', 'watch']);
-
-	grunt.registerTask('publish', function (changeLevel) {
-		grunt.task.run('default', 'bump:' + (changeLevel || 'build'), 'gh-pages', 'npm-publish');
-	});
 };
