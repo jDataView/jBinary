@@ -144,7 +144,7 @@ module.exports = function (grunt) {
 
 	grunt.registerTask('live', ['karma:watch:start', 'watch']);
 
-	grunt.registerTask('npm-publish', 'Publish the latest version of this plugin', function() {
+	grunt.registerTask('npm-publish', 'Publish the latest version of this plugin', function () {
 		var npm = require('npm'), done = this.async();
 
 		npm.load({}, function(err) {
