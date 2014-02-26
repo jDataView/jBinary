@@ -121,6 +121,13 @@ module.exports = function (grunt) {
 				],
 				tasks: ['build', 'karma:watch:run', 'mochaTest:node']
 			}
+		},
+		'gh-pages': {
+			options: {
+				base: 'dist/browser',
+				repo: 'git@github.com:jDataView/dist2.git'
+			},
+			all: ['<%= pkgName %>.js', '<%= pkgName %>.js.map']
 		}
 	});
 
@@ -145,6 +152,6 @@ module.exports = function (grunt) {
 	grunt.registerTask('live', ['karma:watch:start', 'watch']);
 
 	grunt.registerTask('publish', function (changeLevel) {
-		grunt.task.run('default', 'bump:' + (changeLevel || 'build'));
+		grunt.task.run('default', 'bump:' + (changeLevel || 'build'), 'gh-pages');
 	});
 };
