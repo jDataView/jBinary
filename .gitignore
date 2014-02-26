@@ -1,4 +1,4 @@
 /.idea
-/.grunt
 /node_modules
 /dist
+*.log
