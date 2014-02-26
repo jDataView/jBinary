@@ -2,6 +2,7 @@ module.exports = function (grunt) {
 	grunt.initConfig({
 		libName: 'jBinary',
 		pkgName: '<%= libName.toLowerCase() %>',
+		gitHub: 'https://' + process.env.GH_TOKEN + '@github.com/jDataView',
 		concat: {
 			options: {
 				process: function (src) {
@@ -105,7 +106,7 @@ module.exports = function (grunt) {
 			options: {
 				files: ['package.json', 'component.json'],
 				commitFiles: ['-a'],
-				pushTo: 'origin'
+				pushTo: '<%= gitHub %>/jBinary.git'
 			}
 		},
 		watch: {
@@ -125,8 +126,9 @@ module.exports = function (grunt) {
 		'gh-pages': {
 			options: {
 				base: 'dist/browser',
-				repo: 'git@github.com:jDataView/dist2.git',
-				add: true
+				repo: '<%= gitHub %>/dist2.git',
+				add: true,
+				silent: true
 			},
 			all: ['<%= pkgName %>.js', '<%= pkgName %>.js.map']
 		},
