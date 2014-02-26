@@ -22,7 +22,7 @@ after_success:
   - |
       if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
         echo "Waiting for other builds..."
-        curl -o travis_after_all.py https://raw.github.com/dmakhno/travis_after_all/master/travis_after_all.py > /dev/null
+        curl -s -o travis_after_all.py https://raw.github.com/dmakhno/travis_after_all/master/travis_after_all.py
         python travis_after_all.py
         export $(cat .to_export_back)
         if [ "$BUILD_LEADER" = "YES" ]; then
@@ -30,15 +30,15 @@ after_success:
             git config --global user.name "Travis-CI"
             git config --global user.email $EMAIL
             echo "Cloning dist..."
-            git clone https://$GH_TOKEN@github.com/jDataView/dist2.git ~/dist 2>&1 /dev/null
+            git clone https://$GH_TOKEN@github.com/jDataView/dist2.git ~/dist &>-
             echo "Copying generated files into dist..."
-            cp dist/browser/* ~/dist/
+            cp dist/browser/{*.js,*.js.map} ~/dist/
             echo "Committing..."
             pushd ~/dist > /dev/null
             git add .
             git commit -m "Travis build $TRAVIS_BUILD_NUMBER"
             echo "Publishing..."
-            git push origin gh-pages 2>&1 /dev/null
+            git push origin gh-pages &>-
             popd
             echo "Published browser dist."
             grunt npm-publish
