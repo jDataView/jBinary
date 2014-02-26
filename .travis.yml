@@ -14,8 +14,10 @@ before_install:
 - npm install -g grunt-cli
 env:
   global:
+    - NPM_USERNAME=rreverser
     - EMAIL=me@rreverser.com
     - secure: n++5XsU9SToUz4iLG6J//CfCoxAPdD91NyHV77pxsOm9C13mtnVPTByxF6DhRgP6MrBUER3MUfz1q4Zj7PxxJ9qOXgpuUcH1F1wMiJ4IemR7ct0qoaV6eCxBN+gg4nAZDA8798IMjnO8RZ5h2sJfWfm61V82Rg9vth7T0j38Lh8=
+    - secure: jRZCZK4i8cAxSV/YcyutjTKeWSZH6I2G25Bw/Ful96VQ175mxSwE8FdgNjKRHWYLB5PR3GtuuvVG7RK2kCEJ1U9LUkpZBDfmvtobx8dz/hYsqgcLWE+Z5nXW/IPjfpfOwEMdGnSenZ5XKnFOrtMPBK2/6VE9zcgarZRZ2NIsHoI=
 after_success:
   - |
       if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
@@ -24,16 +26,22 @@ after_success:
         export $(cat .to_export_back)
         if [ "$BUILD_LEADER" = "YES" ]; then
           if [ "$BUILD_AGGREGATE_STATUS" = "others_succeeded" ]; then
-            echo "Publishing..."
+            echo "Publishing to gh-pages..."
             git config --global user.name "Travis-CI"
             git config --global user.email $EMAIL
+            echo "Cloning dist..."
             git clone -q https://$GH_PAGES@github.com/jDataView/dist2.git ~/dist
+            echo "Copying generated files into dist..."
             cp dist/browser/* ~/dist/
+            echo "Committing..."
             pushd ~/dist
             git add .
             git commit -m "Travis build $TRAVIS_BUILD_NUMBER"
-            git push -q origin
+            echo "Pushing dist..."
+            git push -q origin gh-pages
             popd
+            echo "Publishing to npm..."
+            grunt npm-publish
           else
             echo "Some of builds were failed."
           fi
