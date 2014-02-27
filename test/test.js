@@ -292,19 +292,21 @@ describe('Saving data', function () {
 			});
 		});
 
-		it('to Node.js writable stream', function (done) {
-			var stream = require('stream').Writable(), chunks = [];
-			stream._write = function (chunk, encoding, callback) {
-				chunks.push(chunk);
-				callback();
-			};
+		if (require('stream').Writable) {
+			it('to Node.js writable stream', function (done) {
+				var stream = require('stream').Writable(), chunks = [];
+				stream._write = function (chunk, encoding, callback) {
+					chunks.push(chunk);
+					callback();
+				};
 
-			binary.saveAs(stream, function (err) {
-				assert.notOk(err, err);
-				assert.equal(Buffer.concat(chunks).toString('binary'), binary.read('string', 0));
-				done();
+				binary.saveAs(stream, function (err) {
+					assert.notOk(err, err);
+					assert.equal(Buffer.concat(chunks).toString('binary'), binary.read('string', 0));
+					done();
+				});
 			});
-		});
+		}
 	} else {
 		it('via browser dialog', function (done) {
 			function addListener(node, eventType, handler) {

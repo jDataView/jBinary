@@ -45,10 +45,6 @@ if (BROWSER) {
 	}
 }
 
-var Promise = global.Promise || function (executor) {
-	this.then = executor;
-};
-
 function promising(func) {
 	return function () {
 		if (typeof arguments[arguments.length - 1] === 'function') {

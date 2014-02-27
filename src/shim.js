@@ -23,3 +23,7 @@ if (BROWSER && !jDataView) {
 }
 
 /* jshint ignore:end */
+
+var Promise = global.Promise || function (executor) {
+	this.then = executor;
+};
