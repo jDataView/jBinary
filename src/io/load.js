@@ -17,7 +17,7 @@ jBinary.loadData = promising(function (source, callback) {
 		;
 	} else
 	if (typeof source !== 'string') {
-		return callback(new TypeError('Unsupported source type.'));
+		callback(new TypeError('Unsupported source type.'));
 	} else
 	if (!!(dataParts = source.match(/^data:(.+?)(;base64)?,(.*)$/))) {
 		try {
@@ -86,7 +86,7 @@ jBinary.loadData = promising(function (source, callback) {
 		xhr.send(null);
 	} else
 	if (BROWSER) {
-		return callback(new TypeError('Unsupported source type.'));
+		callback(new TypeError('Unsupported source type.'));
 	} else
 	if (NODE && /^(https?):\/\//.test(source)) {
 		require('request').get({

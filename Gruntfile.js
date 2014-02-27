@@ -25,6 +25,7 @@ module.exports = function (grunt) {
 						'src/simpleTypes.js',
 						'src/io/toURI.js',
 						'src/io/load.js',
+						'src/io/save.js',
 
 						'src/umd/footer.js'
 					]

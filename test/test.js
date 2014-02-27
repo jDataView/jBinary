@@ -268,6 +268,90 @@ describe('Loading data', function () {
 
 //-----------------------------------------------------------------
 
+describe('Saving data', function () {
+	it('to URI', function (done) {
+		jBinary.load(binary.toURI(), function (err, newBinary) {
+			assert.notOk(err, err);
+			assert.deepEqual(newBinary.read('string', 0), binary.read('string', 0));
+			done();
+		});
+	});
+
+	if (hasNodeRequire) {
+		it('to local file', function (done) {
+			var savedFileName = __dirname + '/' + Math.random().toString().slice(2) + '.tmp';
+
+			binary.saveAs(savedFileName, function (err) {
+				assert.notOk(err, err);
+
+				jBinary.load(savedFileName, function (err, newBinary) {
+					assert.notOk(err, err);
+					assert.equal(newBinary.read('string', 0), binary.read('string', 0));
+					require('fs').unlink(savedFileName, done);
+				});
+			});
+		});
+
+		it('to Node.js writable stream', function (done) {
+			var stream = require('stream').Writable(), chunks = [];
+			stream._write = function (chunk, encoding, callback) {
+				chunks.push(chunk);
+				callback();
+			};
+
+			binary.saveAs(stream, function (err) {
+				assert.notOk(err, err);
+				assert.equal(Buffer.concat(chunks).toString('binary'), binary.read('string', 0));
+				done();
+			});
+		});
+	} else {
+		it('via browser dialog', function (done) {
+			function addListener(node, eventType, handler) {
+				if (node.addEventListener) {
+					node.addEventListener(eventType, handler);
+				} else {
+					node.attachEvent(eventType, handler);
+				}
+			}
+
+			(function (onLoad) {
+				document.readyState === 'complete' ? onLoad() : addListener(window, 'load', onLoad);
+			})(function () {
+				var msSaveBlob = navigator.msSaveBlob;
+
+				if (msSaveBlob) {
+					navigator.msSaveBlob = function (blob, fileName) {
+						assert.instanceOf(blob, Blob);
+						assert.equal(fileName, 'test.dat');
+					};
+				} else {
+					addListener(jBinary.downloader, 'click', function (event) {
+						assert.ok(this.href);
+						assert.equal(this.download, 'test.dat');
+
+						if (event.preventDefault) {
+							event.preventDefault();
+						} else {
+							event.returnValue = false;
+						}
+					});
+				}
+
+				binary.saveAs('test.dat', function () {
+					if (msSaveBlob) {
+						navigator.msSaveBlob = msSaveBlob;
+					}
+					
+					done();
+				});
+			});
+		});
+	}
+});
+
+//-----------------------------------------------------------------
+
 describe('Reading', function () {
 	// getter = value || {value, check?, binary?, args?, offset?}
 	function testGetters(typeName, getters) {
