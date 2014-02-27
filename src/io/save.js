@@ -23,7 +23,13 @@ if (BROWSER) {
 proto.saveAs = promising(function (dest, callback) {
 	if (typeof dest === 'string') {
 		if (NODE) {
-			require('fs').writeFile(dest, this.read('blob', 0), callback);
+			var buffer = this.read('blob', 0);
+
+			if (!(buffer instanceof Buffer)) {
+				buffer = new Buffer(buffer);
+			}
+			
+			require('fs').writeFile(dest, buffer, callback);
 		} else
 		if (BROWSER) {
 			if ('msSaveBlob' in navigator) {
