@@ -5,7 +5,7 @@ module.exports = function (grunt) {
 		concat_sourcemap: {
 			options: {
 				separator: Array(3).join(grunt.util.linefeed),
-				sourceRoot: process.env.CI ? '//raw.github.com/jDataView/jBinary/' + process.env.TRAVIS_COMMIT : '../..'
+				sourceRoot: process.env.CI ? '//raw.github.com/' + process.env.TRAVIS_REPO_SLUG + '/' + process.env.TRAVIS_COMMIT : '../..'
 			},
 			all: {
 				files: {
@@ -71,7 +71,8 @@ module.exports = function (grunt) {
 					compress: {
 						global_defs: {NODE: true, BROWSER: false}
 					},
-					mangle: false
+					mangle: false,
+					beautify: true
 				},
 				files: {
 					'dist/node/<%= pkgName %>.js': 'dist/<%= pkgName %>.js'
@@ -82,9 +83,7 @@ module.exports = function (grunt) {
 			options: {
 				reporter: process.env.CI ? 'dot' : 'progress'
 			},
-			node: {
-				src: 'test/test.js'
-			}
+			node: 'test/test.js'
 		},
 		karma: {
 			options: {
@@ -100,6 +99,17 @@ module.exports = function (grunt) {
 		test: {
 			browser: 'karma:browser',
 			node: 'mochaTest:node'
+		},
+		compare_size: {
+			options: {
+				cache: 'dist/.sizecache.json',
+				compress: {
+					gz: function (content) {
+						return require('gzip-js').zip(content, {}).length;
+					}
+				}
+			},
+			all: 'dist/*/<%= pkgName %>.js'
 		},
 		bump: {
 			options: {
@@ -140,7 +150,7 @@ module.exports = function (grunt) {
 		grunt.registerTask(target, ['build:' + target, 'test:' + target]);
 	});
 
-	grunt.registerTask('default', ['build', 'test']);
+	grunt.registerTask('default', ['build', 'test', 'compare_size']);
 
 	grunt.registerTask('live', ['karma:watch:start', 'watch']);
 

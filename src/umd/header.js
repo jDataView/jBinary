@@ -1,19 +1,19 @@
 (function (factory) {
-	var root = (function () { return this })();
+	var global = this;
 
-	if (typeof exports === 'object') {
-		module.exports = factory.call(root, require('jdataview'));
+	if (NODE || typeof exports === 'object') {
+		module.exports = factory(global, require('jdataview'));
 	} else
-	if (typeof define === 'function' && define.amd) {
-		define(['jdataview'], function () {
-			factory.apply(root, arguments);
-		});
+	if (BROWSER) {
+		if (typeof define === 'function' && define.amd) {
+			define(['jdataview'], function (jDataView) {
+				return factory(global, jDataView);
+			});
+		}
+		else {
+			global.jBinary = factory(global, global.jDataView);
+		}
 	}
-	else {
-		root.jBinary = factory.call(root, root.jDataView);
-	}
-}(function (jDataView) {
+}(function (global, jDataView, undefined) {
 
 'use strict';
-
-var global = this;

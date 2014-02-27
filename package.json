@@ -52,6 +52,8 @@
     "grunt-contrib-watch": "~0.5.3",
     "grunt-bump": "0.0.13",
     "npm": "~1.4.4",
-    "grunt-concat-sourcemap": "~0.4.1"
+    "grunt-concat-sourcemap": "~0.4.1",
+    "grunt-compare-size": "~0.4.0",
+    "gzip-js": "~0.3.2"
   }
 }
