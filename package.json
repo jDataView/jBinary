@@ -1,6 +1,6 @@
 {
   "name": "jbinary2",
-  "version": "2.0.0-7",
+  "version": "2.0.0-8",
   "description": "High-level I/O for binary data.",
   "keywords": [
     "parse",

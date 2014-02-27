@@ -21,7 +21,7 @@ env:
 after_success:
   - |
       if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-        git describe --exact-match HEAD 
+        git describe --exact-match HEAD &>-
         if [ $? -eq 0 ]; then
           echo "Checking other builds..."
           curl -s -o travis_after_all.py https://raw.github.com/dmakhno/travis_after_all/master/travis_after_all.py
