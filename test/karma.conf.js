@@ -4,7 +4,7 @@ module.exports = function (config) {
 	config.set({
 		basePath: '..',
 		frameworks: ['mocha', 'chai'],
-		browsers: CI ? ['PhantomJS'] : ['Chrome', 'Firefox', 'IE'],
+		browsers: ['PhantomJS'].concat(CI ? [] : ['Chrome', 'Firefox', 'IE']),
 		files: [
 			'dist/browser/jbinary.js',
 			'test/test.js',

@@ -311,7 +311,7 @@ describe('Saving data', function () {
 				if (node.addEventListener) {
 					node.addEventListener(eventType, handler);
 				} else {
-					node.attachEvent(eventType, handler);
+					node.attachEvent('on' + eventType, handler);
 				}
 			}
 
@@ -326,15 +326,29 @@ describe('Saving data', function () {
 						assert.equal(fileName, 'test.dat');
 					};
 				} else {
+					// Phantom.JS
+					if (!HTMLElement.prototype.click) {
+						HTMLElement.prototype.click = function() {
+							var event = document.createEvent('MouseEvent');
+
+							event.initMouseEvent(
+								'click',
+								/*bubble*/true, /*cancelable*/true,
+								window, null,
+								0, 0, 0, 0, /*coordinates*/
+								false, false, false, false, /*modifier keys*/
+								0/*button=left*/, null
+							);
+
+							this.dispatchEvent(event);
+						};
+					}
+
 					addListener(jBinary.downloader, 'click', function (event) {
 						assert.ok(this.href);
 						assert.equal(this.download, 'test.dat');
 
-						if (event.preventDefault) {
-							event.preventDefault();
-						} else {
-							event.returnValue = false;
-						}
+						event.preventDefault ? event.preventDefault() : event.returnValue = false;
 					});
 				}
 
