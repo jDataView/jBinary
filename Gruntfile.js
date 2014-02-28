@@ -1,4 +1,7 @@
 module.exports = function (grunt) {
+	var jshintrc = grunt.file.readJSON('src/.jshintrc');
+	jshintrc.reporter = require('jshint-stylish');
+
 	grunt.initConfig({
 		libName: 'jBinary',
 		pkgName: '<%= libName.toLowerCase() %>',
@@ -33,7 +36,7 @@ module.exports = function (grunt) {
 			}
 		},
 		jshint: {
-			options: grunt.file.readJSON('src/.jshintrc'),
+			options: jshintrc,
 			before_concat: {
 				options: {
 					undef: false
