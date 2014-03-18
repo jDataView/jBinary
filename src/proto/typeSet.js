@@ -181,7 +181,7 @@ proto.typeSet = {
 				if (this.strict instanceof Function) {
 					return this.strict(value);
 				} else {
-					throw new TypeError('Unexpected value.');
+					throw new TypeError('Unexpected value (' + value + ' !== ' + this.value + ').');
 				}
 			}
 			return value;

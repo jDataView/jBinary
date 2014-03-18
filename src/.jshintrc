@@ -11,7 +11,8 @@
 		"VBArray": false,
 		"jDataView": false,
 		"NODE": false,
-		"BROWSER": false
+		"BROWSER": false,
+		"document": true
 	},
 	"camelcase": true,
 	"curly": true,

@@ -15,7 +15,7 @@ proto.toURI = function (mimeType) {
 
 var WritableStream = NODE && require('stream').Writable;
 
-if (BROWSER) {
+if (BROWSER && document) {
 	var downloader = jBinary.downloader = document.createElement('a');
 	downloader.style.display = 'none';
 }
@@ -35,14 +35,18 @@ proto.saveAs = promising(function (dest, callback) {
 			if ('msSaveBlob' in navigator) {
 				navigator.msSaveBlob(new Blob([this.read('blob', 0)], {type: this.typeSet['jBinary.mimeType']}), dest);
 			} else {
-				if (!downloader.parentNode) {
-					document.body.appendChild(downloader);
-				}
+				if (document) {
+					if (!downloader.parentNode) {
+						document.body.appendChild(downloader);
+					}
 
-				downloader.href = this.toURI();
-				downloader.download = dest;
-				downloader.click();
-				downloader.href = downloader.download = '';
+					downloader.href = this.toURI();
+					downloader.download = dest;
+					downloader.click();
+					downloader.href = downloader.download = '';
+				} else {
+					callback(new TypeError('Downloading from Web Worker is not supported.'));
+				}
 			}
 			callback();
 		}
