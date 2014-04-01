@@ -40,7 +40,7 @@ module.exports = function (grunt) {
 			options: {
 				editorconfig: '.editorconfig'
 			},
-			all: 'src/**/*.js'
+			all: ['src/**/*.js', '*.json', '.editorconfig', 'src/.jshintrc']
 		},
 		jshint: {
 			options: jshintrc,

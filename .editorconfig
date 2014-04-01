@@ -1,11 +1,18 @@
-# This file is for unifying the coding style for different editors and IDEs
-# editorconfig.org
-
 root = true
 
+# General requirements
 [*]
 end_of_line = crlf
 charset = utf-8
 trim_trailing_whitespace = true
 insert_final_newline = false
+
+# Code style
+[*.js]
 indent_style = tab
+
+# Configs (generated and manually maintained)
+[*.{json,editorconfig,jshintrc,yml}]
+indent_style = space
+indent_size = 2
+insert_final_newline = true
