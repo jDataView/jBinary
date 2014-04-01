@@ -1,5 +1,6 @@
 module.exports = function (grunt) {
 	var jshintrc = grunt.file.readJSON('src/.jshintrc');
+	jshintrc.indent = false;
 	jshintrc.reporter = require('jshint-stylish');
 
 	grunt.initConfig({
@@ -13,7 +14,7 @@ module.exports = function (grunt) {
 			all: {
 				files: {
 					'dist/<%= pkgName %>.js': [
-						'src/umd/header.js',
+						'umd/header.js',
 
 						'src/shim.js',
 						'src/utils.js',
@@ -30,10 +31,16 @@ module.exports = function (grunt) {
 						'src/io/load.js',
 						'src/io/save.js',
 
-						'src/umd/footer.js'
+						'umd/footer.js'
 					]
-				} 
+				}
 			}
+		},
+		lintspaces: {
+			options: {
+				editorconfig: '.editorconfig'
+			},
+			all: 'src/**/*.js'
 		},
 		jshint: {
 			options: jshintrc,
@@ -41,11 +48,10 @@ module.exports = function (grunt) {
 				options: {
 					undef: false
 				},
-				src: ['src/**/*.js', '!src/umd/**']
+				src: 'src/**/*.js'
 			},
 			after_concat: {
 				options: {
-					indent: false,
 					'-W034': true
 				},
 				src: 'dist/<%= pkgName %>.js'
@@ -140,12 +146,12 @@ module.exports = function (grunt) {
 
 	require('load-grunt-tasks')(grunt);
 
-	grunt.registerTask('prebuild', ['jshint:before_concat', 'concat_sourcemap', 'jshint:after_concat']);
+	grunt.registerTask('prebuild', ['lintspaces', 'jshint:before_concat', 'concat_sourcemap', 'jshint:after_concat']);
 
 	grunt.registerTask('build', function (target) {
 		grunt.task.run('prebuild', 'uglify' + (target ? ':' + target : ''));
 	});
- 
+
 	grunt.registerMultiTask('test', function () {
 		grunt.task.run(this.data);
 	});

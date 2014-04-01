@@ -28,7 +28,7 @@ proto.saveAs = promising(function (dest, callback) {
 			if (!(buffer instanceof Buffer)) {
 				buffer = new Buffer(buffer);
 			}
-			
+
 			require('fs').writeFile(dest, buffer, callback);
 		} else
 		if (BROWSER) {

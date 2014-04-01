@@ -56,7 +56,7 @@ function promising(func) {
 				Array.prototype.push.call(args, function (err, res) {
 					return err ? rejectFn(err) : resolveFn(res);
 				});
-				
+
 				func.apply(null, args);
 			});
 		}
