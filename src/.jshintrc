@@ -18,6 +18,7 @@
   "curly": true,
   "eqeqeq": true,
   "es3": true,
+  "expr": true,
   "immed": true,
   "indent": 4,
   "lastsemic": true,

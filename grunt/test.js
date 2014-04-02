@@ -1,4 +1,10 @@
-module.exports = {
-	browser: 'karma:browser',
-	node: 'mochaTest:node'
+module.exports = function (grunt) {
+	grunt.registerMultiTask('test', function () {
+		grunt.task.run(this.data + ':' + this.target);
+	});
+
+	return {
+		browser: 'karma',
+		node: 'mochaTest'
+	};
 };

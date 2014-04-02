@@ -112,7 +112,6 @@ jBinary.load = promising(function (source, typeSet, callback) {
 	}
 
 	jBinary.loadData(source, function (err, data) {
-		/* jshint expr: true */
 		err ? callback(err) : callback(null, new jBinary(data, typeSet));
 	});
 });

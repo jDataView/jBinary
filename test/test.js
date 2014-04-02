@@ -1,5 +1,6 @@
 var hasNodeRequire = typeof require === 'function' && typeof window === 'undefined';
 
+/* jshint ignore:start */
 if (hasNodeRequire) {
 	chai = require('chai');
 	jDataView = require('jdataview');
@@ -7,6 +8,7 @@ if (hasNodeRequire) {
 } else {
 	__dirname = 'base/test';
 }
+/* jshint ignore:end */
 
 var assert = chai.assert,
 	chr = String.fromCharCode,
@@ -62,7 +64,7 @@ describe('Common operations:', function () {
 
 	describe('slice', function () {
 		it('with bound check', function () {
-			assert.throws(function () {
+			assert.Throw(function () {
 				binary.slice(5, 10);
 			});
 		});
@@ -227,7 +229,7 @@ describe('Loading data', function () {
 				done();
 			});
 		});
-		
+
 		it('with explicit typeset object', function (done) {
 			var typeSet = {
 				IS_CORRECT_TYPESET: true
@@ -358,7 +360,7 @@ describe('Saving data', function () {
 					if (msSaveBlob) {
 						navigator.msSaveBlob = msSaveBlob;
 					}
-					
+
 					done();
 				});
 			});
@@ -543,7 +545,7 @@ describe('Reading', function () {
 	]);
 
 	it('const', function () {
-		assert.throws(function () {
+		assert.Throw(function () {
 			binary.read(['const', 'uint16', 0, true], 0);
 		});
 
@@ -661,7 +663,7 @@ describe('Reading', function () {
 			assert.equal(readCount, expectedReadCount);
 			assert.equal(lazy.value, innerValue);
 		}
-		
+
 		resetAccessor();
 		checkState(false, 1);
 
@@ -806,7 +808,7 @@ describe('Writing', function () {
 
 	testSetters('float64', [
 		Math.pow(2, -1074),
-		-Math.pow(2, -1074),   
+		-Math.pow(2, -1074),
 		Math.pow(2, -1022),
 		-Math.pow(2, -1022),
 		2.426842827241402e-300,
@@ -1000,13 +1002,15 @@ describe('Writing', function () {
 //-----------------------------------------------------------------
 
 describe('Test coverage of type', function () {
+	function testCoverage(typeName) {
+		it(typeName, function () {
+			var isTested = typeSet[typeName].isTested;
+			assert.ok(isTested.getter, 'Getter tests');
+			assert.ok(isTested.setter, 'Setter tests');
+		});
+	}
+
 	for (var typeName in typeSet) {
-		(function (typeName) {
-			it(typeName, function () {
-				var isTested = typeSet[typeName].isTested;
-				assert.ok(isTested.getter, 'Getter tests');
-				assert.ok(isTested.setter, 'Setter tests');
-			});
-		})(typeName);
+		testCoverage(typeName);
 	}
 });

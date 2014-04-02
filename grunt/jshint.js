@@ -5,11 +5,17 @@ module.exports = function (grunt) {
 
 	return {
 		options: jshintrc,
+		grunt: {
+			options: {
+				camelcase: false
+			},
+			src: 'grunt/**/*.js'
+		},
 		before_concat: {
 			options: {
 				undef: false
 			},
-			src: 'src/**/*.js'
+			src: ['+(src|test)/**/*.js', '*.js']
 		},
 		after_concat: {
 			options: {

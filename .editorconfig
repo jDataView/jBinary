@@ -12,7 +12,7 @@ insert_final_newline = false
 indent_style = tab
 
 # Configs (generated and manually maintained)
-[*.{json,editorconfig,jshintrc,yml}]
+[*.{json,yml,jshintrc,editorconfig,md}]
 indent_style = space
 indent_size = 2
 insert_final_newline = true

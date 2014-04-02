@@ -13,4 +13,4 @@ module.exports = function (config) {
 		logLevel: CI ? config.LOG_ERROR : config.LOG_INFO,
 		reporters: [CI ? 'dots' : 'progress']
 	});
-}
+};

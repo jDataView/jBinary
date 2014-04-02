@@ -2,5 +2,8 @@ module.exports = {
 	options: {
 		editorconfig: '.editorconfig'
 	},
-	all: ['src/**/*.js', '*.json', '.editorconfig', 'src/.jshintrc']
+	all: {
+		src: ['+(src|test|grunt|umd)/**', '*'],
+		dot: true
+	}
 };
