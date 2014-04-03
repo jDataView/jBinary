@@ -55,21 +55,21 @@ function compareWithNaN(value, expected, message) {
 	assert.ok(isNaN(value), message || value + ' != NaN');
 }
 
-describe('Common operations:', function () {
-	it('getType', function () {
+suite('Common operations:', function () {
+	test('getType', function () {
 		var type = binary.getType('uint32');
 		assert.instanceOf(type, jBinary.Type);
 		assert.equal(binary.getType([type]), type);
 	});
 
-	describe('slice', function () {
-		it('with bound check', function () {
+	suite('slice', function () {
+		test('with bound check', function () {
 			assert.Throw(function () {
 				binary.slice(5, 10);
 			});
 		});
 
-		it('as pointer to original data', function () {
+		test('as pointer to original data', function () {
 			var pointerCopy = binary.slice(1, 4);
 			compareBytes(pointerCopy.read('blob'), [0xfe, 0xfd, 0xfc]);
 			pointerCopy.write('char', chr(1), 0);
@@ -78,7 +78,7 @@ describe('Common operations:', function () {
 			assert.equal(pointerCopy.typeSet, binary.typeSet);
 		});
 
-		it('as copy of original data', function () {
+		test('as copy of original data', function () {
 			var copy = binary.slice(1, 4, true);
 			compareBytes(copy.read('blob'), [0xfe, 0xfd, 0xfc]);
 			copy.write('char', chr(1), 0);
@@ -86,34 +86,34 @@ describe('Common operations:', function () {
 			assert.equal(copy.typeSet, binary.typeSet);
 		});
 
-		it('with only start offset argument given', function () {
+		test('with only start offset argument given', function () {
 			var pointerCopy = binary.slice(1);
 			compareBytes(pointerCopy.read('blob'), [0xfe, 0xfd, 0xfc, 0xfa, 0x00, 0xba, 0x01]);
 		});
 
-		it('with negative start offset given', function () {
+		test('with negative start offset given', function () {
 			var pointerCopy = binary.slice(-2);
 			compareBytes(pointerCopy.read('blob'), [0xba, 0x01]);
 		});
 
-		it('with negative end offset given', function () {
+		test('with negative end offset given', function () {
 			var pointerCopy = binary.slice(1, -2);
 			compareBytes(pointerCopy.read('blob'), [0xfe, 0xfd, 0xfc, 0xfa, 0x00]);
 		});
 	});
 
-	describe('as (cast)', function () {
+	suite('as (cast)', function () {
 		var typeSet = binary.typeSet,
 			typeSet2 = {MY_TYPESET: true};
 
-		it('with inheritance from original binary', function () {
+		test('with inheritance from original binary', function () {
 			var binary2 = binary.as(typeSet2);
 			assert.ok(binary.isPrototypeOf(binary2));
 			assert.equal(binary.typeSet, typeSet);
 			assert.isTrue(binary2.typeSet.MY_TYPESET);
 		});
 
-		it('with modification of original binary', function () {
+		test('with modification of original binary', function () {
 			var binary2 = binary.as(typeSet2, true);
 			assert.equal(binary, binary2);
 			assert.isTrue(binary.typeSet.MY_TYPESET);
@@ -124,10 +124,10 @@ describe('Common operations:', function () {
 
 //-----------------------------------------------------------------
 
-describe('Loading data', function () {
+suite('Loading data', function () {
 	var localFileName = __dirname + '/123.tar';
 
-	it('from data-URI', function (done) {
+	test('from data-URI', function (done) {
 		jBinary.loadData('data:text/plain,123', function (err, data) {
 			assert.notOk(err, err);
 			assert.equal(new jDataView(data).getString(), '123');
@@ -135,7 +135,7 @@ describe('Loading data', function () {
 		});
 	});
 
-	it('from base-64 data-URI', function (done) {
+	test('from base-64 data-URI', function (done) {
 		jBinary.loadData('data:text/plain;base64,MTIz', function (err, data) {
 			assert.notOk(err, err);
 			assert.equal(new jDataView(data).getString(), '123');
@@ -144,7 +144,7 @@ describe('Loading data', function () {
 	});
 
 	if (typeof Blob === 'function') {
-		it('from HTML5 Blob', function (done) {
+		test('from HTML5 Blob', function (done) {
 			var blob = new Blob(['123']);
 			jBinary.loadData(blob, function (err, data) {
 				assert.notOk(err, err);
@@ -154,7 +154,7 @@ describe('Loading data', function () {
 		});
 	}
 
-	it('from local file', function (done) {
+	test('from local file', function (done) {
 		jBinary.loadData(localFileName, function (err, data) {
 			assert.notOk(err, err);
 			assert.equal(data.byteLength || data.length, 512);
@@ -162,7 +162,7 @@ describe('Loading data', function () {
 		});
 	});
 
-	it('from non-existent local file', function (done) {
+	test('from non-existent local file', function (done) {
 		jBinary.loadData('__NON_EXISTENT__', function (err, data) {
 			assert.ok(err);
 			assert.isUndefined(data);
@@ -171,7 +171,7 @@ describe('Loading data', function () {
 	});
 
 	if (hasNodeRequire && require('stream').Readable) {
-		it('from Node.js readable stream', function (done) {
+		test('from Node.js readable stream', function (done) {
 			var stream = require('stream').Readable(), i = 0;
 			stream._read = function () {
 				i++;
@@ -184,7 +184,7 @@ describe('Loading data', function () {
 			});
 		});
 
-		it('from remote URL', function (done) {
+		test('from remote URL', function (done) {
 			this.timeout(30000);
 
 			jBinary.loadData('http://github.com/jDataView/jBinary/raw/master/test/123.tar', function (err, data) {
@@ -195,7 +195,7 @@ describe('Loading data', function () {
 		});
 	}
 
-	it('with explicit typeset object', function (done) {
+	test('with explicit typeset object', function (done) {
 		var typeSet = {
 			IS_CORRECT_TYPESET: true
 		};
@@ -209,7 +209,7 @@ describe('Loading data', function () {
 		});
 	});
 
-	it('with implicitly empty typeset object', function (done) {
+	test('with implicitly empty typeset object', function (done) {
 		jBinary.load(localFileName, function (err, binary) {
 			assert.notOk(err, err);
 			assert.instanceOf(binary, jBinary);
@@ -219,8 +219,8 @@ describe('Loading data', function () {
 		});
 	});
 
-	describe('as Promise', function () {
-		it('from data-URI', function (done) {
+	suite('as Promise', function () {
+		test('from data-URI', function (done) {
 			jBinary.loadData('data:text/plain,123').then(function (res) {
 				assert.equal(new jDataView(res).getString(), '123');
 				done();
@@ -230,7 +230,7 @@ describe('Loading data', function () {
 			});
 		});
 
-		it('with explicit typeset object', function (done) {
+		test('with explicit typeset object', function (done) {
 			var typeSet = {
 				IS_CORRECT_TYPESET: true
 			};
@@ -246,7 +246,7 @@ describe('Loading data', function () {
 			});
 		});
 
-		it('from non-existent local file', function (done) {
+		test('from non-existent local file', function (done) {
 			jBinary.loadData('__NON_EXISTENT__').then(function () {
 				assert.fail();
 				done();
@@ -256,7 +256,7 @@ describe('Loading data', function () {
 			});
 		});
 
-		it('from non-existent local file with explicit typeset object', function (done) {
+		test('from non-existent local file with explicit typeset object', function (done) {
 			jBinary.load('__NON_EXISTENT__').then(function () {
 				assert.fail();
 				done();
@@ -270,8 +270,8 @@ describe('Loading data', function () {
 
 //-----------------------------------------------------------------
 
-describe('Saving data', function () {
-	it('to URI', function (done) {
+suite('Saving data', function () {
+	test('to URI', function (done) {
 		jBinary.load(binary.toURI(), function (err, newBinary) {
 			assert.notOk(err, err);
 			assert.deepEqual(newBinary.read('string', 0), binary.read('string', 0));
@@ -280,7 +280,7 @@ describe('Saving data', function () {
 	});
 
 	if (hasNodeRequire) {
-		it('to local file', function (done) {
+		test('to local file', function (done) {
 			var savedFileName = __dirname + '/' + Math.random().toString().slice(2) + '.tmp';
 
 			binary.saveAs(savedFileName, function (err) {
@@ -295,7 +295,7 @@ describe('Saving data', function () {
 		});
 
 		if (require('stream').Writable) {
-			it('to Node.js writable stream', function (done) {
+			test('to Node.js writable stream', function (done) {
 				var stream = require('stream').Writable(), chunks = [];
 				stream._write = function (chunk, encoding, callback) {
 					chunks.push(chunk);
@@ -310,7 +310,7 @@ describe('Saving data', function () {
 			});
 		}
 	} else {
-		it('via browser dialog', function (done) {
+		test('via browser dialog', function (done) {
 			function addListener(node, eventType, handler) {
 				if (node.addEventListener) {
 					node.addEventListener(eventType, handler);
@@ -370,10 +370,10 @@ describe('Saving data', function () {
 
 //-----------------------------------------------------------------
 
-describe('Reading', function () {
+suite('Reading', function () {
 	// getter = value || {value, check?, binary?, args?, offset?}
 	function testGetters(typeName, getters) {
-		it(typeName, function () {
+		test(typeName, function () {
 			binary.seek(0);
 
 			for (var i = 0; i < getters.length; i++) {
@@ -527,7 +527,7 @@ describe('Reading', function () {
 		{binary: b(0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77), value: 4822678189205111, check: compareInt64}
 	]);
 
-	it('skip', function () {
+	test('skip', function () {
 		binary.read(['skip', 2]);
 		assert.equal(binary.tell(), 2);
 		binary.read(['skip', 1]);
@@ -544,7 +544,7 @@ describe('Reading', function () {
 		{offset: 5, args: ['uint8'], value: [0x00, 0xba, 0x01], check: assert.deepEqual}
 	]);
 
-	it('const', function () {
+	test('const', function () {
 		assert.Throw(function () {
 			binary.read(['const', 'uint16', 0, true], 0);
 		});
@@ -636,7 +636,7 @@ describe('Reading', function () {
 		}
 	}]);
 
-	it('lazy', function () {
+	test('lazy', function () {
 		var innerType = 'uint32',
 			length = 4,
 			lazyType = ['lazy', innerType, length],
@@ -701,14 +701,14 @@ describe('Reading', function () {
 
 //-----------------------------------------------------------------
 
-describe('Writing', function () {
-	afterEach(function () {
+suite('Writing', function () {
+	teardown(function () {
 		binary.write('blob', dataBytes.slice(dataStart), 0);
 	});
 
 	// setter = value || {value, args?, check?}
 	function testSetters(typeName, setters, stdSize) {
-		it(typeName, function () {
+		test(typeName, function () {
 			for (var i = 0; i < setters.length; i++) {
 				var setter = setters[i];
 
@@ -832,7 +832,7 @@ describe('Writing', function () {
 		{value: 4822678189205111, check: compareInt64}
 	], 8);
 
-	it('skip', function () {
+	test('skip', function () {
 		binary.seek(0);
 		binary.write(['skip', 2]);
 		assert.equal(binary.tell(), 2);
@@ -850,7 +850,7 @@ describe('Writing', function () {
 		{args: ['uint8', 3], value: [0x00, 0xba, 0x01], size: 1 * 3, check: assert.deepEqual}
 	]);
 
-	it('const', function () {
+	test('const', function () {
 		var type = ['const', 'uint16', 123, true],
 			size = 2;
 
@@ -882,7 +882,7 @@ describe('Writing', function () {
 
 	// setter = {value, bitLength}
 	function testBitfieldSetters(type, setters) {
-		it(type, function () {
+		test(type, function () {
 			var binary = new jBinary(13);
 
 			function eachValue(callback) {
@@ -971,7 +971,7 @@ describe('Writing', function () {
 		}
 	]);
 
-	it('lazy', function () {
+	test('lazy', function () {
 		var innerType = 'uint32',
 			length = 4,
 			lazyType = ['lazy', innerType, length],
@@ -1001,9 +1001,9 @@ describe('Writing', function () {
 
 //-----------------------------------------------------------------
 
-describe('Test coverage of type', function () {
+suite('Test coverage of type', function () {
 	function testCoverage(typeName) {
-		it(typeName, function () {
+		test(typeName, function () {
 			var isTested = typeSet[typeName].isTested;
 			assert.ok(isTested.getter, 'Getter tests');
 			assert.ok(isTested.setter, 'Setter tests');
