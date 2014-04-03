@@ -1,4 +1,4 @@
-var _toURI =
+proto._toURI =
 	(BROWSER && 'URL' in global && 'createObjectURL' in URL)
 	? function (type) {
 		var data = this.seek(0, function () { return this.view.getBytes() });
@@ -10,7 +10,7 @@ var _toURI =
 	};
 
 proto.toURI = function (mimeType) {
-	return _toURI.call(this, mimeType || this.typeSet['jBinary.mimeType'] || 'application/octet-stream');
+	return this._toURI(mimeType || this.typeSet['jBinary.mimeType'] || 'application/octet-stream');
 };
 
 var WritableStream = NODE && require('stream').Writable;

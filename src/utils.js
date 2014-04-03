@@ -30,25 +30,6 @@ function toValue(obj, binary, value) {
 	return is(value, Function) ? value.call(obj, binary.contexts[0]) : value;
 }
 
-var defineProperty = Object.defineProperty;
-
-if (BROWSER) {
-	if (defineProperty) {
-		// this is needed to detect DOM-only version of Object.defineProperty in IE8:
-		try {
-			defineProperty({}, 'x', {});
-		} catch (e) {
-			defineProperty = null;
-		}
-	} else  {
-		defineProperty = function (obj, key, descriptor, allowVisible) {
-			if (allowVisible) {
-				obj[key] = descriptor.value;
-			}
-		};
-	}
-}
-
 function promising(func) {
 	return function () {
 		if (is(arguments[arguments.length - 1], Function)) {

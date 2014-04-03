@@ -16,7 +16,6 @@ proto.getContext = function (filter) {
 					return context;
 				}
 			}
-			return;
 	}
 };
 

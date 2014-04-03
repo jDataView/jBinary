@@ -12,6 +12,7 @@ module.exports = function (grunt) {
 					'src/shim.js',
 					'src/utils.js',
 					'src/core.js',
+					'src/proto/cache.js',
 					'src/proto/context.js',
 					'src/type.js',
 					'src/template.js',
