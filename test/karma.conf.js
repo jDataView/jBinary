@@ -7,6 +7,7 @@ module.exports = function (config) {
 		browsers: CI ? ['PhantomJS'] : ['Chrome', 'Firefox', 'IE'],
 		files: [
 			'dist/browser/jbinary.js',
+			'test/karma.mocha.conf.js',
 			'test/test.js',
 			{pattern: 'test/123.tar', included: false, served: true}
 		],
