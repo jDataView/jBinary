@@ -18,7 +18,7 @@ Type.prototype = {
 		}
 
 		withProp('params', function (params) {
-			for (var i = 0, length = Math.min(params.length, args.length); i < length; i++) {
+			for (var i = 0, length = params.length; i < length; i++) {
 				this[params[i]] = args[i];
 			}
 		});

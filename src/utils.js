@@ -14,11 +14,15 @@ function extend(obj) {
 	return obj;
 }
 
-var _inherit = Object.create || (BROWSER ? function (obj) {
-	var ClonedObject = function () {};
-	ClonedObject.prototype = obj;
-	return new ClonedObject();
-} : undefined);
+var _inherit = Object.create;
+
+if (BROWSER && !_inherit) {
+	_inherit = function (obj) {
+		var ClonedObject = function () {};
+		ClonedObject.prototype = obj;
+		return new ClonedObject();
+	};
+}
 
 function inherit(obj) {
 	'use strict';

@@ -14,15 +14,10 @@ proto.getType = function (type, args) {
 				var binary = this;
 				return type.inherit(args || [], function (type) { return binary.getType(type) });
 			} else {
-				var isArray = is(type, Array);
-				return this._getCached(
-					type,
-					(
-						isArray
-						? function (type) { return this.getType(type[0], type.slice(1)) }
-						: function (structure) { return this.getType(defaultTypeSet.object, [structure]) }
-					),
-					isArray
+				return (
+					is(type, Array)
+					? this._getCached(type, function (type) { return this.getType(type[0], type.slice(1)) }, true)
+					: this._getCached(type, function (structure) { return this.getType(defaultTypeSet.object, [structure]) }, false)
 				);
 			}
 	}
