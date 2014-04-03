@@ -7,20 +7,20 @@ proto.getType = function (type, args) {
 			return this.getType(this.typeSet[type], args);
 
 		case 'number':
-			return this.getType(proto.typeSet.bitfield, [type]);
+			return this.getType(defaultTypeSet.bitfield, [type]);
 
 		case 'object':
-			if (type instanceof jBinary.Type) {
+			if (is(type, Type)) {
 				var binary = this;
 				return type.inherit(args || [], function (type) { return binary.getType(type) });
 			} else {
-				var isArray = type instanceof Array;
+				var isArray = is(type, Array);
 				return this._getCached(
 					type,
 					(
 						isArray
 						? function (type) { return this.getType(type[0], type.slice(1)) }
-						: function (structure) { return this.getType(proto.typeSet.object, [structure]) }
+						: function (structure) { return this.getType(defaultTypeSet.object, [structure]) }
 					),
 					isArray
 				);

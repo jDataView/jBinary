@@ -7,12 +7,11 @@
     "define": false,
     "URL": false,
     "File": false,
-    "Promise": true,
+    "Promise": false,
     "VBArray": false,
     "jDataView": false,
     "NODE": false,
-    "BROWSER": false,
-    "document": true
+    "BROWSER": false
   },
   "camelcase": true,
   "curly": true,

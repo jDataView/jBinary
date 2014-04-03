@@ -1,3 +1,7 @@
+function is(obj, Ctor) {
+	return Ctor && (obj instanceof Ctor);
+}
+
 function extend(obj) {
 	for (var i = 1, length = arguments.length; i < length; ++i) {
 		var source = arguments[i];
@@ -23,7 +27,7 @@ function inherit(obj) {
 }
 
 function toValue(obj, binary, value) {
-	return value instanceof Function ? value.call(obj, binary.contexts[0]) : value;
+	return is(value, Function) ? value.call(obj, binary.contexts[0]) : value;
 }
 
 var defineProperty = Object.defineProperty;
@@ -47,7 +51,7 @@ if (BROWSER) {
 
 function promising(func) {
 	return function () {
-		if (typeof arguments[arguments.length - 1] === 'function') {
+		if (is(arguments[arguments.length - 1], Function)) {
 			return func.apply(this, arguments);
 		} else {
 			var args = arguments;

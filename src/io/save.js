@@ -25,7 +25,7 @@ proto.saveAs = promising(function (dest, callback) {
 		if (NODE) {
 			var buffer = this.read('blob', 0);
 
-			if (!(buffer instanceof Buffer)) {
+			if (!is(buffer, Buffer)) {
 				buffer = new Buffer(buffer);
 			}
 
@@ -51,7 +51,7 @@ proto.saveAs = promising(function (dest, callback) {
 			callback();
 		}
 	} else
-	if (NODE && dest instanceof WritableStream) {
+	if (NODE && is(dest, WritableStream)) {
 		dest.write(this.read('blob', 0), callback);
 	} else {
 		callback(new TypeError('Unsupported storage type.'));

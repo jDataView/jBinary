@@ -1,7 +1,7 @@
 (function (simpleType, dataTypes) {
 	for (var i = 0, length = dataTypes.length; i < length; i++) {
 		var dataType = dataTypes[i];
-		proto.typeSet[dataType.toLowerCase()] = inherit(simpleType, {dataType: dataType});
+		defaultTypeSet[dataType.toLowerCase()] = inherit(simpleType, {dataType: dataType});
 	}
 })(
 	Type({
@@ -28,8 +28,8 @@
 	]
 );
 
-extend(proto.typeSet, {
-	'byte': proto.typeSet.uint8,
-	'float': proto.typeSet.float32,
-	'double': proto.typeSet.float64
+extend(defaultTypeSet, {
+	'byte': defaultTypeSet.uint8,
+	'float': defaultTypeSet.float32,
+	'double': defaultTypeSet.float64
 });

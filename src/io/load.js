@@ -3,12 +3,12 @@ var ReadableStream = NODE && require('stream').Readable;
 jBinary.loadData = promising(function (source, callback) {
 	var dataParts;
 
-	if (BROWSER && 'Blob' in global && source instanceof Blob) {
+	if (BROWSER && is(source, global.Blob)) {
 		var reader = new FileReader();
 		reader.onload = reader.onerror = function () { callback(this.error, this.result) };
 		reader.readAsArrayBuffer(source);
 	} else
-	if (NODE && ReadableStream && source instanceof ReadableStream) {
+	if (NODE && is(source, ReadableStream)) {
 		var buffers = [];
 		source
 			.on('readable', function () { buffers.push(this.read()) })
@@ -106,7 +106,7 @@ jBinary.loadData = promising(function (source, callback) {
 });
 
 jBinary.load = promising(function (source, typeSet, callback) {
-	if (typeof typeSet === 'function') {
+	if (is(typeSet, Function)) {
 		callback = typeSet;
 		typeSet = undefined;
 	}

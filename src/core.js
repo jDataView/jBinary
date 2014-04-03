@@ -1,14 +1,14 @@
 function jBinary(view, typeSet) {
-	if (view instanceof jBinary) {
+	if (is(view, jBinary)) {
 		return view.as(typeSet);
 	}
 
 	/* jshint validthis:true */
-	if (!(view instanceof jDataView)) {
+	if (!is(view, jDataView)) {
 		view = new jDataView(view, undefined, undefined, typeSet ? typeSet['jBinary.littleEndian'] : undefined);
 	}
 
-	if (!(this instanceof jBinary)) {
+	if (!is(this, jBinary)) {
 		return new jBinary(view, typeSet);
 	}
 
@@ -20,6 +20,8 @@ function jBinary(view, typeSet) {
 }
 
 var proto = jBinary.prototype;
+
+var defaultTypeSet = proto.typeSet = {};
 
 proto.cacheKey = 'jBinary.Cache';
 proto.id = 0;
