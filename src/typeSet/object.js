@@ -1,8 +1,5 @@
 defaultTypeSet.object = Type({
-	params: [
-		'structure',
-		'proto'
-	],
+	params: ['structure', 'proto'],
 	resolve: function (getType) {
 		var structure = {};
 		for (var key in this.structure) {

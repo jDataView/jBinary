@@ -1,9 +1,6 @@
 defaultTypeSet.lazy = Template({
 	marker: 'jBinary.Lazy',
-	params: [
-		'innerType',
-		'length'
-	],
+	params: ['innerType', 'length'],
 	getBaseType: function () {
 		return [
 			'binary',

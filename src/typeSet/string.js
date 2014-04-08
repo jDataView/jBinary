@@ -1,8 +1,5 @@
 defaultTypeSet.string = Template({
-	params: [
-		'length',
-		'encoding'
-	],
+	params: ['length', 'encoding'],
 	read: function () {
 		return this.view.getString(this.toValue(this.length), undefined, this.encoding);
 	},

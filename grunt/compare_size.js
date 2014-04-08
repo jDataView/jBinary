@@ -7,5 +7,5 @@ module.exports = {
 			}
 		}
 	},
-	all: 'dist/*/<%= pkgName %>.js'
+	browser: 'dist/browser/<%= pkgName %>.js'
 };

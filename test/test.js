@@ -184,12 +184,21 @@ suite('Loading data', function () {
 			});
 		});
 
-		test('from remote URL', function (done) {
+		test('from URL', function (done) {
 			this.timeout(30000);
 
-			jBinary.loadData('http://github.com/jDataView/jBinary/raw/master/test/123.tar', function (err, data) {
+			var port = 7359;
+
+			var server = require('http').createServer(function (req, res) {
+				require('fs').createReadStream(localFileName).pipe(res);
+			});
+
+			server.listen(port);
+
+			jBinary.loadData('http://localhost:' + port, function (err, data) {
 				assert.notOk(err, err);
 				assert.equal(data.byteLength || data.length, 512);
+				server.close();
 				done();
 			});
 		});

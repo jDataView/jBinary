@@ -21,22 +21,31 @@ Documentation
   * General API
     * [jBinary Constructor](https://github.com/jDataView/jBinary/wiki/jBinary-Constructor)
     * [jBinary Methods](https://github.com/jDataView/jBinary/wiki/jBinary-Methods)
+      * [Reading/Writing](https://github.com/jDataView/jBinary/wiki/jBinary-Methods#readingwriting)
+      * [Position methods](https://github.com/jDataView/jBinary/wiki/jBinary-Methods#position-methods)
+      * [Instance helpers](https://github.com/jDataView/jBinary/wiki/jBinary-Methods#instance-helpers)
     * [Internal jBinary Methods (useful for custom types)](https://github.com/jDataView/jBinary/wiki/Internal-jBinary-Methods)
-  * [Loading/saving data](https://github.com/jDataView/jBinary/wiki/Loading-and-saving-data)
-  * [Typesets](https://github.com/jDataView/jBinary/wiki/Typesets)
-    * [Standard types](https://github.com/jDataView/jBinary/wiki/Standard-types)
-    * Custom types
-      * [Simple types with jBinary.Type](https://github.com/jDataView/jBinary/wiki/jBinary.Type)
-      * [Type wrappers with jBinary.Template](https://github.com/jDataView/jBinary/wiki/jBinary.Template)
-      * [Caveats](https://github.com/jDataView/jBinary/wiki/Caveats)
-    * Ready-to-use typesets
-      * [The Repo](https://github.com/jDataView/jBinary/wiki/The-Repo)
-      * [Typeset associations](https://github.com/jDataView/jBinary/wiki/Typeset-associations)
   * Usage
     * [Node.js](https://github.com/jDataView/jBinary/wiki/Usage-in-Node.js)
     * [Browser](https://github.com/jDataView/jBinary/wiki/Usage-in-Browser)
     * [AMD](https://github.com/jDataView/jBinary/wiki/Usage-with-AMD)
     * [Type usage syntax](https://github.com/jDataView/jBinary/wiki/Type-usage-syntax)
+  * [Loading/saving data (working with external data storages)](https://github.com/jDataView/jBinary/wiki/Loading-and-saving-data)
+  * [Typesets](https://github.com/jDataView/jBinary/wiki/Typesets)
+    * [Standard types](https://github.com/jDataView/jBinary/wiki/Standard-types)
+      * [Integers](https://github.com/jDataView/jBinary/wiki/Standard-types#integers)
+      * [Floats](https://github.com/jDataView/jBinary/wiki/Standard-types#floats)
+      * [Strings](https://github.com/jDataView/jBinary/wiki/Standard-types#strings)
+      * [Complex types](https://github.com/jDataView/jBinary/wiki/Standard-types#complex-types)
+      * [Binary types](https://github.com/jDataView/jBinary/wiki/Standard-types#binary-types)
+      * [Control statements](https://github.com/jDataView/jBinary/wiki/Standard-types#control-statements)
+    * Custom types
+      * [Custom types creation (jBinary.Type)](https://github.com/jDataView/jBinary/wiki/jBinary.Type)
+      * [Types wrapping (jBinary.Template)](https://github.com/jDataView/jBinary/wiki/jBinary.Template)
+      * [Caveats](https://github.com/jDataView/jBinary/wiki/Caveats)
+    * Ready-to-use typesets
+      * [The Repo](https://github.com/jDataView/jBinary/wiki/The-Repo)
+      * [File type associations](https://github.com/jDataView/jBinary/wiki/Typeset-associations)
 
 Demos
 =====

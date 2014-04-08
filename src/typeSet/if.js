@@ -1,9 +1,5 @@
 defaultTypeSet['if'] = Template({
-	params: [
-		'condition',
-		'trueType',
-		'falseType'
-	],
+	params: ['condition', 'trueType', 'falseType'],
 	typeParams: [
 		'trueType',
 		'falseType'

@@ -1,8 +1,5 @@
 defaultTypeSet.array = Template({
-	params: [
-		'baseType',
-		'length'
-	],
+	params: ['baseType', 'length'],
 	read: function () {
 		var length = this.toValue(this.length);
 		if (this.baseType === defaultTypeSet.uint8) {

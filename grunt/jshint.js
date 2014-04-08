@@ -6,7 +6,8 @@ module.exports = function (grunt) {
 		options: jshintrc,
 		grunt: {
 			options: {
-				camelcase: false
+				camelcase: false,
+				es3: false
 			},
 			src: 'grunt/**/*.js'
 		},

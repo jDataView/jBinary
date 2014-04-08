@@ -6,6 +6,7 @@ default:
 browser:
   - 'build:browser'
   - 'test:browser'
+  - 'compare_size:browser'
 
 node:
   - 'build:node'

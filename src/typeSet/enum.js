@@ -1,8 +1,5 @@
 defaultTypeSet['enum'] = Template({
-	params: [
-		'baseType',
-		'matches'
-	],
+	params: ['baseType', 'matches'],
 	setParams: function (baseType, matches) {
 		this.backMatches = {};
 		for (var key in matches) {

@@ -1,8 +1,5 @@
 defaultTypeSet.string0 = Type({
-	params: [
-		'length',
-		'encoding'
-	],
+	params: ['length', 'encoding'],
 	read: function () {
 		var view = this.view, maxLength = this.length;
 		if (maxLength === undefined) {
