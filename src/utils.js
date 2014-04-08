@@ -39,14 +39,14 @@ function promising(func) {
 		if (is(arguments[arguments.length - 1], Function)) {
 			return func.apply(this, arguments);
 		} else {
-			var args = arguments;
+			var self = this, args = arguments;
 
 			return new Promise(function (resolveFn, rejectFn) {
 				Array.prototype.push.call(args, function (err, res) {
 					return err ? rejectFn(err) : resolveFn(res);
 				});
 
-				func.apply(null, args);
+				func.apply(self, args);
 			});
 		}
 	};
