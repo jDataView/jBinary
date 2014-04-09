@@ -106,11 +106,6 @@ jBinary.loadData = promising(function (source, callback) {
 });
 
 jBinary.load = promising(function (source, typeSet, callback) {
-	if (is(typeSet, Function)) {
-		callback = typeSet;
-		typeSet = undefined;
-	}
-
 	jBinary.loadData(source, function (err, data) {
 		err ? callback(err) : callback(null, new jBinary(data, typeSet));
 	});

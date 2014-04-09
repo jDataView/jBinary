@@ -11,7 +11,7 @@ defaultTypeSet.object = Type({
 		var self = this, structure = this.structure, output = this.proto ? inherit(this.proto) : {};
 		this.binary.inContext(output, function () {
 			for (var key in structure) {
-				var value = !is(structure[key], Function) ? this.read(structure[key]) : structure[key].call(self, this.contexts[0]);
+				var value = !is(structure[key], Function) ? this.read(structure[key]) : structure[key].call(self, output);
 				if (value !== undefined) {
 					output[key] = value;
 				}
@@ -26,7 +26,7 @@ defaultTypeSet.object = Type({
 				if (!is(structure[key], Function)) {
 					this.write(structure[key], data[key]);
 				} else {
-					data[key] = structure[key].call(self, this.contexts[0]);
+					data[key] = structure[key].call(self, data);
 				}
 			}
 		});

@@ -36,15 +36,24 @@ function toValue(obj, binary, value) {
 
 function promising(func) {
 	return function () {
-		if (is(arguments[arguments.length - 1], Function)) {
-			return func.apply(this, arguments);
+		var args = arguments,
+			lastArgsIndex = args.length - 1,
+			lastFuncIndex = func.length - 1,
+			callback = args[lastArgsIndex];
+
+		args.length = lastFuncIndex + 1;
+
+		if (is(callback, Function)) {
+			args[lastArgsIndex] = undefined;
+			args[lastFuncIndex] = callback;
+			func.apply(this, args);
 		} else {
-			var self = this, args = arguments;
+			var self = this;
 
 			return new Promise(function (resolveFn, rejectFn) {
-				Array.prototype.push.call(args, function (err, res) {
+				args[lastFuncIndex] = function (err, res) {
 					return err ? rejectFn(err) : resolveFn(res);
-				});
+				};
 
 				func.apply(self, args);
 			});

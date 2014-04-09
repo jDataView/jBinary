@@ -21,13 +21,16 @@
     }
     function promising(func) {
         return function() {
-            if (is(arguments[arguments.length - 1], Function)) return func.apply(this, arguments);
-            var self = this, args = arguments;
-            return new Promise(function(resolveFn, rejectFn) {
-                Array.prototype.push.call(args, function(err, res) {
-                    return err ? rejectFn(err) : resolveFn(res);
-                }), func.apply(self, args);
-            });
+            var args = arguments, lastArgsIndex = args.length - 1, lastFuncIndex = func.length - 1, callback = args[lastArgsIndex];
+            if (args.length = lastFuncIndex + 1, !is(callback, Function)) {
+                var self = this;
+                return new Promise(function(resolveFn, rejectFn) {
+                    args[lastFuncIndex] = function(err, res) {
+                        return err ? rejectFn(err) : resolveFn(res);
+                    }, func.apply(self, args);
+                });
+            }
+            args[lastArgsIndex] = undefined, args[lastFuncIndex] = callback, func.apply(this, args);
         };
     }
     function jBinary(view, typeSet) {
@@ -381,7 +384,7 @@
             var self = this, structure = this.structure, output = this.proto ? inherit(this.proto) : {};
             return this.binary.inContext(output, function() {
                 for (var key in structure) {
-                    var value = is(structure[key], Function) ? structure[key].call(self, this.contexts[0]) : this.read(structure[key]);
+                    var value = is(structure[key], Function) ? structure[key].call(self, output) : this.read(structure[key]);
                     value !== undefined && (output[key] = value);
                 }
             }), output;
@@ -389,7 +392,7 @@
         write: function(data) {
             var self = this, structure = this.structure;
             this.binary.inContext(data, function() {
-                for (var key in structure) is(structure[key], Function) ? data[key] = structure[key].call(self, this.contexts[0]) : this.write(structure[key], data[key]);
+                for (var key in structure) is(structure[key], Function) ? data[key] = structure[key].call(self, data) : this.write(structure[key], data[key]);
             });
         }
     }), defaultTypeSet.skip = Type({
@@ -454,7 +457,7 @@
             }) : require("fs").readFile(source, callback);
         }
     }), jBinary.load = promising(function(source, typeSet, callback) {
-        is(typeSet, Function) && (callback = typeSet, typeSet = undefined), jBinary.loadData(source, function(err, data) {
+        jBinary.loadData(source, function(err, data) {
             err ? callback(err) : callback(null, new jBinary(data, typeSet));
         });
     }), proto._toURI = function(type) {
@@ -462,11 +465,13 @@
             return this.view.getString(undefined, undefined, this.view._isNodeBuffer ? "base64" : "binary");
         });
         return "data:" + type + ";base64," + (this.view._isNodeBuffer ? string : btoa(string));
+    }, proto._mimeType = function(mimeType) {
+        return mimeType || this.typeSet["jBinary.mimeType"] || "application/octet-stream";
     }, proto.toURI = function(mimeType) {
-        return this._toURI(mimeType || this.typeSet["jBinary.mimeType"] || "application/octet-stream");
+        return this._toURI(this._mimeType(mimeType));
     };
     var WritableStream = !0 && require("stream").Writable;
-    return proto.saveAs = promising(function(dest, callback) {
+    return proto.saveAs = promising(function(dest, mimeType, callback) {
         if ("string" == typeof dest) {
             var buffer = this.read("blob", 0);
             is(buffer, Buffer) || (buffer = new Buffer(buffer)), require("fs").writeFile(dest, buffer, callback);

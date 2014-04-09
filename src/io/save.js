@@ -9,8 +9,12 @@ proto._toURI =
 		return 'data:' + type + ';base64,' + (NODE && this.view._isNodeBuffer ? string : btoa(string));
 	};
 
+proto._mimeType = function (mimeType) {
+	return mimeType || this.typeSet['jBinary.mimeType'] || 'application/octet-stream';
+};
+
 proto.toURI = function (mimeType) {
-	return this._toURI(mimeType || this.typeSet['jBinary.mimeType'] || 'application/octet-stream');
+	return this._toURI(this._mimeType(mimeType));
 };
 
 var WritableStream = NODE && require('stream').Writable;
@@ -20,7 +24,7 @@ if (BROWSER && document) {
 	downloader.style.display = 'none';
 }
 
-proto.saveAs = promising(function (dest, callback) {
+proto.saveAs = promising(function (dest, mimeType, callback) {
 	if (typeof dest === 'string') {
 		if (NODE) {
 			var buffer = this.read('blob', 0);
@@ -33,19 +37,19 @@ proto.saveAs = promising(function (dest, callback) {
 		} else
 		if (BROWSER) {
 			if ('msSaveBlob' in navigator) {
-				navigator.msSaveBlob(new Blob([this.read('blob', 0)], {type: this.typeSet['jBinary.mimeType']}), dest);
+				navigator.msSaveBlob(new Blob([this.read('blob', 0)], {type: this._mimeType(mimeType)}), dest);
 			} else {
 				if (document) {
 					if (!downloader.parentNode) {
 						document.body.appendChild(downloader);
 					}
 
-					downloader.href = this.toURI();
+					downloader.href = this.toURI(mimeType);
 					downloader.download = dest;
 					downloader.click();
 					downloader.href = downloader.download = '';
 				} else {
-					callback(new TypeError('Downloading from Web Worker is not supported.'));
+					callback(new TypeError('Saving from Web Worker is not supported.'));
 				}
 			}
 			callback();

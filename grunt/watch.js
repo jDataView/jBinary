@@ -4,11 +4,7 @@ module.exports = {
 		interrupt: true
 	},
 	all: {
-		files: [
-			'Gruntfile.js',
-			'src/**/*.js',
-			'test/test.js'
-		],
+		files: ['+(src|test|grunt|umd)/**/*.js', '*.js'],
 		tasks: ['build', 'karma:watch:run', 'mochaTest:node']
 	}
 };
