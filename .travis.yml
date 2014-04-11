@@ -43,7 +43,7 @@ after_success:
               git push origin gh-pages &>-
               popd
               echo "Published browser dist."
-              grunt npm-publish
+              grunt npm_publish
             else
               echo "Some of builds were failed."
             fi

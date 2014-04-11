@@ -1,6 +1,6 @@
 module.exports = function (grunt) {
-	grunt.registerTask('npm-publish', function () {
-		var npm = require('npm'), done = this.async(), options = this.data;
+	grunt.registerTask('npm_publish', function () {
+		var npm = require('npm'), done = this.async(), options = this.options();
 
 		npm.load({}, function(err) {
 			npm.registry.adduser(options.username, options.password, options.email, function (err) {
@@ -20,8 +20,10 @@ module.exports = function (grunt) {
 	});
 
 	return {
-		username: process.env.NPM_USERNAME,
-		password: process.env.NPM_PASSWORD,
-		email: process.env.EMAIL
+		options: {
+			username: process.env.NPM_USERNAME,
+			password: process.env.NPM_PASSWORD,
+			email: process.env.EMAIL
+		}
 	};
 };
