@@ -32,7 +32,7 @@ after_success:
               git config --global user.name "Travis-CI"
               git config --global user.email $EMAIL
               echo "Cloning dist..."
-              git clone https://$GH_TOKEN@github.com/jDataView/dist2.git ~/dist &>-
+              git clone https://$GH_TOKEN@github.com/jDataView/dist.git ~/dist &>-
               echo "Copying generated files into dist..."
               cp dist/browser/{*.js,*.js.map} ~/dist/
               echo "Committing..."

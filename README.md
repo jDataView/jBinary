@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/jDataView/jBinary.png?branch=master)](https://travis-ci.org/jDataView/jBinary) [![NPM version](https://badge.fury.io/js/jbinary2.png)](https://npmjs.org/package/jbinary2)
+[![Build Status](https://travis-ci.org/jDataView/jBinary.png?branch=master)](https://travis-ci.org/jDataView/jBinary) [![NPM version](https://badge.fury.io/js/jbinary.png)](https://npmjs.org/package/jbinary)
 jBinary - High-level I/O for binary data.
 =========================================
 
@@ -29,7 +29,7 @@ Sure, how about TAR archive modification:
 require.config({
   paths: {
     jdataview: '//jdataview.github.io/dist/jdataview',
-    jbinary: '//jdataview.github.io/dist2/jbinary',
+    jbinary: '//jdataview.github.io/dist/jbinary',
     TAR: '//jdataview.github.io/jBinary.Repo/typeSets/tar' // TAR archive typeset
   }
 });
