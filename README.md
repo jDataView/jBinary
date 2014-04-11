@@ -22,7 +22,7 @@ Check out [wiki](https://github.com/jDataView/jBinary/wiki) for detailed API doc
 
 # Is there any example code?
 
-Sure, how about this:
+Sure, how about TAR archive modification:
 ```javascript
 // configuring paths for Require.js
 // (you can use CommonJS (Component, Node.js) or simple script tags as well)
