@@ -1,22 +1,58 @@
 branches:
   only:
-    - master
+  - v2.0
 language: node_js
 node_js:
+- '0.11'
 - '0.10'
 - '0.8'
-- '0.6'
+matrix:
+  fast_finish: true
+  allow_failures:
+  - node_js: '0.11'
+before_install:
+- npm install -g grunt-cli
 env:
   global:
-  - secure: iavEdFxn7fNKbkulrS2iQBOjJ9W8qWi6qYhdYdzVII0xYgMHPN10nvYHIA5dMYxC+IfWWz2qMyP9Aurn/VxMQOBDj4RhYflLo9tmrgkDWTpsu3tn88RQmgaBbX9eDUDG8PoFciEXg6ckCHfpjsh/CAUOdufJta9YZJ1vGjLUfVs=
-  - secure: ALf9WMMWGLIkqqF+ALMmUosxFstbz7lvyUK3p6/qPmLMtgjqI7eqxL8IFXM+nxjZXNIDqOXGCWhytIzVbfRvN1otJl5zp6Q+PnbgwlsuiuJOTo42t9PmnkGzYIYuquNecqeWDDmluPmrKuRYD0nHXQDd91GDXyDdIrrYU+o19tY=
-  - secure: oeGwEBKblxEvnJEnvB2kRTrgp5FJbN9XiCXifmKThf4YHpYCoAfvfWbi6mfxkD65eZorbCSGOz9g384+8R1+cK5dstjoZRq2wpHGPu7nOX4GXmodqAWqjN2dB/nnd+jq1LWatuXXUbouWo51ll+Fi08wVlvHN6a1obGZLyn49f4=
-  - secure: CZr8QDkFtHjiezI6Sr+LZ/lxQj+Txe1tFSlNh42psE6FlhipOrae8dsUS4cffPDyxy5NcUc75GgKy1u4MRg7RuG5UiFVrdul14juXn3L0m6TdYIz/ZvboYby5sjaAOAfzFRJR70+2GCmPf9ijHhPZzdcN+gGr6vmEoSHVY+fmXw=
+    - NPM_USERNAME=rreverser
+    - EMAIL=me@rreverser.com
+    - secure: n++5XsU9SToUz4iLG6J//CfCoxAPdD91NyHV77pxsOm9C13mtnVPTByxF6DhRgP6MrBUER3MUfz1q4Zj7PxxJ9qOXgpuUcH1F1wMiJ4IemR7ct0qoaV6eCxBN+gg4nAZDA8798IMjnO8RZ5h2sJfWfm61V82Rg9vth7T0j38Lh8=
+    - secure: jRZCZK4i8cAxSV/YcyutjTKeWSZH6I2G25Bw/Ful96VQ175mxSwE8FdgNjKRHWYLB5PR3GtuuvVG7RK2kCEJ1U9LUkpZBDfmvtobx8dz/hYsqgcLWE+Z5nXW/IPjfpfOwEMdGnSenZ5XKnFOrtMPBK2/6VE9zcgarZRZ2NIsHoI=
 after_success:
-  - node publish/publish jDataView/dist
-matrix:
-  include:
-    - node_js: '0.10'
-      install: git clone https://github.com/jDataView/jDataView.git ../jDataView
-      before_script: cd test
-      script: phantomjs --local-to-remote-url-access=true --web-security=false phantom-mocha.js index.html
+  - |
+      if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+        git describe --exact-match HEAD &>-
+        if [ $? -eq 0 ]; then
+          echo "Checking other builds..."
+          curl -s -o travis_after_all.py https://raw.github.com/dmakhno/travis_after_all/master/travis_after_all.py
+          python travis_after_all.py
+          export $(cat .to_export_back)
+          if [ "$BUILD_LEADER" = "YES" ]; then
+            if [ "$BUILD_AGGREGATE_STATUS" = "others_succeeded" ]; then
+              git config --global user.name "Travis-CI"
+              git config --global user.email $EMAIL
+              echo "Cloning dist..."
+              git clone https://$GH_TOKEN@github.com/jDataView/dist.git ~/dist &>-
+              echo "Copying generated files into dist..."
+              cp dist/browser/{*.js,*.js.map} ~/dist/
+              echo "Committing..."
+              pushd ~/dist > /dev/null
+              git add .
+              git commit -m "Travis build $TRAVIS_BUILD_NUMBER"
+              echo "Publishing..."
+              git push origin gh-pages &>-
+              popd
+              echo "Published browser dist."
+              grunt npm-publish
+            else
+              echo "Some of builds were failed."
+            fi
+          fi
+        else
+          echo "No tags found, not publishing."
+        fi
+      else
+        echo "Pull request detected, not publishing."
+      fi
+after_script:
+  - echo pull_request=$TRAVIS_PULL_REQUEST leader=$BUILD_LEADER status=$BUILD_AGGREGATE_STATUS

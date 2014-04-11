@@ -1,0 +1,17 @@
+default:
+  - 'build'
+  - 'test'
+  - 'compare_size'
+
+browser:
+  - 'build:browser'
+  - 'test:browser'
+  - 'compare_size:browser'
+
+node:
+  - 'build:node'
+  - 'test:node'
+
+live:
+  - 'karma:watch:start'
+  - 'watch'
