@@ -6,7 +6,7 @@ module.exports = function (config) {
 		frameworks: ['mocha', 'chai'],
 		browsers: CI ? ['PhantomJS'] : ['Chrome', 'Firefox', 'IE'],
 		files: [
-			'//jdataview.github.io/dist/jdataview.js',
+			'http://jdataview.github.io/dist/jdataview.js',
 			'dist/browser/jbinary.js',
 			'test/karma.mocha.conf.js',
 			'test/test.js',

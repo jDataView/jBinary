@@ -28,6 +28,6 @@ if (BROWSER && !jDataView && document) {
 
 /* jshint ignore:end */
 
-var Promise = global.Promise || function (executor) {
+var Promise = global.Promise || (NODE ? require('es6-promise').Promise : function (executor) {
 	this.then = executor;
-};
+});
