@@ -1,6 +1,6 @@
 {
   "name": "jbinary",
-  "version": "2.0.1-0",
+  "version": "2.0.1",
   "description": "High-level I/O for binary data.",
   "keywords": [
     "parse",
@@ -33,7 +33,7 @@
   "dependencies": {
     "jdataview": "*",
     "request": "*",
-    "es6-promise": "^0.1.1"
+    "es6-promise": "*"
   },
   "devDependencies": {
     "grunt": "~0.4.2",
