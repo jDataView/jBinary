@@ -14,6 +14,6 @@
 			global.jBinary = factory(global, global.jDataView);
 		}
 	}
-}(function (global, jDataView, undefined) {
+}(function (global, jDataView) {
 
 'use strict';

@@ -1,7 +1,7 @@
 !function(factory) {
     var global = this;
     module.exports = factory(global, require("jdataview"));
-}(function(global, jDataView, undefined) {
+}(function(global, jDataView) {
     "use strict";
     function is(obj, Ctor) {
         return Ctor && obj instanceof Ctor;
@@ -9,7 +9,7 @@
     function extend(obj) {
         for (var i = 1, length = arguments.length; length > i; ++i) {
             var source = arguments[i];
-            for (var prop in source) source[prop] !== undefined && (obj[prop] = source[prop]);
+            for (var prop in source) void 0 !== source[prop] && (obj[prop] = source[prop]);
         }
         return obj;
     }
@@ -30,11 +30,11 @@
                     }, func.apply(self, args);
                 });
             }
-            args[lastArgsIndex] = undefined, args[lastFuncIndex] = callback, func.apply(this, args);
+            args[lastArgsIndex] = void 0, args[lastFuncIndex] = callback, func.apply(this, args);
         };
     }
     function jBinary(view, typeSet) {
-        return is(view, jBinary) ? view.as(typeSet) : (is(view, jDataView) || (view = new jDataView(view, undefined, undefined, typeSet ? typeSet["jBinary.littleEndian"] : undefined)), 
+        return is(view, jBinary) ? view.as(typeSet) : (is(view, jDataView) || (view = new jDataView(view, void 0, void 0, typeSet ? typeSet["jBinary.littleEndian"] : void 0)), 
         is(this, jBinary) ? (this.view = view, this.view.seek(0), this.contexts = [], this.as(typeSet, !0)) : new jBinary(view, typeSet));
     }
     function Type(config) {
@@ -93,9 +93,7 @@
         var a = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", d = [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1 ];
         global.btoa || (global.btoa = b), global.atob || (global.atob = c);
     }();
-    var Promise = global.Promise || function(executor) {
-        this.then = executor;
-    }, _inherit = Object.create, proto = jBinary.prototype, defaultTypeSet = proto.typeSet = {};
+    var Promise = global.Promise || require("es6-promise").Promise, _inherit = Object.create, proto = jBinary.prototype, defaultTypeSet = proto.typeSet = {};
     proto.toValue = function(value) {
         return toValue(this, this, value);
     };
@@ -178,7 +176,7 @@
             return cacheKey + "." + ++cacheId;
         }, !0), binary;
     }, proto.seek = function(position, callback) {
-        if (position = this.toValue(position), callback !== undefined) {
+        if (position = this.toValue(position), void 0 !== callback) {
             var oldPos = this.view.tell();
             this.view.seek(position);
             var result = callback.call(this);
@@ -216,7 +214,7 @@
     }, proto.createProperty = function(type) {
         return this.getType(type).createProperty(this);
     }, proto._action = function(type, offset, callback) {
-        return type !== undefined ? offset !== undefined ? this.seek(offset, callback) : callback.call(this) : void 0;
+        return void 0 !== type ? void 0 !== offset ? this.seek(offset, callback) : callback.call(this) : void 0;
     }, proto.read = function(type, offset) {
         return this._action(type, offset, function() {
             return this.createProperty(type).read(this.contexts[0]);
@@ -240,7 +238,7 @@
     }(Type({
         params: [ "littleEndian" ],
         read: function() {
-            return this.view["get" + this.dataType](undefined, this.littleEndian);
+            return this.view["get" + this.dataType](void 0, this.littleEndian);
         },
         write: function(value) {
             this.view["write" + this.dataType](value, this.littleEndian);
@@ -254,9 +252,9 @@
         params: [ "baseType", "length" ],
         read: function() {
             var length = this.toValue(this.length);
-            if (this.baseType === defaultTypeSet.uint8) return this.view.getBytes(length, undefined, !0, !0);
+            if (this.baseType === defaultTypeSet.uint8) return this.view.getBytes(length, void 0, !0, !0);
             var results;
-            if (length !== undefined) {
+            if (void 0 !== length) {
                 results = new Array(length);
                 for (var i = 0; length > i; i++) results[i] = this.baseRead();
             } else {
@@ -305,7 +303,7 @@
             return value;
         },
         write: function(value) {
-            this.baseWrite(this.strict || value === undefined ? this.value : value);
+            this.baseWrite(this.strict || void 0 === value ? this.value : value);
         }
     }), defaultTypeSet["enum"] = Template({
         params: [ "baseType", "matches" ],
@@ -385,7 +383,7 @@
             return this.binary.inContext(output, function() {
                 for (var key in structure) {
                     var value = is(structure[key], Function) ? structure[key].call(self, output) : this.read(structure[key]);
-                    value !== undefined && (output[key] = value);
+                    void 0 !== value && (output[key] = value);
                 }
             }), output;
         },
@@ -406,7 +404,7 @@
     }), defaultTypeSet.string = Template({
         params: [ "length", "encoding" ],
         read: function() {
-            return this.view.getString(this.toValue(this.length), undefined, this.encoding);
+            return this.view.getString(this.toValue(this.length), void 0, this.encoding);
         },
         write: function(value) {
             this.view.writeString(value, this.encoding);
@@ -415,17 +413,17 @@
         params: [ "length", "encoding" ],
         read: function() {
             var view = this.view, maxLength = this.length;
-            if (maxLength === undefined) {
+            if (void 0 === maxLength) {
                 var code, startPos = view.tell(), length = 0;
                 for (maxLength = view.byteLength - startPos; maxLength > length && (code = view.getUint8()); ) length++;
                 var string = view.getString(length, startPos, this.encoding);
                 return maxLength > length && view.skip(1), string;
             }
-            return view.getString(maxLength, undefined, this.encoding).replace(/\0.*$/, "");
+            return view.getString(maxLength, void 0, this.encoding).replace(/\0.*$/, "");
         },
         write: function(value) {
-            var view = this.view, zeroLength = this.length === undefined ? 1 : this.length - value.length;
-            view.writeString(value, undefined, this.encoding), zeroLength > 0 && (view.writeUint8(0), 
+            var view = this.view, zeroLength = void 0 === this.length ? 1 : this.length - value.length;
+            view.writeString(value, void 0, this.encoding), zeroLength > 0 && (view.writeUint8(0), 
             view.skip(zeroLength - 1));
         }
     });
@@ -462,7 +460,7 @@
         });
     }), proto._toURI = function(type) {
         var string = this.seek(0, function() {
-            return this.view.getString(undefined, undefined, this.view._isNodeBuffer ? "base64" : "binary");
+            return this.view.getString(void 0, void 0, this.view._isNodeBuffer ? "base64" : "binary");
         });
         return "data:" + type + ";base64," + (this.view._isNodeBuffer ? string : btoa(string));
     }, proto._mimeType = function(mimeType) {

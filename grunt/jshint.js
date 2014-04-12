@@ -14,7 +14,8 @@ module.exports = function (grunt) {
 		before_concat: {
 			options: {
 				undef: false, // ignore access to undefined vars since they may be defined in other files
-				'-W079': true // ignore redefinition of "global" vars since they are actually local
+				'-W079': true, // ignore redefinition of "global" vars since they are actually local
+				'-W020': true // ...and ignore writing to read-only "global" vars
 			},
 			src: ['+(src|test)/**/*.js', '*.js']
 		},
