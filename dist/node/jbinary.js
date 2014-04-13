@@ -455,15 +455,15 @@
             }) : require("fs").readFile(source, callback);
         }
     }), jBinary.load = promising(function(source, typeSet, callback) {
-        var whenData = jBinary.loadData(source), getTypeSet = jBinary.Repo ? jBinary.Repo.getTypeSet : function(source, typeSet, callback) {
-            callback(typeSet);
-        };
-        getTypeSet(source, typeSet, function(typeSet) {
+        var whenData = jBinary.loadData(source);
+        jBinary.load.getTypeSet(source, typeSet, function(typeSet) {
             whenData.then(function(data) {
                 callback(null, new jBinary(data, typeSet));
             }, callback);
         });
-    }), proto._toURI = function(type) {
+    }), jBinary.load.getTypeSet = function(source, typeSet, callback) {
+        callback(typeSet);
+    }, proto._toURI = function(type) {
         var string = this.seek(0, function() {
             return this.view.getString(void 0, void 0, this.view._isNodeBuffer ? "base64" : "binary");
         });

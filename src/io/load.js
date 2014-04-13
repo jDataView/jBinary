@@ -106,14 +106,15 @@ jBinary.loadData = promising(function (source, callback) {
 });
 
 jBinary.load = promising(function (source, typeSet, callback) {
-	var whenData = jBinary.loadData(source),
-		getTypeSet = jBinary.Repo ? jBinary.Repo.getTypeSet : function (source, typeSet, callback) {
-			callback(typeSet);
-		};
+	var whenData = jBinary.loadData(source);
 
-	getTypeSet(source, typeSet, function (typeSet) {
+	jBinary.load.getTypeSet(source, typeSet, function (typeSet) {
 		whenData.then(function (data) {
 			callback(null, new jBinary(data, typeSet));
 		}, callback);
 	});
 });
+
+jBinary.load.getTypeSet = function (source, typeSet, callback) {
+	callback(typeSet);
+};
