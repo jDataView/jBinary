@@ -58,8 +58,17 @@ require(['jbinary', 'TAR'], function (jBinary, TAR) {
 
 # What is already created?
 
-[![Screenshot](http://rreverser.github.io/mpegts/screenshot.png?)](http://rreverser.github.io/mpegts/)
 Advanced demo that shows abilities and performance of jBinary - [Apple HTTP Live Streaming player](https://rreverser.github.io/mpegts/) which converts MPEG-TS video chunks from realtime stream to MP4 and plays them immediately one by one while converting few more chunks in background.
+
+[![Screenshot](http://rreverser.github.io/mpegts/screenshot.png?)](http://rreverser.github.io/mpegts/)
+
+---
+
+A [World of Warcraft Model Viewer](http://jdataview.github.io/jsWoWModelViewer/). It uses [jDataView](https://github.com/jDataView/jDataView)+[jBinary](https://github.com/jDataView/jBinary) to read the binary file and then WebGL to display it.
+
+[![Screenshot](http://jdataview.github.io/jsWoWModelViewer/images/modelviewer.png)](http://jdataview.github.io/jsWoWModelViewer/)
+
+---
 
 Also check out [jBinary.Repo](https://jDataView.github.io/jBinary.Repo/) for advanced usage and demos of some popular file formats (and feel free to submit more!).
 
