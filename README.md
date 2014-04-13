@@ -4,7 +4,7 @@ jBinary - High-level I/O for binary data.
 
 <img src="https://avatars1.githubusercontent.com/u/4702384?s=130" align="right"></img>
 
-jBinary makes it easy to work with binary files in JavaScript.
+jBinary makes it easy to work with binary files in JavaScript as with native objects via declarative syntax.
 
 It works on top of [jDataView](https://github.com/jDataView/jDataView) (extended [DataView](http://www.khronos.org/registry/typedarray/specs/latest/#8) polyfill).
 
@@ -58,8 +58,17 @@ require(['jbinary', 'TAR'], function (jBinary, TAR) {
 
 # What is already created?
 
-[![Screenshot](http://rreverser.github.io/mpegts/screenshot.png?)](http://rreverser.github.io/mpegts/)
 Advanced demo that shows abilities and performance of jBinary - [Apple HTTP Live Streaming player](https://rreverser.github.io/mpegts/) which converts MPEG-TS video chunks from realtime stream to MP4 and plays them immediately one by one while converting few more chunks in background.
+
+[![Screenshot](http://rreverser.github.io/mpegts/screenshot.png?)](http://rreverser.github.io/mpegts/)
+
+---
+
+A [World of Warcraft Model Viewer](http://jdataview.github.io/jsWoWModelViewer/). It uses [jDataView](https://github.com/jDataView/jDataView)+[jBinary](https://github.com/jDataView/jBinary) to read the binary file and then WebGL to display it.
+
+[![Screenshot](http://jdataview.github.io/jsWoWModelViewer/images/modelviewer.png)](http://jdataview.github.io/jsWoWModelViewer/)
+
+---
 
 Also check out [jBinary.Repo](https://jDataView.github.io/jBinary.Repo/) for advanced usage and demos of some popular file formats (and feel free to submit more!).
 
