@@ -4,7 +4,7 @@ jBinary - High-level I/O for binary data.
 
 <img src="https://avatars1.githubusercontent.com/u/4702384?s=130" align="right"></img>
 
-jBinary makes it easy to work with binary files in JavaScript.
+jBinary makes it easy to work with binary files in JavaScript as with native objects via declarative syntax.
 
 It works on top of [jDataView](https://github.com/jDataView/jDataView) (extended [DataView](http://www.khronos.org/registry/typedarray/specs/latest/#8) polyfill).
 
