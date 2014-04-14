@@ -1,6 +1,6 @@
 branches:
   only:
-  - master
+  - saucelabs
 language: node_js
 node_js:
 - '0.11'
