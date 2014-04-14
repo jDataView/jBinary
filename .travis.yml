@@ -3,13 +3,13 @@ branches:
   - saucelabs
 language: node_js
 node_js:
-- '0.11'
-- '0.10'
-- '0.8'
+  - '0.11'
+  - '0.10'
+  - '0.8'
 before_install:
-- npm install -g grunt-cli
-- export DISPLAY=:99.0
-- sh -e /etc/init.d/xvfb start
+  - npm install -g grunt-cli
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
 env:
   global:
     - NPM_USERNAME=rreverser
@@ -18,6 +18,11 @@ env:
     - secure: n++5XsU9SToUz4iLG6J//CfCoxAPdD91NyHV77pxsOm9C13mtnVPTByxF6DhRgP6MrBUER3MUfz1q4Zj7PxxJ9qOXgpuUcH1F1wMiJ4IemR7ct0qoaV6eCxBN+gg4nAZDA8798IMjnO8RZ5h2sJfWfm61V82Rg9vth7T0j38Lh8=
     - secure: jRZCZK4i8cAxSV/YcyutjTKeWSZH6I2G25Bw/Ful96VQ175mxSwE8FdgNjKRHWYLB5PR3GtuuvVG7RK2kCEJ1U9LUkpZBDfmvtobx8dz/hYsqgcLWE+Z5nXW/IPjfpfOwEMdGnSenZ5XKnFOrtMPBK2/6VE9zcgarZRZ2NIsHoI=
     - secure: CUlpzljyBHjqL0etSgjiZHZSAp0DF9fWwIoAiB43Kldzy0ZKG90Mq+0gt989BeqyWp0nipkAMCsbsoQVNHDQwQ/oGeLLItC0/ZO72ICpIz+73C/hFbFONr998GZIJC5g8OzFWy6vORQ6RRSfs31TWxfKDzh8XN1IkU/kryxe4RM= #SAUCE
+script: grunt node
+matrix:
+  include:
+    - node_js: '0.10'
+      script: grunt browser
 after_success:
   - |
       if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then

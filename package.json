@@ -59,6 +59,6 @@
     "jshint-stylish": "~0.1.5",
     "grunt-lintspaces": "~0.5.0",
     "grunt-contrib-clean": "~0.5.0",
-    "karma-sauce-launcher": "^0.2.7"
+    "karma-sauce-launcher": "~0.2.7"
   }
 }
