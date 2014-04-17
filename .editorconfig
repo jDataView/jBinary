@@ -4,14 +4,12 @@ root = true
 [*]
 charset = utf-8
 trim_trailing_whitespace = true
+# Configs (generated and manually maintained)
+indent_style = space
+indent_size = 2
 insert_final_newline = true
 
 # Code style
 [*.js]
 indent_style = tab
 insert_final_newline = false
-
-# Configs (generated and manually maintained)
-[*.{json,yml,jshintrc,editorconfig,md}]
-indent_style = space
-indent_size = 2
