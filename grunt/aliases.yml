@@ -1,24 +1,23 @@
 build_common:
-  - 'clean'
-  - 'lintspaces'
-  - 'jshint:grunt'
-  - 'jshint:before_concat'
-  - 'concat_sourcemap'
-  - 'jshint:after_concat'
+  - 'newer:lintspaces'
+  - 'newer:jshint:grunt'
+  - 'newer:jshint:before_concat'
+  - 'newer:concat_sourcemap'
+  - 'newer:jshint:after_concat'
 
 default:
   - 'build'
-  - 'test'
+  - 'newer:test'
   - 'compare_size'
 
 browser:
   - 'build:browser'
-  - 'test:browser'
+  - 'newer:test:browser'
   - 'compare_size:browser'
 
 node:
   - 'build:node'
-  - 'test:node'
+  - 'newer:test:node'
 
 live:
   - 'karma:watch:start'

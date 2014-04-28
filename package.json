@@ -58,6 +58,7 @@
     "gzip-js": "~0.3.2",
     "jshint-stylish": "~0.1.5",
     "grunt-lintspaces": "~0.4.1",
-    "grunt-contrib-clean": "~0.5.0"
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-newer": "^0.7.0"
   }
 }
