@@ -1,18 +1,24 @@
 module.exports = function (grunt) {
 	grunt.registerMultiTask('test', function () {
-		grunt.task.run(this.options().task + ':' + this.target);
+		grunt.task.run(this.options().task);
 	});
 
 	return {
 		browser: {
 			options: {
-				task: 'karma'
+				task: 'karma:browser'
+			},
+			src: 'dist/browser/<%= pkgName %>.js'
+		},
+		browserLive: {
+			options: {
+				task: 'karma:watch:run'
 			},
 			src: 'dist/browser/<%= pkgName %>.js'
 		},
 		node: {
 			options: {
-				task: 'mochaTest'
+				task: 'mochaTest:node'
 			},
 			src: 'dist/node/<%= pkgName %>.js'
 		}
