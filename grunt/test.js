@@ -10,12 +10,6 @@ module.exports = function (grunt) {
 			},
 			src: 'dist/browser/<%= pkgName %>.js'
 		},
-		browserLive: {
-			options: {
-				task: 'karma:watch:run'
-			},
-			src: 'dist/browser/<%= pkgName %>.js'
-		},
 		node: {
 			options: {
 				task: 'mochaTest:node'
