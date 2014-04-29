@@ -22,7 +22,6 @@ after_success:
         git describe --exact-match HEAD &>-
         if [ $? -eq 0 ]; then
           echo "Checking other builds..."
-          curl -s -o travis_after_all.py https://raw.github.com/dmakhno/travis_after_all/master/travis_after_all.py
           python travis_after_all.py
           export $(cat .to_export_back)
           if [ "$BUILD_LEADER" = "YES" ]; then
