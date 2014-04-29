@@ -189,14 +189,14 @@
         return this.seek(this.tell() + this.toValue(offset), callback);
     }, proto.slice = function(start, end, forceCopy) {
         return new jBinary(this.view.slice(start, end, forceCopy), this.typeSet);
-    }, proto.getType = function(type, args) {
+    }, proto._getType = function(type, args) {
         switch (typeof type) {
           case "string":
             if (!(type in this.typeSet)) throw new ReferenceError("Unknown type: " + type);
-            return this.getType(this.typeSet[type], args);
+            return this._getType(this.typeSet[type], args);
 
           case "number":
-            return this.getType(defaultTypeSet.bitfield, [ type ]);
+            return this._getType(defaultTypeSet.bitfield, [ type ]);
 
           case "object":
             if (is(type, Type)) {
@@ -211,20 +211,31 @@
                 return this.getType(defaultTypeSet.object, [ structure ]);
             }, !1);
         }
-    }, proto.createProperty = function(type) {
-        return this.getType(type).createProperty(this);
-    }, proto._action = function(type, offset, callback) {
-        return void 0 !== type ? void 0 !== offset ? this.seek(offset, callback) : callback.call(this) : void 0;
+    }, proto.getType = function(type, args) {
+        var resolvedType = this._getType(type, args);
+        return resolvedType && !is(type, Type) && (resolvedType.name = "object" == typeof type ? is(type, Array) ? type[0] + "(" + type.slice(1).join(", ") + ")" : "object" : String(type)), 
+        resolvedType;
+    }, proto._named = function(func, name, offset) {
+        return func.displayName = name + " @ " + (void 0 !== offset ? offset : this.view.tell()), 
+        func;
+    }, proto._action = function(type, offset, _callback) {
+        if (void 0 !== type) {
+            type = this.getType(type);
+            var callback = this._named(function() {
+                return _callback.call(this, type.createProperty(this), this.contexts[0]);
+            }, "[" + type.name + "]", offset);
+            return void 0 !== offset ? this.seek(offset, callback) : callback.call(this);
+        }
     }, proto.read = function(type, offset) {
-        return this._action(type, offset, function() {
-            return this.createProperty(type).read(this.contexts[0]);
+        return this._action(type, offset, function(prop, context) {
+            return prop.read(context);
         });
     }, proto.readAll = function() {
         return this.read("jBinary.all", 0);
     }, proto.write = function(type, data, offset) {
-        return this._action(type, offset, function() {
+        return this._action(type, offset, function(prop, context) {
             var start = this.tell();
-            return this.createProperty(type).write(data, this.contexts[0]), this.tell() - start;
+            return prop.write(data, context), this.tell() - start;
         });
     }, proto.writeAll = function(data) {
         return this.write("jBinary.all", data, 0);
@@ -381,16 +392,18 @@
         read: function() {
             var self = this, structure = this.structure, output = this.proto ? inherit(this.proto) : {};
             return this.binary.inContext(output, function() {
-                for (var key in structure) {
+                for (var key in structure) this._named(function() {
                     var value = is(structure[key], Function) ? structure[key].call(self, output) : this.read(structure[key]);
                     void 0 !== value && (output[key] = value);
-                }
+                }, key).call(this);
             }), output;
         },
         write: function(data) {
             var self = this, structure = this.structure;
             this.binary.inContext(data, function() {
-                for (var key in structure) is(structure[key], Function) ? data[key] = structure[key].call(self, data) : this.write(structure[key], data[key]);
+                for (var key in structure) this._named(function() {
+                    is(structure[key], Function) ? data[key] = structure[key].call(self, data) : this.write(structure[key], data[key]);
+                }, key).call(this);
             });
         }
     }), defaultTypeSet.skip = Type({

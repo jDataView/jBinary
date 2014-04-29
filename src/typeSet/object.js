@@ -9,25 +9,34 @@ defaultTypeSet.object = Type({
 	},
 	read: function () {
 		var self = this, structure = this.structure, output = this.proto ? inherit(this.proto) : {};
+
 		this.binary.inContext(output, function () {
+			/* jshint loopfunc: true */
 			for (var key in structure) {
-				var value = !is(structure[key], Function) ? this.read(structure[key]) : structure[key].call(self, output);
-				if (value !== undefined) {
-					output[key] = value;
-				}
+				this._named(function () {
+					var value = !is(structure[key], Function) ? this.read(structure[key]) : structure[key].call(self, output);
+					if (value !== undefined) {
+						output[key] = value;
+					}
+				}, key).call(this);
 			}
 		});
+
 		return output;
 	},
 	write: function (data) {
 		var self = this, structure = this.structure;
+
 		this.binary.inContext(data, function () {
+			/* jshint loopfunc: true */
 			for (var key in structure) {
-				if (!is(structure[key], Function)) {
-					this.write(structure[key], data[key]);
-				} else {
-					data[key] = structure[key].call(self, data);
-				}
+				this._named(function () {
+					if (!is(structure[key], Function)) {
+						this.write(structure[key], data[key]);
+					} else {
+						data[key] = structure[key].call(self, data);
+					}
+				}, key).call(this);
 			}
 		});
 	}

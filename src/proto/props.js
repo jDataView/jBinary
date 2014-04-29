@@ -1,13 +1,13 @@
-proto.getType = function (type, args) {
+proto._getType = function (type, args) {
 	switch (typeof type) {
 		case 'string':
 			if (!(type in this.typeSet)) {
 				throw new ReferenceError('Unknown type: ' + type);
 			}
-			return this.getType(this.typeSet[type], args);
+			return this._getType(this.typeSet[type], args);
 
 		case 'number':
-			return this.getType(defaultTypeSet.bitfield, [type]);
+			return this._getType(defaultTypeSet.bitfield, [type]);
 
 		case 'object':
 			if (is(type, Type)) {
@@ -23,23 +23,44 @@ proto.getType = function (type, args) {
 	}
 };
 
-proto.createProperty = function (type) {
-	return this.getType(type).createProperty(this);
+proto.getType = function (type, args) {
+	var resolvedType = this._getType(type, args);
+
+	if (resolvedType && !is(type, Type)) {
+		resolvedType.name =
+			typeof type === 'object'
+			? (
+				is(type, Array)
+				? type[0] + '(' + type.slice(1).join(', ') + ')'
+				: 'object'
+			)
+			: String(type);
+	}
+
+	return resolvedType;
 };
 
-proto._action = function (type, offset, callback) {
+proto._named = function (func, name, offset) {
+	func.displayName = name + ' @ ' + (offset !== undefined ? offset : this.view.tell());
+	return func;
+};
+
+proto._action = function (type, offset, _callback) {
 	if (type === undefined) {
 		return;
 	}
+
+	type = this.getType(type);
+
+	var callback = this._named(function () {
+		return _callback.call(this, type.createProperty(this), this.contexts[0]);
+	}, '[' + type.name + ']', offset);
+
 	return offset !== undefined ? this.seek(offset, callback) : callback.call(this);
 };
 
 proto.read = function (type, offset) {
-	return this._action(
-		type,
-		offset,
-		function () { return this.createProperty(type).read(this.contexts[0]) }
-	);
+	return this._action(type, offset, function (prop, context) { return prop.read(context) });
 };
 
 proto.readAll = function () {
@@ -47,15 +68,11 @@ proto.readAll = function () {
 };
 
 proto.write = function (type, data, offset) {
-	return this._action(
-		type,
-		offset,
-		function () {
-			var start = this.tell();
-			this.createProperty(type).write(data, this.contexts[0]);
-			return this.tell() - start;
-		}
-	);
+	return this._action(type, offset, function (prop, context) {
+		var start = this.tell();
+		prop.write(data, context);
+		return this.tell() - start;
+	});
 };
 
 proto.writeAll = function (data) {

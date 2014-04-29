@@ -8,7 +8,7 @@ build_common:
 default:
   - 'build'
   - 'newer:test'
-  - 'newer:compare_size'
+  - 'compare_size'
 
 browser:
   - 'build:browser'
