@@ -26,3 +26,8 @@ var defaultTypeSet = proto.typeSet = {};
 proto.toValue = function (value) {
 	return toValue(this, this, value);
 };
+
+proto._named = function (func, name, offset) {
+	func.displayName = name + ' @ ' + (offset !== undefined ? offset : this.view.tell());
+	return func;
+};

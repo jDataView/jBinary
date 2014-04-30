@@ -40,11 +40,6 @@ proto.getType = function (type, args) {
 	return resolvedType;
 };
 
-proto._named = function (func, name, offset) {
-	func.displayName = name + ' @ ' + (offset !== undefined ? offset : this.view.tell());
-	return func;
-};
-
 proto._action = function (type, offset, _callback) {
 	if (type === undefined) {
 		return;

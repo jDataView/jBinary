@@ -96,6 +96,9 @@
     var Promise = global.Promise || require("es6-promise").Promise, _inherit = Object.create, proto = jBinary.prototype, defaultTypeSet = proto.typeSet = {};
     proto.toValue = function(value) {
         return toValue(this, this, value);
+    }, proto._named = function(func, name, offset) {
+        return func.displayName = name + " @ " + (void 0 !== offset ? offset : this.view.tell()), 
+        func;
     };
     var defineProperty = Object.defineProperty, cacheKey = "jBinary.Cache", cacheId = 0;
     proto._getCached = function(obj, valueAccessor, allowVisible) {
@@ -215,9 +218,6 @@
         var resolvedType = this._getType(type, args);
         return resolvedType && !is(type, Type) && (resolvedType.name = "object" == typeof type ? is(type, Array) ? type[0] + "(" + type.slice(1).join(", ") + ")" : "object" : String(type)), 
         resolvedType;
-    }, proto._named = function(func, name, offset) {
-        return func.displayName = name + " @ " + (void 0 !== offset ? offset : this.view.tell()), 
-        func;
     }, proto._action = function(type, offset, _callback) {
         if (void 0 !== type) {
             type = this.getType(type);
