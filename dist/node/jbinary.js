@@ -97,7 +97,7 @@
     proto.toValue = function(value) {
         return toValue(this, this, value);
     }, proto._named = function(func, name, offset) {
-        return func.displayName = name + " @ " + (void 0 !== offset ? offset : this.view.tell()), 
+        return func.displayName = "[32m" + name + " @ " + (void 0 !== offset ? offset : this.view.tell()) + "[39m", 
         func;
     };
     var defineProperty = Object.defineProperty, cacheKey = "jBinary.Cache", cacheId = 0;

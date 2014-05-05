@@ -28,6 +28,6 @@ proto.toValue = function (value) {
 };
 
 proto._named = function (func, name, offset) {
-	func.displayName = name + ' @ ' + (offset !== undefined ? offset : this.view.tell());
+	func.displayName = (NODE ? '\x1B[32m' : '') + name + ' @ ' + (offset !== undefined ? offset : this.view.tell()) + (NODE ? '\x1B[39m' : '');
 	return func;
 };
