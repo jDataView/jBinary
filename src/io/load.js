@@ -4,9 +4,26 @@ jBinary.loadData = promising(function (source, callback) {
 	var dataParts;
 
 	if (BROWSER && is(source, global.Blob)) {
-		var reader = new FileReader();
-		reader.onload = reader.onerror = function () { callback(this.error, this.result) };
-		reader.readAsArrayBuffer(source);
+		var reader;
+
+		if ('FileReader' in global) {
+			reader = new FileReader();
+			reader.onload = reader.onerror = function () { callback(this.error, this.result) };
+			reader.readAsArrayBuffer(source);
+		} else {
+			// Web Worker has only sync version of FileReader
+			reader = new FileReaderSync();
+
+			var error, result;
+
+			try {
+				result = reader.readAsArrayBuffer(source);
+			} catch (e) {
+				error = e;
+			} finally {
+				callback(error, result);
+			}
+		}
 	} else
 	if (NODE && is(source, ReadableStream)) {
 		var buffers = [];
