@@ -18,6 +18,8 @@ Typical scenario:
   * Create jBinary instance [from memory](https://github.com/jDataView/jBinary/wiki/jBinary-Constructor) or [from data source](https://github.com/jDataView/jBinary/wiki/Loading-and-saving-data) and your typeset.
   * [Read/write](https://github.com/jDataView/jBinary/wiki/jBinary-Methods#readingwriting) data just as native JavaScript objects!
 
+# API documentation.
+
 Check out [wiki](https://github.com/jDataView/jBinary/wiki) for detailed API documentation.
 
 # Is there any example code?
