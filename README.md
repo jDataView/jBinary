@@ -66,9 +66,9 @@ Advanced demo that shows abilities and performance of jBinary - [Apple HTTP Live
 
 ---
 
-A [World of Warcraft Model Viewer](http://jdataview.github.io/jsWoWModelViewer/). It uses [jDataView](https://github.com/jDataView/jDataView)+[jBinary](https://github.com/jDataView/jBinary) to read the binary file and then WebGL to display it.
+A [World of Warcraft Model Viewer](http://vjeux.github.io/jsWoWModelViewer/). It uses [jDataView](https://github.com/jDataView/jDataView)+[jBinary](https://github.com/jDataView/jBinary) to read the binary file and then WebGL to display it.
 
-[![Screenshot](http://jdataview.github.io/jsWoWModelViewer/images/modelviewer.png)](http://jdataview.github.io/jsWoWModelViewer/)
+[![Screenshot](http://vjeux.github.io/jsWoWModelViewer/images/modelviewer.png)](http://vjeux.github.io/jsWoWModelViewer/images/modelviewer.png)
 
 ---
 
