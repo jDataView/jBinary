@@ -1,16 +1,18 @@
 [![Build Status](https://travis-ci.org/jDataView/jBinary.png?branch=master)](https://travis-ci.org/jDataView/jBinary) [![NPM version](https://badge.fury.io/js/jbinary.png)](https://npmjs.org/package/jbinary)
-jBinary - High-level I/O for binary data.
-=========================================
+jBinary
+=======
+
+## Binary data in JavaScript is easy!
 
 <img src="https://avatars1.githubusercontent.com/u/4702384?s=130" align="right"></img>
 
-jBinary makes it easy to work with binary files in JavaScript as with native objects via declarative syntax.
+jBinary makes it easy to create, load, parse, modify and save complex binary files and data structures in both browser and Node.js.
 
-It works on top of [jDataView](https://github.com/jDataView/jDataView) (extended [DataView](http://www.khronos.org/registry/typedarray/specs/latest/#8) polyfill).
+It works on top of [jDataView](https://github.com/jDataView/jDataView) ([DataView](http://www.khronos.org/registry/typedarray/specs/latest/#8) polyfill with convenient extensions).
 
-Was inspired by [jParser](https://github.com/vjeux/jParser) and derived as new library with full set of I/O operations for manipulations on binary data in JavaScript.
+Was inspired by [jParser](https://github.com/vjeux/jParser) and derived as new library with full set of operations for binary data.
 
-# How can I use it?
+## How can I use it?
 
 Typical scenario:
 
@@ -18,13 +20,13 @@ Typical scenario:
   * Create jBinary instance [from memory](https://github.com/jDataView/jBinary/wiki/jBinary-Constructor) or [from data source](https://github.com/jDataView/jBinary/wiki/Loading-and-saving-data) and your typeset.
   * [Read/write](https://github.com/jDataView/jBinary/wiki/jBinary-Methods#readingwriting) data just as native JavaScript objects!
 
-# API documentation.
+## API Documentation.
 
 Check out [wiki](https://github.com/jDataView/jBinary/wiki) for detailed API documentation.
 
-# Is there any example code?
+## Is there any example code?
 
-Sure, how about TAR archive modification:
+How about TAR archive modification:
 ```javascript
 // configuring paths for Require.js
 // (you can use CommonJS (Component, Node.js) or simple script tags as well)
@@ -38,19 +40,16 @@ require.config({
 
 require(['jbinary', 'TAR'], function (jBinary, TAR) {
   // loading TAR archive with given typeset
-  jBinary.load('http://corsproxy.com/jdataview.github.io/jBinary.Repo/demo/tar/sample.tar', TAR)
-  .then(function (jb/* : jBinary */) {
+  jBinary.load('sample.tar', TAR).then(function (jb/* : jBinary */) {
     // read everything using type aliased in TAR['jBinary.all']
     var files = jb.readAll();
 
-    // do something with files in TAR archive (like log info and rename them to upper case)
+    // do something with files in TAR archive (like rename them to upper case)
     files.forEach(function (file) {
-      console.log(file.name + ' (' + Math.round(file.size / 1024) + ' KB)');
       file.name = file.name.toUpperCase();
     });
 
-    jb.seek(0); // reusing same instance (and memory buffer) by resetting pointer
-    jb.writeAll(files); // writing entire content from files array
+    jb.writeAll(files, 0); // writing entire content from files array
     jb.saveAs('sample.new.tar'); // saving file under given name
   });
 });
@@ -58,7 +57,7 @@ require(['jbinary', 'TAR'], function (jBinary, TAR) {
 
 [Run](http://jsbin.com/gopekewi/1/) or [edit](http://jsbin.com/gopekewi/1/edit?js,console) it on JSBin.
 
-# What is already created?
+# Show me amazing use-cases!
 
 Advanced demo that shows abilities and performance of jBinary - [Apple HTTP Live Streaming player](https://rreverser.github.io/mpegts/) which converts MPEG-TS video chunks from realtime stream to MP4 and plays them immediately one by one while converting few more chunks in background.
 
