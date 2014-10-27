@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.org/jDataView/jBinary.png?branch=master)](https://travis-ci.org/jDataView/jBinary) [![NPM version](https://badge.fury.io/js/jbinary.png)](https://npmjs.org/package/jbinary)
 jBinary
 =======
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/jDataView/jBinary?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Binary data in JavaScript is easy!
 
