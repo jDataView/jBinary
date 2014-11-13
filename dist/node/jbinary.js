@@ -33,22 +33,18 @@
             args[lastArgsIndex] = void 0, args[lastFuncIndex] = callback, func.apply(this, args);
         };
     }
-    function jBinary(view, typeSet) {
-        return is(view, jBinary) ? view.as(typeSet) : (is(view, jDataView) || (view = new jDataView(view, void 0, void 0, typeSet ? typeSet["jBinary.littleEndian"] : void 0)), 
-        is(this, jBinary) ? (this.view = view, this.view.seek(0), this.contexts = [], this.as(typeSet, !0)) : new jBinary(view, typeSet));
-    }
-    function Type(config) {
-        return inherit(Type.prototype, config);
-    }
-    function Template(config) {
-        return inherit(Template.prototype, config, {
-            createProperty: function() {
-                var property = (config.createProperty || Template.prototype.createProperty).apply(this, arguments);
-                return property.getBaseType && (property.baseType = property.binary.getType(property.getBaseType(property.binary.contexts[0]))), 
-                property;
+    var _slice = Array.prototype.slice, _extends = function(child, parent) {
+        child.prototype = Object.create(parent.prototype, {
+            constructor: {
+                value: child,
+                enumerable: !1,
+                writable: !0,
+                configurable: !0
             }
-        });
-    }
+        }), child.__proto__ = parent;
+    }, _classProps = function(child, staticProps, instanceProps) {
+        staticProps && Object.defineProperties(child, staticProps), instanceProps && Object.defineProperties(child.prototype, instanceProps);
+    };
     "atob" in global && "btoa" in global || !function() {
         function b(l) {
             var g, j, e, k, h, f;
@@ -93,14 +89,27 @@
         var a = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", d = [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1 ];
         global.btoa || (global.btoa = b), global.atob || (global.atob = c);
     }();
-    var Promise = global.Promise || require("es6-promise").Promise, _inherit = Object.create, proto = jBinary.prototype, defaultTypeSet = proto.typeSet = {};
-    proto.toValue = function(value) {
-        return toValue(this, this, value);
-    }, proto._named = function(func, name, offset) {
-        return func.displayName = name + " @ " + (void 0 !== offset ? offset : this.view.tell()), 
-        func;
-    };
-    var defineProperty = Object.defineProperty, cacheKey = "jBinary.Cache", cacheId = 0;
+    var Promise = global.Promise || require("es6-promise").Promise, _inherit = Object.create, jBinary = function() {
+        var jBinary = function jBinary(view, typeSet) {
+            return is(view, jBinary) ? view.as(typeSet) : (is(view, jDataView) || (view = new jDataView(view, void 0, void 0, typeSet ? typeSet["jBinary.littleEndian"] : void 0)), 
+            is(this, jBinary) ? (this.view = view, this.view.seek(0), this.contexts = [], this.as(typeSet, !0)) : new jBinary(view, typeSet));
+        };
+        return _classProps(jBinary, null, {
+            toValue: {
+                writable: !0,
+                value: function(value) {
+                    return toValue(this, this, value);
+                }
+            },
+            _named: {
+                writable: !0,
+                value: function(func, name, offset) {
+                    return func.displayName = name + " @ " + (void 0 !== offset ? offset : this.view.tell()), 
+                    func;
+                }
+            }
+        }), jBinary;
+    }(), proto = jBinary.prototype, defaultTypeSet = proto.typeSet = {}, defineProperty = Object.defineProperty, cacheKey = "jBinary.Cache", cacheId = 0;
     proto._getCached = function(obj, valueAccessor, allowVisible) {
         if (obj.hasOwnProperty(this.cacheKey)) return obj[this.cacheKey];
         var value = valueAccessor.call(this, obj);
@@ -130,49 +139,116 @@
         this.contexts.unshift(newContext);
         var result = callback.call(this);
         return this.contexts.shift(), result;
-    }, Type.prototype = {
-        inherit: function(args, getType) {
-            function withProp(name, callback) {
-                var value = _type[name];
-                value && (type || (type = inherit(_type)), callback.call(type, value), type[name] = null);
-            }
-            var type, _type = this;
-            return withProp("params", function(params) {
-                for (var i = 0, length = params.length; length > i; i++) this[params[i]] = args[i];
-            }), withProp("setParams", function(setParams) {
-                setParams.apply(this, args);
-            }), withProp("typeParams", function(typeParams) {
-                for (var i = 0, length = typeParams.length; length > i; i++) {
-                    var param = typeParams[i], descriptor = this[param];
-                    descriptor && (this[param] = getType(descriptor));
+    };
+    var Type = function() {
+        var Type = function Type(config) {
+            if (!(this instanceof Type)) return new Type(config);
+            this.override = {};
+            for (var name in config) name in this ? this.override[name] = config[name] : this[name] = config[name];
+            this.read = this.override.read || this.read, this.write = this.override.write || this.write;
+        };
+        return _classProps(Type, null, {
+            read: {
+                writable: !0,
+                value: function() {
+                    throw new TypeError("read() method was not defined.");
                 }
-            }), withProp("resolve", function(resolve) {
-                resolve.call(this, getType);
-            }), type || _type;
-        },
-        createProperty: function(binary) {
-            return inherit(this, {
-                binary: binary,
-                view: binary.view
-            });
-        },
-        toValue: function(val, allowResolve) {
-            return allowResolve !== !1 && "string" == typeof val ? this.binary.getContext(val)[val] : toValue(this, this.binary, val);
-        }
-    }, jBinary.Type = Type, Template.prototype = inherit(Type.prototype, {
-        setParams: function() {
-            this.baseType && (this.typeParams = [ "baseType" ].concat(this.typeParams || []));
-        },
-        baseRead: function() {
-            return this.binary.read(this.baseType);
-        },
-        baseWrite: function(value) {
-            return this.binary.write(this.baseType, value);
-        }
-    }), extend(Template.prototype, {
-        read: Template.prototype.baseRead,
-        write: Template.prototype.baseWrite
-    }), jBinary.Template = Template, proto.as = function(typeSet, modifyOriginal) {
+            },
+            write: {
+                writable: !0,
+                value: function() {
+                    throw new TypeError("write() method was not defined.");
+                }
+            },
+            setParams: {
+                writable: !0,
+                value: function() {
+                    var args = _slice.call(arguments), _ref = this, params = _ref.params;
+                    if (params) for (var i = 0; i < params.length; i++) this[params[i]] = args[i];
+                    var setParams = this.override.setParams;
+                    return setParams && setParams.apply(this, args), this;
+                }
+            },
+            resolve: {
+                writable: !0,
+                value: function(getType) {
+                    var _ref2 = this, typeParams = _ref2.typeParams;
+                    if (typeParams) for (var i = 0; i < typeParams.length; i++) {
+                        var param = typeParams[i], descriptor = this[param];
+                        descriptor && (this[param] = getType(descriptor));
+                    }
+                    var resolve = this.override.resolve;
+                    return resolve && resolve.call(this, getType), this;
+                }
+            },
+            _resolvedInherit: {
+                writable: !0,
+                value: function() {
+                    return this;
+                }
+            },
+            inherit: {
+                writable: !0,
+                value: function(args, getType) {
+                    return extend(inherit(this).setParams.apply(inherit(this), _slice.call(args)).resolve(getType), {
+                        inherit: this._resolvedInherit
+                    });
+                }
+            },
+            createProperty: {
+                writable: !0,
+                value: function(binary) {
+                    var view = binary.view;
+                    return inherit(this, {
+                        binary: binary,
+                        view: view
+                    });
+                }
+            },
+            toValue: {
+                writable: !0,
+                value: function(val, allowResolve) {
+                    return allowResolve !== !1 && "string" == typeof val ? this.binary.getContext(val)[val] : toValue(this, this.binary, val);
+                }
+            }
+        }), Type;
+    }();
+    jBinary.Type = Type;
+    var Template = function(Type) {
+        var Template = function Template(config) {
+            return this instanceof Template ? (this.read = this.baseRead, this.write = this.baseWrite, 
+            void Type.call(this, config)) : new Template(config);
+        };
+        return _extends(Template, Type), _classProps(Template, null, {
+            resolve: {
+                writable: !0,
+                value: function(getType) {
+                    return this.baseType && (this.baseType = getType(this.baseType)), Type.prototype.resolve.call(this, getType);
+                }
+            },
+            createProperty: {
+                writable: !0,
+                value: function(binary) {
+                    var property = Type.prototype.createProperty.call(this, binary);
+                    return this.getBaseType && (property.baseType = property.binary.getType(property.getBaseType(property.binary.contexts[0]))), 
+                    property;
+                }
+            },
+            baseRead: {
+                writable: !0,
+                value: function() {
+                    return this.binary.read(this.baseType);
+                }
+            },
+            baseWrite: {
+                writable: !0,
+                value: function(value) {
+                    return this.binary.write(this.baseType, value);
+                }
+            }
+        }), Template;
+    }(Type);
+    jBinary.Template = Template, proto.as = function(typeSet, modifyOriginal) {
         var binary = modifyOriginal ? this : inherit(this);
         return typeSet = typeSet || defaultTypeSet, binary.typeSet = typeSet === defaultTypeSet || defaultTypeSet.isPrototypeOf(typeSet) ? typeSet : inherit(defaultTypeSet, typeSet), 
         binary.cacheKey = cacheKey, binary.cacheKey = binary._getCached(typeSet, function() {

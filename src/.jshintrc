@@ -1,6 +1,7 @@
 {
   "browser": true,
   "node": true,
+  "esnext": true,
   "nonstandard": true,
   "worker": true,
   "globals": {
