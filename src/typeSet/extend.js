@@ -1,15 +1,15 @@
 defaultTypeSet.extend = Type({
-	setParams: function () {
+	setParams() {
 		this.parts = arguments;
 	},
-	resolve: function (getType) {
+	resolve(getType) {
 		var parts = this.parts, length = parts.length, partTypes = new Array(length);
 		for (var i = 0; i < length; i++) {
 			partTypes[i] = getType(parts[i]);
 		}
 		this.parts = partTypes;
 	},
-	read: function () {
+	read() {
 		var parts = this.parts, obj = this.binary.read(parts[0]);
 		this.binary.inContext(obj, function () {
 			for (var i = 1, length = parts.length; i < length; i++) {
@@ -18,7 +18,7 @@ defaultTypeSet.extend = Type({
 		});
 		return obj;
 	},
-	write: function (obj) {
+	write(obj) {
 		var parts = this.parts;
 		this.binary.inContext(obj, function () {
 			for (var i = 0, length = parts.length; i < length; i++) {

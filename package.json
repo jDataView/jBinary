@@ -31,9 +31,10 @@
     }
   ],
   "dependencies": {
+    "array.from": "^0.2.0",
+    "es6-promise": "*",
     "jdataview": "*",
-    "request": "*",
-    "es6-promise": "*"
+    "request-promise": "^0.3.1"
   },
   "devDependencies": {
     "chai": "^1.9.1",

@@ -1,6 +1,6 @@
 defaultTypeSet['const'] = Template({
 	params: ['baseType', 'value', 'strict'],
-	read: function () {
+	read() {
 		var value = this.baseRead();
 		if (this.strict && value !== this.value) {
 			if (is(this.strict, Function)) {
@@ -11,7 +11,7 @@ defaultTypeSet['const'] = Template({
 		}
 		return value;
 	},
-	write: function (value) {
+	write(value) {
 		this.baseWrite(this.strict || value === undefined ? this.value : value);
 	}
 });

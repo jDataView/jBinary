@@ -11,13 +11,12 @@ proto._getType = function (type, args) {
 
 		case 'object':
 			if (is(type, Type)) {
-				var binary = this;
-				return type.inherit(args || [], function (type) { return binary.getType(type) });
+				return type.inherit(args || [], type => this.getType(type));
 			} else {
 				return (
 					is(type, Array)
-					? this._getCached(type, function (type) { return this.getType(type[0], type.slice(1)) }, true)
-					: this._getCached(type, function (structure) { return this.getType(defaultTypeSet.object, [structure]) }, false)
+					? this._getCached(type, type => this.getType(type[0], type.slice(1)), true)
+					: this._getCached(type, structure => this.getType(defaultTypeSet.object, [structure]), false)
 				);
 			}
 	}

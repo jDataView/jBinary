@@ -1,9 +1,9 @@
 defaultTypeSet.string = Template({
 	params: ['length', 'encoding'],
-	read: function () {
+	read() {
 		return this.view.getString(this.toValue(this.length), undefined, this.encoding);
 	},
-	write: function (value) {
+	write(value) {
 		this.view.writeString(value, this.encoding);
 	}
 });

@@ -1,60 +1,39 @@
 var ReadableStream = NODE && require('stream').Readable;
 
-jBinary.loadData = promising(function (source, callback) {
+jBinary.loadData = source => new Promise((resolve, reject) => {
 	var dataParts;
 
 	if (BROWSER && is(source, global.Blob)) {
-		var reader;
-
 		if ('FileReader' in global) {
-			reader = new FileReader();
-			reader.onload = reader.onerror = function () { callback(this.error, this.result) };
+			let reader = new FileReader();
+			reader.onload = function () { resolve(this.result) };
+			reader.onerror = function () { reject(this.error) };
 			reader.readAsArrayBuffer(source);
 		} else {
 			// Web Worker has only sync version of FileReader
-			reader = new FileReaderSync();
-
-			var error, result;
-
-			try {
-				result = reader.readAsArrayBuffer(source);
-			} catch (e) {
-				error = e;
-			} finally {
-				callback(error, result);
-			}
+			resolve(new FileReaderSync().readAsArrayBuffer(source));
 		}
 	} else
 	if (NODE && is(source, ReadableStream)) {
-		var buffers = [];
+		let buffers = [];
 		source
-			.on('readable', function () { buffers.push(this.read()) })
-			.on('end', function () { callback(null, Buffer.concat(buffers)) })
-			.on('error', callback)
-		;
+		.on('readable', function () { buffers.push(this.read()) })
+		.on('end', () => resolve(Buffer.concat(buffers)))
+		.on('error', reject);
 	} else
 	if (typeof source !== 'string') {
-		callback(new TypeError('Unsupported source type.'));
+		reject(new TypeError('Unsupported source type.'));
 	} else
 	if (!!(dataParts = source.match(/^data:(.+?)(;base64)?,(.*)$/))) {
-		try {
-			var isBase64 = dataParts[2],
-				content = dataParts[3];
-
-			callback(
-				null,
-				(
-					(isBase64 && NODE && jDataView.prototype.compatibility.NodeBuffer)
-					? new Buffer(content, 'base64')
-					: (isBase64 ? atob : decodeURIComponent)(content)
-				)
-			);
-		} catch (e) {
-			callback(e);
+		var [, , isBase64, content] = dataParts;
+		if (isBase64 && NODE && jDataView.prototype.compatibility.NodeBuffer) {
+			resolve(new Buffer(content, 'base64'));
+		} else {
+			resolve((isBase64 ? atob : decodeURIComponent)(content));
 		}
 	} else
 	if (BROWSER && 'XMLHttpRequest' in global) {
-		var xhr = new XMLHttpRequest();
+		let xhr = new XMLHttpRequest();
 		xhr.open('GET', source, true);
 
 		// new browsers (XMLHttpRequest2-compliant)
@@ -79,13 +58,9 @@ jBinary.loadData = promising(function (source, callback) {
 			};
 		}
 
-		var cbError = function (string) {
-			callback(new Error(string));
-		};
-
 		xhr.onload = function () {
 			if (this.status !== 0 && this.status !== 200) {
-				return cbError('HTTP Error #' + this.status + ': ' + this.statusText);
+				return reject(new Error('HTTP Error #' + this.status + ': ' + this.statusText));
 			}
 
 			// emulating response field for IE9
@@ -93,45 +68,25 @@ jBinary.loadData = promising(function (source, callback) {
 				this.response = new VBArray(this.responseBody).toArray();
 			}
 
-			callback(null, this.response);
+			resolve(this.response);
 		};
-
-		xhr.onerror = function () {
-			cbError('Network error.');
+		xhr.onerror = () => {
+			reject(new Error('Network error.'));
 		};
-
 		xhr.send(null);
 	} else
 	if (BROWSER) {
-		callback(new TypeError('Unsupported source type.'));
+		reject(new TypeError('Unsupported source type.'));
 	} else
 	if (NODE && /^(https?):\/\//.test(source)) {
-		require('request').get({
+		require('request-promise').get({
 			uri: source,
 			encoding: null
-		}, function (error, response, body) {
-			if (!error && response.statusCode !== 200) {
-				var statusText = require('http').STATUS_CODES[response.statusCode];
-				error = new Error('HTTP Error #' + response.statusCode + ': ' + statusText);
-			}
-			callback(error, body);
-		});
+		}).then(resolve, reject);
 	} else
 	if (NODE) {
-		require('fs').readFile(source, callback);
+		require('fs').readFile(source, callback(resolve, reject));
 	}
 });
 
-jBinary.load = promising(function (source, typeSet, callback) {
-	var whenData = jBinary.loadData(source);
-
-	jBinary.load.getTypeSet(source, typeSet, function (typeSet) {
-		whenData.then(function (data) {
-			callback(null, new jBinary(data, typeSet));
-		}, callback);
-	});
-});
-
-jBinary.load.getTypeSet = function (source, typeSet, callback) {
-	callback(typeSet);
-};
+jBinary.load = (source, typeSet) => jBinary.loadData(source).then(data => new jBinary(data, typeSet));

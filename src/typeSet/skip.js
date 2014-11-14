@@ -1,9 +1,9 @@
 defaultTypeSet.skip = Type({
 	params: ['length'],
-	read: function () {
+	read() {
 		this.view.skip(this.toValue(this.length));
 	},
-	write: function () {
+	write() {
 		this.read();
 	}
 });

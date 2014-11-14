@@ -127,64 +127,50 @@ suite('Common operations:', function () {
 suite('Loading data', function () {
 	var localFileName = __dirname + '/123.tar';
 
-	test('from data-URI', function (done) {
-		jBinary.loadData('data:text/plain,123', function (err, data) {
-			assert.notOk(err, err);
+	test('from data-URI', function () {
+		return jBinary.loadData('data:text/plain,123').then(function (data) {
 			assert.equal(new jDataView(data).getString(), '123');
-			done();
 		});
 	});
 
-	test('from base-64 data-URI', function (done) {
-		jBinary.loadData('data:text/plain;base64,MTIz', function (err, data) {
-			assert.notOk(err, err);
+	test('from base-64 data-URI', function () {
+		return jBinary.loadData('data:text/plain;base64,MTIz').then(function (data) {
 			assert.equal(new jDataView(data).getString(), '123');
-			done();
 		});
 	});
 
 	if (typeof Blob === 'function') {
-		test('from HTML5 Blob', function (done) {
+		test('from HTML5 Blob', function () {
 			var blob = new Blob(['123']);
-			jBinary.loadData(blob, function (err, data) {
-				assert.notOk(err, err);
+			return jBinary.loadData(blob).then(function (data) {
 				assert.equal(new jDataView(data).getString(), '123');
-				done();
 			});
 		});
 	}
 
-	test('from local file', function (done) {
-		jBinary.loadData(localFileName, function (err, data) {
-			assert.notOk(err, err);
+	test('from local file', function () {
+		return jBinary.loadData(localFileName).then(function (data) {
 			assert.equal(data.byteLength || data.length, 512);
-			done();
 		});
 	});
 
-	test('from non-existent local file', function (done) {
-		jBinary.loadData('__NON_EXISTENT__', function (err, data) {
-			assert.ok(err);
-			assert.isUndefined(data);
-			done();
-		});
+	test('from non-existent local file', function () {
+		return jBinary.loadData('__NON_EXISTENT__').then(assert.fail, assert.ok);
 	});
 
 	if (hasNodeRequire && require('stream').Readable) {
-		test('from Node.js readable stream', function (done) {
+		test('from Node.js readable stream', function () {
 			var stream = require('stream').Readable(), i = 0;
 			stream._read = function () {
 				i++;
 				this.push(i <= 3 ? new Buffer([i]) : null);
 			};
-			jBinary.loadData(stream, function (err, data) {
-				assert.notOk(err, err);
+			return jBinary.loadData(stream, function (data) {
 				compareBytes(data, [1, 2, 3]);
-				done();
 			});
 		});
 
-		test('from URL', function (done) {
+		test('from URL', function () {
 			this.timeout(30000);
 
 			var port = 7359;
@@ -195,84 +181,28 @@ suite('Loading data', function () {
 
 			server.listen(port);
 
-			jBinary.loadData('http://localhost:' + port, function (err, data) {
-				assert.notOk(err, err);
+			return jBinary.loadData('http://localhost:' + port).then(function (data) {
 				assert.equal(data.byteLength || data.length, 512);
 				server.close();
-				done();
 			});
 		});
 	}
 
-	test('with explicit typeset object', function (done) {
-		var typeSet = {
+	test('with explicit typeset object', function () {
+		return jBinary.load(localFileName, {
 			IS_CORRECT_TYPESET: true
-		};
-
-		jBinary.load(localFileName, typeSet, function (err, binary) {
-			assert.notOk(err, err);
+		}).then(function (binary) {
 			assert.instanceOf(binary, jBinary);
 			assert.equal(binary.view.byteLength, 512);
-			assert.isTrue(typeSet.IS_CORRECT_TYPESET);
-			done();
+			assert.isTrue(binary.typeSet.IS_CORRECT_TYPESET);
 		});
 	});
 
-	test('with implicitly empty typeset object', function (done) {
-		jBinary.load(localFileName, function (err, binary) {
-			assert.notOk(err, err);
+	test('with implicitly empty typeset object', function () {
+		return jBinary.load(localFileName, function (binary) {
 			assert.instanceOf(binary, jBinary);
 			assert.equal(binary.view.byteLength, 512);
 			assert.equal(binary.typeSet, jBinary.prototype.typeSet);
-			done();
-		});
-	});
-
-	suite('as Promise', function () {
-		test('from data-URI', function (done) {
-			jBinary.loadData('data:text/plain,123').then(function (res) {
-				assert.equal(new jDataView(res).getString(), '123');
-				done();
-			}, function (err) {
-				assert.fail(err);
-				done();
-			});
-		});
-
-		test('with explicit typeset object', function (done) {
-			var typeSet = {
-				IS_CORRECT_TYPESET: true
-			};
-
-			jBinary.load(localFileName, typeSet).then(function (binary) {
-				assert.instanceOf(binary, jBinary);
-				assert.equal(binary.view.byteLength, 512);
-				assert.isTrue(typeSet.IS_CORRECT_TYPESET);
-				done();
-			}, function (err) {
-				assert.fail(err);
-				done();
-			});
-		});
-
-		test('from non-existent local file', function (done) {
-			jBinary.loadData('__NON_EXISTENT__').then(function () {
-				assert.fail();
-				done();
-			}, function (err) {
-				assert.instanceOf(err, Error);
-				done();
-			});
-		});
-
-		test('from non-existent local file with explicit typeset object', function (done) {
-			jBinary.load('__NON_EXISTENT__').then(function () {
-				assert.fail();
-				done();
-			}, function (err) {
-				assert.instanceOf(err, Error);
-				done();
-			});
 		});
 	});
 });
@@ -280,46 +210,39 @@ suite('Loading data', function () {
 //-----------------------------------------------------------------
 
 suite('Saving data', function () {
-	test('to URI', function (done) {
-		jBinary.load(binary.toURI(), function (err, newBinary) {
-			assert.notOk(err, err);
+	test('to URI', function () {
+		return jBinary.load(binary.toURI()).then(function (newBinary) {
 			assert.deepEqual(newBinary.read('string', 0), binary.read('string', 0));
-			done();
 		});
 	});
 
 	if (hasNodeRequire) {
-		test('to local file', function (done) {
+		test('to local file', function () {
 			var savedFileName = __dirname + '/' + Math.random().toString().slice(2) + '.tmp';
 
-			binary.saveAs(savedFileName, function (err) {
-				assert.notOk(err, err);
-
-				jBinary.load(savedFileName, function (err, newBinary) {
-					assert.notOk(err, err);
-					assert.equal(newBinary.read('string', 0), binary.read('string', 0));
-					require('fs').unlink(savedFileName, done);
-				});
+			return binary.saveAs(savedFileName).then(function () {
+				return jBinary.load(savedFileName);
+			}).then(function (newBinary) {
+				assert.equal(newBinary.read('string', 0), binary.read('string', 0));
+				require('fs').unlink(savedFileName);
 			});
 		});
 
 		if (require('stream').Writable) {
-			test('to Node.js writable stream', function (done) {
+			test('to Node.js writable stream', function () {
 				var stream = require('stream').Writable(), chunks = [];
 				stream._write = function (chunk, encoding, callback) {
 					chunks.push(chunk);
 					callback();
 				};
 
-				binary.saveAs(stream, function (err) {
-					assert.notOk(err, err);
+				return binary.saveAs(stream, function () {
 					assert.equal(Buffer.concat(chunks).toString('binary'), binary.read('string', 0));
-					done();
 				});
 			});
 		}
 	} else {
-		test('via browser dialog', function (done) {
+		test('via browser dialog', function () {
 			function addListener(node, eventType, handler) {
 				if (node.addEventListener) {
 					node.addEventListener(eventType, handler);
@@ -328,9 +251,15 @@ suite('Saving data', function () {
 				}
 			}
 
-			(function (onLoad) {
-				document.readyState === 'complete' ? onLoad() : addListener(window, 'load', onLoad);
-			})(function () {
+			var ready = new Promise(function (resolve) {
+				if (document.readyState === 'complete') {
+					resolve();
+				} else {
+					addListener(window, 'load', resolve);
+				}
+			});
+
+			return ready.then(function () {
 				var msSaveBlob = navigator.msSaveBlob;
 
 				if (msSaveBlob) {
@@ -365,12 +294,10 @@ suite('Saving data', function () {
 					});
 				}
 
-				binary.saveAs('test.dat', function () {
+				return binary.saveAs('test.dat').then(function () {
 					if (msSaveBlob) {
 						navigator.msSaveBlob = msSaveBlob;
 					}
-
-					done();
 				});
 			});
 		});

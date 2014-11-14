@@ -54,7 +54,10 @@ class Type {
 		return this;
 	}
 
-	_resolvedInherit() {
+	_resolvedInherit(args) {
+		if (args.length) {
+			throw new TypeError('Type is already configured and doesn\'t accept new arguments.');
+		}
 		return this;
 	}
 

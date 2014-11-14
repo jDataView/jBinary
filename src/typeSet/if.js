@@ -4,7 +4,7 @@ defaultTypeSet['if'] = Template({
 		'trueType',
 		'falseType'
 	],
-	getBaseType: function (context) {
+	getBaseType(context) {
 		return this.toValue(this.condition) ? this.trueType : this.falseType;
 	}
 });

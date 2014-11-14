@@ -1,14 +1,14 @@
 defaultTypeSet.lazy = Template({
 	marker: 'jBinary.Lazy',
 	params: ['innerType', 'length'],
-	getBaseType: function () {
+	getBaseType() {
 		return [
 			'binary',
 			this.length,
 			this.binary.typeSet
 		];
 	},
-	read: function () {
+	read() {
 		var accessor = function (newValue) {
 			if (arguments.length === 0) {
 				return 'value' in accessor ? accessor.value : accessor.value = accessor.binary.read(accessor.innerType);
@@ -25,7 +25,7 @@ defaultTypeSet.lazy = Template({
 			innerType: this.innerType
 		});
 	},
-	write: function (accessor) {
+	write(accessor) {
 		if (accessor.wasChanged || !accessor[this.marker]) {
 			this.binary.write(this.innerType, accessor());
 		} else {

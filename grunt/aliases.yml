@@ -1,7 +1,7 @@
 build_common:
   - 'newer:lintspaces'
   - 'newer:jshint:grunt'
-  - 'newer:jshint:before_concat'
+  #- 'newer:jshint:before_concat'
   - 'concat_sourcemap:common'
   - '6to5'
   - 'concat_sourcemap:umd'

@@ -1,9 +1,9 @@
 defaultTypeSet.blob = Type({
 	params: ['length'],
-	read: function () {
+	read() {
 		return this.view.getBytes(this.toValue(this.length));
 	},
-	write: function (bytes) {
+	write(bytes) {
 		this.view.writeBytes(bytes, true);
 	}
 });

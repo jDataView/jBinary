@@ -7,10 +7,10 @@ proto.getContext = function (filter) {
 			return this.contexts[filter];
 
 		case 'string':
-			return this.getContext(function (context) { return filter in context });
+			return this.getContext(context => filter in context);
 
 		case 'function':
-			for (var i = 0, length = this.contexts.length; i < length; i++) {
+			for (var i = 0; i < this.contexts.length; i++) {
 				var context = this.contexts[i];
 				if (filter.call(this, context)) {
 					return context;

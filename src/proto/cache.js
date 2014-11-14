@@ -22,8 +22,8 @@ var cacheId = 0;
 
 proto._getCached = function (obj, valueAccessor, allowVisible) {
 	if (!obj.hasOwnProperty(this.cacheKey)) {
-		var value = valueAccessor.call(this, obj);
-		defineProperty(obj, this.cacheKey, {value: value}, allowVisible);
+		var value = valueAccessor(obj);
+		defineProperty(obj, this.cacheKey, {value}, allowVisible);
 		return value;
 	} else {
 		return obj[this.cacheKey];

@@ -1,6 +1,6 @@
 defaultTypeSet.string0 = Type({
 	params: ['length', 'encoding'],
-	read: function () {
+	read() {
 		var view = this.view, maxLength = this.length;
 		if (maxLength === undefined) {
 			var startPos = view.tell(), length = 0, code;
@@ -17,7 +17,7 @@ defaultTypeSet.string0 = Type({
 			return view.getString(maxLength, undefined, this.encoding).replace(/\0.*$/, '');
 		}
 	},
-	write: function (value) {
+	write(value) {
 		var view = this.view, zeroLength = this.length === undefined ? 1 : this.length - value.length;
 		view.writeString(value, undefined, this.encoding);
 		if (zeroLength > 0) {

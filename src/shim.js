@@ -11,6 +11,6 @@ if (!('atob' in global) || !('btoa' in global)) {
 
 /* jshint ignore:end */
 
-var Promise = global.Promise || (NODE ? require('es6-promise').Promise : function (executor) {
-	this.then = executor;
+var Promise = global.Promise || (NODE ? require('es6-promise').Promise : () => {
+	throw new ReferenceError('Promises are not supported in your browser.');
 });

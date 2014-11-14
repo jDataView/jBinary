@@ -19,18 +19,9 @@
     function toValue(obj, binary, value) {
         return is(value, Function) ? value.call(obj, binary.contexts[0]) : value;
     }
-    function promising(func) {
-        return function() {
-            var args = arguments, lastArgsIndex = args.length - 1, lastFuncIndex = func.length - 1, callback = args[lastArgsIndex];
-            if (args.length = lastFuncIndex + 1, !is(callback, Function)) {
-                var self = this;
-                return new Promise(function(resolveFn, rejectFn) {
-                    args[lastFuncIndex] = function(err, res) {
-                        return err ? rejectFn(err) : resolveFn(res);
-                    }, func.apply(self, args);
-                });
-            }
-            args[lastArgsIndex] = void 0, args[lastFuncIndex] = callback, func.apply(this, args);
+    function callback(resolve, reject) {
+        return function(err, data) {
+            err ? reject(err) : resolve(data);
         };
     }
     var _slice = Array.prototype.slice, _extends = function(child, parent) {
@@ -45,6 +36,48 @@
     }, _classProps = function(child, staticProps, instanceProps) {
         staticProps && Object.defineProperties(child, staticProps), instanceProps && Object.defineProperties(child.prototype, instanceProps);
     };
+    Array.from || !function() {
+        var defineProperty = function() {
+            try {
+                var object = {}, $defineProperty = Object.defineProperty, result = $defineProperty(object, object, object) && $defineProperty;
+            } catch (error) {}
+            return result || function(object, key, descriptor) {
+                object[key] = descriptor.value;
+            };
+        }(), toStr = Object.prototype.toString, isCallable = function(fn) {
+            return "function" == typeof fn || "[object Function]" == toStr.call(fn);
+        }, toInteger = function(value) {
+            var number = Number(value);
+            return isNaN(number) ? 0 : 0 != number && isFinite(number) ? (number > 0 ? 1 : -1) * Math.floor(Math.abs(number)) : number;
+        }, maxSafeInteger = Math.pow(2, 53) - 1, toLength = function(value) {
+            var len = toInteger(value);
+            return Math.min(Math.max(len, 0), maxSafeInteger);
+        }, from = function(arrayLike) {
+            var C = this;
+            if (null == arrayLike) throw new TypeError("`Array.from` requires an array-like object, not `null` or `undefined`");
+            {
+                var mapFn, T, items = Object(arrayLike);
+                arguments.length > 1;
+            }
+            if (arguments.length > 1) {
+                if (mapFn = arguments[1], !isCallable(mapFn)) throw new TypeError("When provided, the second argument to `Array.from` must be a function");
+                arguments.length > 2 && (T = arguments[2]);
+            }
+            for (var kValue, mappedValue, len = toLength(items.length), A = isCallable(C) ? Object(new C(len)) : new Array(len), k = 0; len > k; ) kValue = items[k], 
+            mappedValue = mapFn ? "undefined" == typeof T ? mapFn(kValue, k) : mapFn.call(T, kValue, k) : kValue, 
+            defineProperty(A, k, {
+                value: mappedValue,
+                configurable: !0,
+                enumerable: !0
+            }), ++k;
+            return A.length = len, A;
+        };
+        defineProperty(Array, "from", {
+            value: from,
+            configurable: !0,
+            writable: !0
+        });
+    }();
     "atob" in global && "btoa" in global || !function() {
         function b(l) {
             var g, j, e, k, h, f;
@@ -112,7 +145,7 @@
     }(), proto = jBinary.prototype, defaultTypeSet = proto.typeSet = {}, defineProperty = Object.defineProperty, cacheKey = "jBinary.Cache", cacheId = 0;
     proto._getCached = function(obj, valueAccessor, allowVisible) {
         if (obj.hasOwnProperty(this.cacheKey)) return obj[this.cacheKey];
-        var value = valueAccessor.call(this, obj);
+        var value = valueAccessor(obj);
         return defineProperty(obj, this.cacheKey, {
             value: value
         }, allowVisible), value;
@@ -130,7 +163,7 @@
             });
 
           case "function":
-            for (var i = 0, length = this.contexts.length; length > i; i++) {
+            for (var i = 0; i < this.contexts.length; i++) {
                 var context = this.contexts[i];
                 if (filter.call(this, context)) return context;
             }
@@ -183,14 +216,15 @@
             },
             _resolvedInherit: {
                 writable: !0,
-                value: function() {
+                value: function(args) {
+                    if (args.length) throw new TypeError("Type is already configured and doesn't accept new arguments.");
                     return this;
                 }
             },
             inherit: {
                 writable: !0,
                 value: function(args, getType) {
-                    return extend(inherit(this).setParams.apply(inherit(this), _slice.call(args)).resolve(getType), {
+                    return extend(inherit(this).setParams.apply(inherit(this), Array.from(args)).resolve(getType), {
                         inherit: this._resolvedInherit
                     });
                 }
@@ -269,6 +303,7 @@
     }, proto.slice = function(start, end, forceCopy) {
         return new jBinary(this.view.slice(start, end, forceCopy), this.typeSet);
     }, proto._getType = function(type, args) {
+        var _this = this;
         switch (typeof type) {
           case "string":
             if (!(type in this.typeSet)) throw new ReferenceError("Unknown type: " + type);
@@ -278,16 +313,12 @@
             return this._getType(defaultTypeSet.bitfield, [ type ]);
 
           case "object":
-            if (is(type, Type)) {
-                var binary = this;
-                return type.inherit(args || [], function(type) {
-                    return binary.getType(type);
-                });
-            }
-            return is(type, Array) ? this._getCached(type, function(type) {
-                return this.getType(type[0], type.slice(1));
+            return is(type, Type) ? type.inherit(args || [], function(type) {
+                return _this.getType(type);
+            }) : is(type, Array) ? this._getCached(type, function(type) {
+                return _this.getType(type[0], type.slice(1));
             }, !0) : this._getCached(type, function(structure) {
-                return this.getType(defaultTypeSet.object, [ structure ]);
+                return _this.getType(defaultTypeSet.object, [ structure ]);
             }, !1);
         }
     }, proto.getType = function(type, args) {
@@ -517,41 +548,28 @@
         }
     });
     var ReadableStream = !0 && require("stream").Readable;
-    jBinary.loadData = promising(function(source, callback) {
-        var dataParts;
-        if (is(source, ReadableStream)) {
-            var buffers = [];
-            source.on("readable", function() {
-                buffers.push(this.read());
-            }).on("end", function() {
-                callback(null, Buffer.concat(buffers));
-            }).on("error", callback);
-        } else if ("string" != typeof source) callback(new TypeError("Unsupported source type.")); else if (dataParts = source.match(/^data:(.+?)(;base64)?,(.*)$/)) try {
-            var isBase64 = dataParts[2], content = dataParts[3];
-            callback(null, isBase64 && jDataView.prototype.compatibility.NodeBuffer ? new Buffer(content, "base64") : (isBase64 ? atob : decodeURIComponent)(content));
-        } catch (e) {
-            callback(e);
-        } else {
-            /^(https?):\/\//.test(source) ? require("request").get({
+    jBinary.loadData = function(source) {
+        return new Promise(function(resolve, reject) {
+            var dataParts;
+            if (is(source, ReadableStream)) !function() {
+                var buffers = [];
+                source.on("readable", function() {
+                    buffers.push(this.read());
+                }).on("end", function() {
+                    return resolve(Buffer.concat(buffers));
+                }).on("error", reject);
+            }(); else if ("string" != typeof source) reject(new TypeError("Unsupported source type.")); else if (dataParts = source.match(/^data:(.+?)(;base64)?,(.*)$/)) {
+                var isBase64 = dataParts[2], content = dataParts[3];
+                resolve(isBase64 && jDataView.prototype.compatibility.NodeBuffer ? new Buffer(content, "base64") : (isBase64 ? atob : decodeURIComponent)(content));
+            } else /^(https?):\/\//.test(source) ? require("request-promise").get({
                 uri: source,
                 encoding: null
-            }, function(error, response, body) {
-                if (!error && 200 !== response.statusCode) {
-                    var statusText = require("http").STATUS_CODES[response.statusCode];
-                    error = new Error("HTTP Error #" + response.statusCode + ": " + statusText);
-                }
-                callback(error, body);
-            }) : require("fs").readFile(source, callback);
-        }
-    }), jBinary.load = promising(function(source, typeSet, callback) {
-        var whenData = jBinary.loadData(source);
-        jBinary.load.getTypeSet(source, typeSet, function(typeSet) {
-            whenData.then(function(data) {
-                callback(null, new jBinary(data, typeSet));
-            }, callback);
+            }).then(resolve, reject) : require("fs").readFile(source, callback(resolve, reject));
         });
-    }), jBinary.load.getTypeSet = function(source, typeSet, callback) {
-        callback(typeSet);
+    }, jBinary.load = function(source, typeSet) {
+        return jBinary.loadData(source).then(function(data) {
+            return new jBinary(data, typeSet);
+        });
     }, proto._toURI = function(type) {
         var string = this.seek(0, function() {
             return this.view.getString(void 0, void 0, this.view._isNodeBuffer ? "base64" : "binary");
@@ -563,10 +581,13 @@
         return this._toURI(this._mimeType(mimeType));
     };
     var WritableStream = !0 && require("stream").Writable;
-    return proto.saveAs = promising(function(dest, mimeType, callback) {
-        if ("string" == typeof dest) {
-            var buffer = this.read("blob", 0);
-            is(buffer, Buffer) || (buffer = new Buffer(buffer)), require("fs").writeFile(dest, buffer, callback);
-        } else is(dest, WritableStream) ? dest.write(this.read("blob", 0), callback) : callback(new TypeError("Unsupported storage type."));
-    }), jBinary;
+    return proto.saveAs = function(dest, mimeType) {
+        var _this2 = this;
+        return new Promise(function(resolve, reject) {
+            if ("string" == typeof dest) {
+                var buffer = _this2.read("blob", 0);
+                is(buffer, Buffer) || (buffer = new Buffer(buffer)), require("fs").writeFile(dest, buffer, callback(resolve, reject));
+            } else is(dest, WritableStream) ? dest.write(_this2.read("blob", 0), callback(resolve, reject)) : reject(new TypeError("Unsupported storage type."));
+        });
+    }, jBinary;
 });

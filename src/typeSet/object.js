@@ -1,13 +1,13 @@
 defaultTypeSet.object = Type({
 	params: ['structure', 'proto'],
-	resolve: function (getType) {
+	resolve(getType) {
 		var structure = {};
 		for (var key in this.structure) {
 			structure[key] = !is(this.structure[key], Function) ? getType(this.structure[key]) : this.structure[key];
 		}
 		this.structure = structure;
 	},
-	read: function () {
+	read() {
 		var self = this, structure = this.structure, output = this.proto ? inherit(this.proto) : {};
 
 		this.binary.inContext(output, function () {
@@ -24,7 +24,7 @@ defaultTypeSet.object = Type({
 
 		return output;
 	},
-	write: function (data) {
+	write(data) {
 		var self = this, structure = this.structure;
 
 		this.binary.inContext(data, function () {

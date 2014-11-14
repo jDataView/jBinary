@@ -2,7 +2,7 @@ proto._toURI =
 	(BROWSER && 'URL' in global && 'createObjectURL' in URL)
 	? function (type) {
 		var data = this.seek(0, function () { return this.view.getBytes() });
-		return URL.createObjectURL(new Blob([data], {type: type}));
+		return URL.createObjectURL(new Blob([data], {type}));
 	}
 	: function (type) {
 		var string = this.seek(0, function () { return this.view.getString(undefined, undefined, NODE && this.view._isNodeBuffer ? 'base64' : 'binary') });
@@ -24,40 +24,40 @@ if (BROWSER && document) {
 	downloader.style.display = 'none';
 }
 
-proto.saveAs = promising(function (dest, mimeType, callback) {
-	if (typeof dest === 'string') {
-		if (NODE) {
-			var buffer = this.read('blob', 0);
+proto.saveAs = function (dest, mimeType) {
+	return new Promise((resolve, reject) => {
+		if (typeof dest === 'string') {
+			if (NODE) {
+				let buffer = this.read('blob', 0);
 
-			if (!is(buffer, Buffer)) {
-				buffer = new Buffer(buffer);
-			}
+				if (!is(buffer, Buffer)) {
+					buffer = new Buffer(buffer);
+				}
 
-			require('fs').writeFile(dest, buffer, callback);
-		} else
-		if (BROWSER) {
-			if ('msSaveBlob' in navigator) {
-				navigator.msSaveBlob(new Blob([this.read('blob', 0)], {type: this._mimeType(mimeType)}), dest);
-			} else {
-				if (document) {
+				require('fs').writeFile(dest, buffer, callback(resolve, reject));
+			} else
+			if (BROWSER) {
+				if ('msSaveBlob' in navigator) {
+					navigator.msSaveBlob(new Blob([this.read('blob', 0)], {type: this._mimeType(mimeType)}), dest);
+				} else {
+					if (!document) {
+						return reject(new TypeError('Saving from Web Worker is not supported.'));
+					}
 					if (!downloader.parentNode) {
 						document.body.appendChild(downloader);
 					}
-
 					downloader.href = this.toURI(mimeType);
 					downloader.download = dest;
 					downloader.click();
 					downloader.href = downloader.download = '';
-				} else {
-					callback(new TypeError('Saving from Web Worker is not supported.'));
 				}
+				resolve();
 			}
-			callback();
+		} else
+		if (NODE && is(dest, WritableStream)) {
+			dest.write(this.read('blob', 0), callback(resolve, reject));
+		} else {
+			reject(new TypeError('Unsupported storage type.'));
 		}
-	} else
-	if (NODE && is(dest, WritableStream)) {
-		dest.write(this.read('blob', 0), callback);
-	} else {
-		callback(new TypeError('Unsupported storage type.'));
-	}
-});
+	});
+};

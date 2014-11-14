@@ -1,6 +1,6 @@
 defaultTypeSet.array = Template({
 	params: ['baseType', 'length'],
-	read: function () {
+	read() {
 		var length = this.toValue(this.length);
 		if (this.baseType === defaultTypeSet.uint8) {
 			return this.view.getBytes(length, undefined, true, true);
@@ -20,7 +20,7 @@ defaultTypeSet.array = Template({
 		}
 		return results;
 	},
-	write: function (values) {
+	write(values) {
 		if (this.baseType === defaultTypeSet.uint8) {
 			return this.view.writeBytes(values);
 		}

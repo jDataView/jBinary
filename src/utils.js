@@ -34,29 +34,8 @@ function toValue(obj, binary, value) {
 	return is(value, Function) ? value.call(obj, binary.contexts[0]) : value;
 }
 
-function promising(func) {
-	return function () {
-		var args = arguments,
-			lastArgsIndex = args.length - 1,
-			lastFuncIndex = func.length - 1,
-			callback = args[lastArgsIndex];
-
-		args.length = lastFuncIndex + 1;
-
-		if (is(callback, Function)) {
-			args[lastArgsIndex] = undefined;
-			args[lastFuncIndex] = callback;
-			func.apply(this, args);
-		} else {
-			var self = this;
-
-			return new Promise(function (resolveFn, rejectFn) {
-				args[lastFuncIndex] = function (err, res) {
-					return err ? rejectFn(err) : resolveFn(res);
-				};
-
-				func.apply(self, args);
-			});
-		}
+function callback(resolve, reject) {
+	return (err, data) => {
+		err ? reject(err) : resolve(data);
 	};
 }

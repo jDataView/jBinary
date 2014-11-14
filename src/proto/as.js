@@ -3,6 +3,6 @@ proto.as = function (typeSet, modifyOriginal) {
 	typeSet = typeSet || defaultTypeSet;
 	binary.typeSet = (typeSet === defaultTypeSet || defaultTypeSet.isPrototypeOf(typeSet)) ? typeSet : inherit(defaultTypeSet, typeSet);
 	binary.cacheKey = cacheKey;
-	binary.cacheKey = binary._getCached(typeSet, function () { return cacheKey + '.' + (++cacheId) }, true);
+	binary.cacheKey = binary._getCached(typeSet, () => cacheKey + '.' + (++cacheId), true);
 	return binary;
 };

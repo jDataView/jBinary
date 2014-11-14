@@ -1,9 +1,9 @@
 defaultTypeSet.bitfield = Type({
 	params: ['bitSize'],
-	read: function () {
+	read() {
 		return this.view.getUnsigned(this.bitSize);
 	},
-	write: function (value) {
+	write(value) {
 		this.view.writeUnsigned(value, this.bitSize);
 	}
 });

@@ -6,10 +6,10 @@
 })(
 	Type({
 		params: ['littleEndian'],
-		read: function () {
+		read() {
 			return this.view['get' + this.dataType](undefined, this.littleEndian);
 		},
-		write: function (value) {
+		write(value) {
 			this.view['write' + this.dataType](value, this.littleEndian);
 		}
 	}),
