@@ -574,7 +574,7 @@ suite('Reading', function () {
 
 		function resetAccessor() {
 			lazy = binary.read(lazyType, 0);
-			assert.notOk('value' in lazy);
+			assert.notOk(lazy.wasResolved);
 			readCount = 0;
 			var read = lazy.binary.read;
 			lazy.binary.read = function () {
@@ -913,7 +913,7 @@ suite('Writing', function () {
 
 		assert.equal(newBinary.write(lazyType, nativeAccessor), length);
 		assert.equal(newBinary.tell(), length);
-		assert.ok(!('value' in nativeAccessor));
+		assert.notOk(nativeAccessor.wasResolved);
 		assert.deepEqual(binary.read(blobType, 0), newBinary.read(blobType, 0));
 
 		newBinary.seek(0);

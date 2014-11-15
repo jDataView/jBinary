@@ -9,24 +9,46 @@ defaultTypeSet.lazy = Template({
 		];
 	},
 	read() {
-		var accessor = function (newValue) {
+		var {innerType} = this;
+		var wasResolved = false, wasChanged = false, value;
+		return Object.defineProperties(function accessor(newValue) {
 			if (arguments.length === 0) {
-				return 'value' in accessor ? accessor.value : accessor.value = accessor.binary.read(accessor.innerType);
+				return accessor.value;
 			} else {
-				return extend(accessor, {
-					wasChanged: true,
-					value: newValue
-				}).value;
+				return accessor.value = newValue;
 			}
-		};
-		accessor[this.marker] = true;
-		return extend(accessor, {
-			binary: extend(this.baseRead(), { contexts: this.binary.contexts.slice() }),
-			innerType: this.innerType
+		}, {
+			[this.marker]: {
+				value: true
+			},
+			binary: {
+				enumerable: true,
+				value: extend(this.baseRead(), {contexts: this.binary.contexts.slice()})
+			},
+			wasResolved: {
+				get() { return wasResolved }
+			},
+			wasChanged: {
+				get() { return wasChanged }
+			},
+			value: {
+				enumerable: true,
+				get() {
+					if (wasResolved) {
+						return value;
+					}
+					wasResolved = true;
+					return value = this.binary.read(innerType);
+				},
+				set(newValue) {
+					wasChanged = wasResolved = true;
+					value = newValue;
+				}
+			}
 		});
 	},
 	write(accessor) {
-		if (accessor.wasChanged || !accessor[this.marker]) {
+		if (!accessor[this.marker] || accessor.wasChanged) {
 			this.binary.write(this.innerType, accessor());
 		} else {
 			this.baseWrite(accessor.binary);
