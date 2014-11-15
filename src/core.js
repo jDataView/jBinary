@@ -25,10 +25,14 @@ class jBinary {
 	}
 
 	_named(func, name, offset) {
-		func.displayName = name + ' @ ' + (offset !== undefined ? offset : this.view.tell());
+		if (jBinary.DEBUG) {
+			func.displayName = name + ' @ ' + (offset !== undefined ? offset : this.view.tell());
+		}
 		return func;
 	}
 }
+
+jBinary.DEBUG = NODE ? process.env.NODE_ENV === 'development' : !!global.DEBUG;
 
 var proto = jBinary.prototype;
 
