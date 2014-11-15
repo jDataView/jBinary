@@ -14,3 +14,8 @@ if (!('atob' in global) || !('btoa' in global)) {
 var Promise = global.Promise || (NODE ? require('es6-promise').Promise : () => {
 	throw new ReferenceError('Promises are not supported in your browser.');
 });
+
+var WeakMap = global.WeakMap || (!NODE ? require('es6-weak-map') : class {
+	has() { return false }
+	set() {}
+});

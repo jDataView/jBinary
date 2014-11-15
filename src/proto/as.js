@@ -1,8 +1,12 @@
 proto.as = function (typeSet, modifyOriginal) {
-	var binary = modifyOriginal ? this : inherit(this);
-	typeSet = typeSet || defaultTypeSet;
-	binary.typeSet = (typeSet === defaultTypeSet || defaultTypeSet.isPrototypeOf(typeSet)) ? typeSet : inherit(defaultTypeSet, typeSet);
-	binary.cacheKey = cacheKey;
-	binary.cacheKey = binary._getCached(typeSet, () => cacheKey + '.' + (++cacheId), true);
-	return binary;
+	if (!typeSet) {
+		typeSet = defaultTypeSet;
+	}
+	if (typeSet !== defaultTypeSet && !defaultTypeSet.isPrototypeOf(typeSet)) {
+		typeSet = inherit(defaultTypeSet, typeSet);
+	}
+	return (modifyOriginal ? extend : inherit)(this, {
+		typeSet,
+		cache: new WeakMap()
+	});
 };

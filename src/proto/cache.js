@@ -1,31 +1,11 @@
-var defineProperty = Object.defineProperty;
+proto.cache = new WeakMap();
 
-if (BROWSER) {
-	if (defineProperty) {
-		// this is needed to detect DOM-only version of Object.defineProperty in IE8:
-		try {
-			defineProperty({}, 'x', {});
-		} catch (e) {
-			defineProperty = undefined;
-		}
-	} else  {
-		defineProperty = function (obj, key, descriptor, allowVisible) {
-			if (allowVisible) {
-				obj[key] = descriptor.value;
-			}
-		};
-	}
-}
-
-var cacheKey = 'jBinary.Cache';
-var cacheId = 0;
-
-proto._getCached = function (obj, valueAccessor, allowVisible) {
-	if (!obj.hasOwnProperty(this.cacheKey)) {
+proto._getCached = function (obj, valueAccessor) {
+	if (!this.cache.has(obj)) {
 		var value = valueAccessor(obj);
-		defineProperty(obj, this.cacheKey, {value}, allowVisible);
+		this.cache.set(obj, value);
 		return value;
 	} else {
-		return obj[this.cacheKey];
+		return this.cache.get(obj);
 	}
 };
