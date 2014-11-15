@@ -58,7 +58,7 @@ function compareWithNaN(value, expected, message) {
 suite('Common operations:', function () {
 	test('getType', function () {
 		var type = binary.getType('uint32');
-		assert.instanceOf(type, jBinary.Type);
+		assert.instanceOf(type, jBinary.Type.Base);
 		assert.equal(binary.getType([type]), type);
 	});
 

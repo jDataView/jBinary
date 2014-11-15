@@ -24,7 +24,10 @@
             err ? reject(err) : resolve(data);
         };
     }
-    var _slice = Array.prototype.slice, _extends = function(child, parent) {
+    var _slice = Array.prototype.slice, _applyConstructor = function(Constructor, args) {
+        var bindArgs = [ null ].concat(args), Factory = Constructor.bind.apply(Constructor, bindArgs);
+        return new Factory();
+    }, _extends = function(child, parent) {
         child.prototype = Object.create(parent.prototype, {
             constructor: {
                 value: child,
@@ -173,14 +176,30 @@
         var result = callback.call(this);
         return this.contexts.shift(), result;
     };
-    var Type = function() {
-        var Type = function Type(config) {
-            if (!(this instanceof Type)) return new Type(config);
-            this.override = {};
-            for (var name in config) name in this ? this.override[name] = config[name] : this[name] = config[name];
-            this.read = this.override.read || this.read, this.write = this.override.write || this.write;
+    var typeFactory = function(Base) {
+        return extend(function(config) {
+            var Type = function(Base) {
+                var Type = function Type(getType) {
+                    var args = _slice.call(arguments, 1);
+                    return this instanceof Type ? void Base.call(this, config, getType, args) : _applyConstructor(Type, Array.from(arguments));
+                };
+                return _extends(Type, Base), Type;
+            }(Base);
+            return extend(Type.prototype, config), Type;
+        }, {
+            Base: Base
+        });
+    }, Type = jBinary.Type = typeFactory(function() {
+        var _class = function(config, getType, args) {
+            var params = config.params, setParams = config.setParams, typeParams = config.typeParams, resolve = config.resolve;
+            if (params) for (var i = 0; i < params.length; i++) this[params[i]] = args[i];
+            if (setParams && setParams.apply(this, args), typeParams) for (var i = 0; i < typeParams.length; i++) {
+                var param = typeParams[i], descriptor = this[param];
+                descriptor && (this[param] = getType(descriptor));
+            }
+            resolve && resolve.call(this, getType);
         };
-        return _classProps(Type, null, {
+        return _classProps(_class, null, {
             read: {
                 writable: !0,
                 value: function() {
@@ -191,42 +210,6 @@
                 writable: !0,
                 value: function() {
                     throw new TypeError("write() method was not defined.");
-                }
-            },
-            setParams: {
-                writable: !0,
-                value: function() {
-                    var args = _slice.call(arguments), _ref = this, params = _ref.params;
-                    if (params) for (var i = 0; i < params.length; i++) this[params[i]] = args[i];
-                    var setParams = this.override.setParams;
-                    return setParams && setParams.apply(this, args), this;
-                }
-            },
-            resolve: {
-                writable: !0,
-                value: function(getType) {
-                    var _ref2 = this, typeParams = _ref2.typeParams;
-                    if (typeParams) for (var i = 0; i < typeParams.length; i++) {
-                        var param = typeParams[i], descriptor = this[param];
-                        descriptor && (this[param] = getType(descriptor));
-                    }
-                    var resolve = this.override.resolve;
-                    return resolve && resolve.call(this, getType), this;
-                }
-            },
-            _resolvedInherit: {
-                writable: !0,
-                value: function(args) {
-                    if (args.length) throw new TypeError("Type is already configured and doesn't accept new arguments.");
-                    return this;
-                }
-            },
-            inherit: {
-                writable: !0,
-                value: function(args, getType) {
-                    return extend(inherit(this).setParams.apply(inherit(this), Array.from(args)).resolve(getType), {
-                        inherit: this._resolvedInherit
-                    });
                 }
             },
             createProperty: {
@@ -245,27 +228,24 @@
                     return allowResolve !== !1 && "string" == typeof val ? this.binary.getContext(val)[val] : toValue(this, this.binary, val);
                 }
             }
-        }), Type;
-    }();
-    jBinary.Type = Type;
-    var Template = function(Type) {
-        var Template = function Template(config) {
-            return this instanceof Template ? (this.read = this.baseRead, this.write = this.baseWrite, 
-            void Type.call(this, config)) : new Template(config);
+        }), _class;
+    }()), Template = jBinary.Template = typeFactory(function(Type) {
+        var _class2 = function(config, getType) {
+            Type.Base.call.apply(Type.Base, [ this ].concat(Array.from(arguments))), config.baseType && (this.baseType = getType(config.baseType));
         };
-        return _extends(Template, Type), _classProps(Template, null, {
-            resolve: {
-                writable: !0,
-                value: function(getType) {
-                    return this.baseType && (this.baseType = getType(this.baseType)), Type.prototype.resolve.call(this, getType);
-                }
-            },
+        return _extends(_class2, Type.Base), _classProps(_class2, null, {
             createProperty: {
                 writable: !0,
                 value: function(binary) {
-                    var property = Type.prototype.createProperty.call(this, binary);
-                    return this.getBaseType && (property.baseType = property.binary.getType(property.getBaseType(property.binary.contexts[0]))), 
+                    var property = Type.Base.prototype.createProperty.call(this, binary);
+                    return this.getBaseType && (property.baseType = binary.getType(property.getBaseType(binary.contexts[0]))), 
                     property;
+                }
+            },
+            read: {
+                writable: !0,
+                value: function() {
+                    return this.baseRead();
                 }
             },
             baseRead: {
@@ -274,15 +254,21 @@
                     return this.binary.read(this.baseType);
                 }
             },
+            write: {
+                writable: !0,
+                value: function(value) {
+                    return this.baseWrite(value);
+                }
+            },
             baseWrite: {
                 writable: !0,
                 value: function(value) {
                     return this.binary.write(this.baseType, value);
                 }
             }
-        }), Template;
-    }(Type);
-    jBinary.Template = Template, proto.as = function(typeSet, modifyOriginal) {
+        }), _class2;
+    }(Type));
+    proto.as = function(typeSet, modifyOriginal) {
         var binary = modifyOriginal ? this : inherit(this);
         return typeSet = typeSet || defaultTypeSet, binary.typeSet = typeSet === defaultTypeSet || defaultTypeSet.isPrototypeOf(typeSet) ? typeSet : inherit(defaultTypeSet, typeSet), 
         binary.cacheKey = cacheKey, binary.cacheKey = binary._getCached(typeSet, function() {
@@ -313,17 +299,22 @@
             return this._getType(defaultTypeSet.bitfield, [ type ]);
 
           case "object":
-            return is(type, Type) ? type.inherit(args || [], function(type) {
-                return _this.getType(type);
-            }) : is(type, Array) ? this._getCached(type, function(type) {
+            if (is(type, Type.Base)) {
+                if (args.length) throw new TypeError("Can't pass arguments to preconfigured type.");
+                return type;
+            }
+            return is(type, Array) ? this._getCached(type, function(type) {
                 return _this.getType(type[0], type.slice(1));
             }, !0) : this._getCached(type, function(structure) {
                 return _this.getType(defaultTypeSet.object, [ structure ]);
             }, !1);
+
+          case "function":
+            return _applyConstructor(type, [ this.getType.bind(this) ].concat(Array.from(args)));
         }
     }, proto.getType = function(type, args) {
-        var resolvedType = this._getType(type, args);
-        return resolvedType && !is(type, Type) && (resolvedType.name = "object" == typeof type ? is(type, Array) ? type[0] + "(" + type.slice(1).join(", ") + ")" : "object" : String(type)), 
+        var resolvedType = this._getType(type, args || []);
+        return resolvedType && !is(type, Type.Base) && (resolvedType.name = "object" == typeof type ? is(type, Array) ? type[0] + "(" + type.slice(1).join(", ") + ")" : "object" : String(type)), 
         resolvedType;
     }, proto._action = function(type, offset, _callback) {
         if (void 0 !== type) {
@@ -346,22 +337,19 @@
         });
     }, proto.writeAll = function(data) {
         return this.write("jBinary.all", data, 0);
-    }, function(simpleType, dataTypes) {
-        for (var i = 0, length = dataTypes.length; length > i; i++) {
-            var dataType = dataTypes[i];
-            defaultTypeSet[dataType.toLowerCase()] = inherit(simpleType, {
-                dataType: dataType
-            });
-        }
-    }(Type({
-        params: [ "littleEndian" ],
-        read: function() {
-            return this.view["get" + this.dataType](void 0, this.littleEndian);
-        },
-        write: function(value) {
-            this.view["write" + this.dataType](value, this.littleEndian);
-        }
-    }), [ "Uint8", "Uint16", "Uint32", "Uint64", "Int8", "Int16", "Int32", "Int64", "Float32", "Float64", "Char" ]), 
+    };
+    for (var dataTypes = [ "Uint8", "Uint16", "Uint32", "Uint64", "Int8", "Int16", "Int32", "Int64", "Float32", "Float64", "Char" ], i = 0; i < dataTypes.length; i++) !function() {
+        var dataType = dataTypes[i];
+        defaultTypeSet[dataType.toLowerCase()] = Type({
+            params: [ "littleEndian" ],
+            read: function() {
+                return this.view["get" + dataType](void 0, this.littleEndian);
+            },
+            write: function(value) {
+                this.view["write" + dataType](value, this.littleEndian);
+            }
+        });
+    }();
     extend(defaultTypeSet, {
         "byte": defaultTypeSet.uint8,
         "float": defaultTypeSet.float32,

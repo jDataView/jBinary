@@ -1,35 +1,32 @@
-class Template extends Type {
-	constructor(config) {
-		if (!(this instanceof Template)) {
-			return new Template(config);
+var Template = jBinary.Template = typeFactory(class extends Type.Base {
+	constructor(config, getType, args) {
+		super(...arguments);
+		if (config.baseType) {
+			this.baseType = getType(config.baseType);
 		}
-		this.read = this.baseRead;
-		this.write = this.baseWrite;
-		super(config);
-	}
-
-	resolve(getType) {
-		if (this.baseType) {
-			this.baseType = getType(this.baseType);
-		}
-		return super(getType);
 	}
 
 	createProperty(binary) {
 		var property = super(binary);
 		if (this.getBaseType) {
-			property.baseType = property.binary.getType(property.getBaseType(property.binary.contexts[0]));
+			property.baseType = binary.getType(property.getBaseType(binary.contexts[0]));
 		}
 		return property;
+	}
+
+	read() {
+		return this.baseRead();
 	}
 
 	baseRead() {
 		return this.binary.read(this.baseType);
 	}
 
+	write(value) {
+		return this.baseWrite(value);
+	}
+
 	baseWrite(value) {
 		return this.binary.write(this.baseType, value);
 	}
-}
-
-jBinary.Template = Template;
+});

@@ -10,8 +10,11 @@ proto._getType = function (type, args) {
 			return this._getType(defaultTypeSet.bitfield, [type]);
 
 		case 'object':
-			if (is(type, Type)) {
-				return type.inherit(args || [], type => this.getType(type));
+			if (is(type, Type.Base)) {
+				if (args.length) {
+					throw new TypeError('Can\'t pass arguments to preconfigured type.');
+				}
+				return type;
 			} else {
 				return (
 					is(type, Array)
@@ -19,13 +22,16 @@ proto._getType = function (type, args) {
 					: this._getCached(type, structure => this.getType(defaultTypeSet.object, [structure]), false)
 				);
 			}
+
+		case 'function':
+			return new type(this.getType.bind(this), ...args);
 	}
 };
 
 proto.getType = function (type, args) {
-	var resolvedType = this._getType(type, args);
+	var resolvedType = this._getType(type, args || []);
 
-	if (resolvedType && !is(type, Type)) {
+	if (resolvedType && !is(type, Type.Base)) {
 		resolvedType.name =
 			typeof type === 'object'
 			? (
@@ -54,7 +60,7 @@ proto._action = function (type, offset, _callback) {
 };
 
 proto.read = function (type, offset) {
-	return this._action(type, offset, function (prop, context) { return prop.read(context) });
+	return this._action(type, offset, (prop, context) => prop.read(context));
 };
 
 proto.readAll = function () {

@@ -1,44 +1,27 @@
-class Type {
-	constructor(config) {
-		if (!(this instanceof Type)) {
-			return new Type(config);
-		}
-		this.override = {};
-		for (var name in config) {
-			if (name in this) {
-				this.override[name] = config[name];
-			} else {
-				this[name] = config[name];
+var typeFactory = Base => extend(config => {
+	class Type extends Base {
+		constructor(getType, ...args) {
+			if (!(this instanceof Type)) {
+				return new Type(...arguments);
 			}
+			super(config, getType, args);
 		}
-		this.read = this.override.read || this.read;
-		this.write = this.override.write || this.write;
 	}
+	extend(Type.prototype, config);
+	return Type;
+}, {Base});
 
-	read() {
-		throw new TypeError('read() method was not defined.');
-	}
-
-	write() {
-		throw new TypeError('write() method was not defined.');
-	}
-
-	setParams(...args) {
-		var {params} = this;
+var Type = jBinary.Type = typeFactory(class {
+	constructor(config, getType, args) {
+		var {params, setParams, typeParams, resolve} = config;
 		if (params) {
 			for (var i = 0; i < params.length; i++) {
 				this[params[i]] = args[i];
 			}
 		}
-		var {setParams} = this.override;
 		if (setParams) {
 			setParams.apply(this, args);
 		}
-		return this;
-	}
-
-	resolve(getType) {
-		var {typeParams} = this;
 		if (typeParams) {
 			for (var i = 0; i < typeParams.length; i++) {
 				var param = typeParams[i], descriptor = this[param];
@@ -47,25 +30,17 @@ class Type {
 				}
 			}
 		}
-		var {resolve} = this.override;
 		if (resolve) {
 			resolve.call(this, getType);
 		}
-		return this;
 	}
 
-	_resolvedInherit(args) {
-		if (args.length) {
-			throw new TypeError('Type is already configured and doesn\'t accept new arguments.');
-		}
-		return this;
+	read() {
+		throw new TypeError('read() method was not defined.');
 	}
 
-	inherit(args, getType) {
-		return extend(
-			inherit(this).setParams(...args).resolve(getType),
-			{inherit: this._resolvedInherit}
-		);
+	write(value) {
+		throw new TypeError('write() method was not defined.');
 	}
 
 	createProperty(binary) {
@@ -79,6 +54,4 @@ class Type {
 		}
 		return toValue(this, this.binary, val);
 	}
-}
-
-jBinary.Type = Type;
+});

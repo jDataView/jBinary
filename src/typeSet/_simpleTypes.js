@@ -1,19 +1,5 @@
-(function (simpleType, dataTypes) {
-	for (var i = 0, length = dataTypes.length; i < length; i++) {
-		var dataType = dataTypes[i];
-		defaultTypeSet[dataType.toLowerCase()] = inherit(simpleType, {dataType: dataType});
-	}
-})(
-	Type({
-		params: ['littleEndian'],
-		read() {
-			return this.view['get' + this.dataType](undefined, this.littleEndian);
-		},
-		write(value) {
-			this.view['write' + this.dataType](value, this.littleEndian);
-		}
-	}),
-	[
+{
+	let dataTypes = [
 		'Uint8',
 		'Uint16',
 		'Uint32',
@@ -25,8 +11,21 @@
 		'Float32',
 		'Float64',
 		'Char'
-	]
-);
+	];
+
+	for (var i = 0; i < dataTypes.length; i++) {
+		let dataType = dataTypes[i];
+		defaultTypeSet[dataType.toLowerCase()] = Type({
+			params: ['littleEndian'],
+			read() {
+				return this.view['get' + dataType](undefined, this.littleEndian);
+			},
+			write(value) {
+				this.view['write' + dataType](value, this.littleEndian);
+			}
+		});
+	}
+}
 
 extend(defaultTypeSet, {
 	'byte': defaultTypeSet.uint8,
