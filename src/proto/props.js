@@ -16,11 +16,11 @@ proto._getType = function (type, args) {
 				}
 				return type;
 			} else {
-				return (
+				return this._getCached(type, (
 					is(type, Array)
-					? this._getCached(type, type => this.getType(type[0], type.slice(1)), true)
-					: this._getCached(type, structure => this.getType(defaultTypeSet.object, [structure]), false)
-				);
+					? type => this.getType(type[0], type.slice(1))
+					: structure => this.getType(defaultTypeSet.object, [structure])
+				));
 			}
 
 		case 'function':
