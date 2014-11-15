@@ -24,7 +24,9 @@ proto._getType = function (type, args) {
 			}
 
 		case 'function':
-			return new type(this.getType.bind(this), ...args);
+			type = new type(...args);
+			type.resolveTypes(this.getType.bind(this));
+			return type;
 	}
 };
 

@@ -1,10 +1,10 @@
 var typeFactory = Base => extend(config => {
 	class Type extends Base {
-		constructor(getType, ...args) {
+		constructor(...args) {
 			if (!(this instanceof Type)) {
-				return new Type(...arguments);
+				return new Type(...args);
 			}
-			super(config, getType, args);
+			super(args);
 		}
 	}
 	extend(Type.prototype, config);
@@ -12,8 +12,8 @@ var typeFactory = Base => extend(config => {
 }, {Base});
 
 var Type = jBinary.Type = typeFactory(class {
-	constructor(config, getType, args) {
-		var {params, setParams, typeParams, resolve} = config;
+	constructor(args) {
+		var {params, setParams} = this;
 		if (params) {
 			for (var i = 0; i < params.length; i++) {
 				this[params[i]] = args[i];
@@ -22,6 +22,10 @@ var Type = jBinary.Type = typeFactory(class {
 		if (setParams) {
 			setParams.apply(this, args);
 		}
+	}
+
+	resolveTypes(getType) {
+		var {typeParams, resolve} = this;
 		if (typeParams) {
 			for (var i = 0; i < typeParams.length; i++) {
 				var param = typeParams[i], descriptor = this[param];

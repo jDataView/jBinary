@@ -1,8 +1,8 @@
 var Template = jBinary.Template = typeFactory(class extends Type.Base {
-	constructor(config, getType, args) {
-		super(...arguments);
-		if (config.baseType) {
-			this.baseType = getType(config.baseType);
+	resolveTypes(getType) {
+		var {baseType} = this;
+		if (baseType) {
+			this.baseType = getType(baseType);
 		}
 	}
 
