@@ -1,17 +1,15 @@
 (function (factory) {
-	var global = this;
-
 	if (NODE || typeof exports === 'object') {
 		module.exports = factory(global, require('jdataview'));
 	} else
 	if (BROWSER) {
 		if (typeof define === 'function' && define.amd) {
 			define(['jdataview'], function (jDataView) {
-				return factory(global, jDataView);
+				return factory(window, jDataView);
 			});
 		}
 		else {
-			global.jBinary = factory(global, global.jDataView);
+			window.jBinary = factory(window, window.jDataView);
 		}
 	}
 }(function (global, jDataView) {

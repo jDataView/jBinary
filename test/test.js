@@ -1,17 +1,10 @@
-var hasNodeRequire = typeof require === 'function' && typeof window === 'undefined';
+var NODE = typeof process === 'object';
 
-/* jshint ignore:start */
-if (hasNodeRequire) {
-	chai = require('chai');
-	jDataView = require('jdataview');
-	jBinary = require('..');
-} else {
-	__dirname = 'base/test';
-}
-/* jshint ignore:end */
+import {assert} from 'chai';
+import * as jDataView from 'jdataview';
+import * as jBinary from '..';
 
-var assert = chai.assert,
-	chr = String.fromCharCode,
+var chr = String.fromCharCode,
 	dataBytes = [
 		0x00,
 		0xff, 0xfe, 0xfd, 0xfc,
@@ -20,7 +13,7 @@ var assert = chai.assert,
 	dataStart = 1,
 	view = new jDataView(dataBytes.slice(), dataStart, undefined, true),
 	binary = new jBinary(view, {__UNUSED__: '__UNUSED__'}),
-	typeSet = jBinary.prototype.typeSet,
+	{typeSet} = jBinary.prototype,
 	ObjectStructure = {
 		arrays: ['array', {
 			flag: ['enum', 'uint8', [false, true]],
@@ -47,8 +40,7 @@ function compareInt64(value, expected) {
 }
 
 function compareBytes(value, expected) {
-	value = Array.prototype.slice.call(value);
-	assert.deepEqual(value, expected);
+	assert.deepEqual([...value], expected);
 }
 
 function compareWithNaN(value, expected, message) {
@@ -158,7 +150,7 @@ suite('Loading data', function () {
 		return jBinary.loadData('__NON_EXISTENT__').then(assert.fail, assert.ok);
 	});
 
-	if (hasNodeRequire && require('stream').Readable) {
+	if (NODE && require('stream').Readable) {
 		test('from Node.js readable stream', function () {
 			var stream = require('stream').Readable(), i = 0;
 			stream._read = function () {
@@ -216,7 +208,7 @@ suite('Saving data', function () {
 		});
 	});
 
-	if (hasNodeRequire) {
+	if (NODE) {
 		test('to local file', function () {
 			var savedFileName = __dirname + '/' + Math.random().toString().slice(2) + '.tmp';
 
@@ -811,7 +803,7 @@ suite('Writing', function () {
 		{args: [function () { return false }, 'uint8', 'uint16'], value: 17893, size: 2}
 	]);
 
-	testSetters('if_not', [
+	testSetters('ifNot', [
 		{args: [false, 'uint8'], value: 123, size: 1},
 		{args: [function () { return false }, 'uint16', 'uint8'], value: 17893, size: 2}
 	]);
