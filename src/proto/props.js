@@ -34,14 +34,19 @@ proto.getType = function (type, args) {
 	var resolvedType = this._getType(type, args || []);
 
 	if (resolvedType && !is(type, Type.Base)) {
-		resolvedType.name =
-			typeof type === 'object'
-			? (
-				is(type, Array)
-				? type[0] + '(' + type.slice(1).join(', ') + ')'
-				: 'object'
-			)
-			: String(type);
+		if (typeof type === 'object') {
+			if (is(type, Array)) {
+				resolvedType.name = type[0] + '(' + type.slice(1).join(', ') + ')';
+			} else {
+				let keys = Object.keys(type);
+				if (keys.length > 3) {
+					keys = keys.slice(0, 3).concat(['...']);
+				}
+				resolvedType.name = '{' + keys.join(', ') + '}';
+			}
+		} else {
+			resolvedType.name = String(type);
+		}
 	}
 
 	return resolvedType;
@@ -54,9 +59,11 @@ proto._action = function (type, offset, _callback) {
 
 	type = this.getType(type);
 
-	var callback = this._named(function () {
-		return _callback.call(this, type.createProperty(this), this.contexts[0]);
-	}, '[' + type.name + ']', offset);
+	var callback = this._named(
+		_callback.bind(this, type.createProperty(this), this.contexts[0]),
+		'[' + type.name + ']',
+		offset
+	);
 
 	return offset !== undefined ? this.seek(offset, callback) : callback.call(this);
 };
