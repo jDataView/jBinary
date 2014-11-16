@@ -2,9 +2,9 @@ function is(obj, Ctor) {
 	return Ctor && (obj instanceof Ctor);
 }
 
-function extend(obj) {
-	for (var i = 1, length = arguments.length; i < length; ++i) {
-		var source = arguments[i];
+var extend = Object.assign || (NODE ? require('object-assign') : (obj, ...args) => {
+	for (var i = 0; i < args.length; i++) {
+		var source = args[i];
 		for (var prop in source) {
 			if (source[prop] !== undefined) {
 				obj[prop] = source[prop];
@@ -12,22 +12,10 @@ function extend(obj) {
 		}
 	}
 	return obj;
-}
+});
 
-var _inherit = Object.create;
-
-if (BROWSER && !_inherit) {
-	_inherit = function (obj) {
-		var ClonedObject = function () {};
-		ClonedObject.prototype = obj;
-		return new ClonedObject();
-	};
-}
-
-function inherit(obj) {
-	'use strict';
-	arguments[0] = _inherit(obj);
-	return extend.apply(null, arguments);
+function inherit(obj, ...args) {
+	return extend(Object.create(obj), ...args);
 }
 
 function toValue(obj, binary, value) {
