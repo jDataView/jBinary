@@ -1,10 +1,11 @@
-var NODE = typeof process === 'object';
-
 import {assert} from 'chai';
 import * as jDataView from 'jdataview';
-import * as jBinary from '..';
+import jBinary, {typeSet as defaultTypeSet, Type, loadData, load} from '../dist/es5';
 
-var chr = String.fromCharCode,
+const
+	NODE = typeof process === 'object',
+	chr = String.fromCharCode,
+	b = jBinary.from,
 	dataBytes = [
 		0x00,
 		0xff, 0xfe, 0xfd, 0xfc,
@@ -13,13 +14,12 @@ var chr = String.fromCharCode,
 	dataStart = 1,
 	view = new jDataView(dataBytes.slice(), dataStart, undefined, true),
 	binary = new jBinary(view, {__UNUSED__: '__UNUSED__'}),
-	{typeSet} = jBinary.prototype,
 	ObjectStructure = {
-		arrays: ['array', {
+		arrays: ['list', {
 			flag: ['enum', 'uint8', [false, true]],
 			array: ['if', 'flag', {
 				length: 'uint8',
-				values: ['array', 'uint16', 'length']
+				values: ['list', 'uint16', 'length']
 			}]
 		}, 2]
 	},
@@ -27,12 +27,8 @@ var chr = String.fromCharCode,
 		extraByte: 'uint8'
 	};
 
-for (var typeName in typeSet) {
-	typeSet[typeName].isTested = {getter: false, setter: false};
-}
-
-function b() {
-	return new jBinary(arguments);
+for (var typeName in defaultTypeSet) {
+	defaultTypeSet[typeName].isTested = {getter: false, setter: false};
 }
 
 function compareInt64(value, expected) {
@@ -47,21 +43,21 @@ function compareWithNaN(value, expected, message) {
 	assert.ok(isNaN(value), message || value + ' != NaN');
 }
 
-suite('Common operations:', function () {
-	test('getType', function () {
+suite('Common operations:', () => {
+	test('getType', () => {
 		var type = binary.getType('uint32');
-		assert.instanceOf(type, jBinary.Type.Base);
+		assert.instanceOf(type, Type.Base);
 		assert.equal(binary.getType([type]), type);
 	});
 
-	suite('slice', function () {
-		test('with bound check', function () {
-			assert.Throw(function () {
+	suite('slice', () => {
+		test('with bound check', () => {
+			assert.Throw(() => {
 				binary.slice(5, 10);
 			});
 		});
 
-		test('as pointer to original data', function () {
+		test('as pointer to original data', () => {
 			var pointerCopy = binary.slice(1, 4);
 			compareBytes(pointerCopy.read('blob'), [0xfe, 0xfd, 0xfc]);
 			pointerCopy.write('char', chr(1), 0);
@@ -70,7 +66,7 @@ suite('Common operations:', function () {
 			assert.equal(pointerCopy.typeSet, binary.typeSet);
 		});
 
-		test('as copy of original data', function () {
+		test('as copy of original data', () => {
 			var copy = binary.slice(1, 4, true);
 			compareBytes(copy.read('blob'), [0xfe, 0xfd, 0xfc]);
 			copy.write('char', chr(1), 0);
@@ -78,37 +74,36 @@ suite('Common operations:', function () {
 			assert.equal(copy.typeSet, binary.typeSet);
 		});
 
-		test('with only start offset argument given', function () {
+		test('with only start offset argument given', () => {
 			var pointerCopy = binary.slice(1);
 			compareBytes(pointerCopy.read('blob'), [0xfe, 0xfd, 0xfc, 0xfa, 0x00, 0xba, 0x01]);
 		});
 
-		test('with negative start offset given', function () {
+		test('with negative start offset given', () => {
 			var pointerCopy = binary.slice(-2);
 			compareBytes(pointerCopy.read('blob'), [0xba, 0x01]);
 		});
 
-		test('with negative end offset given', function () {
+		test('with negative end offset given', () => {
 			var pointerCopy = binary.slice(1, -2);
 			compareBytes(pointerCopy.read('blob'), [0xfe, 0xfd, 0xfc, 0xfa, 0x00]);
 		});
 	});
 
-	suite('as (cast)', function () {
-		var typeSet = binary.typeSet,
+	suite('as (cast)', () => {
+		var {typeSet} = binary,
 			typeSet2 = {MY_TYPESET: true};
 
-		test('with inheritance from original binary', function () {
+		test('with inheritance from original binary', () => {
 			var binary2 = binary.as(typeSet2);
 			assert.ok(binary.isPrototypeOf(binary2));
-			assert.equal(binary.typeSet, typeSet);
-			assert.isTrue(binary2.typeSet.MY_TYPESET);
+			assert.equal(binary2.typeSet, typeSet2);
 		});
 
-		test('with modification of original binary', function () {
+		test('with modification of original binary', () => {
 			var binary2 = binary.as(typeSet2, true);
 			assert.equal(binary, binary2);
-			assert.isTrue(binary.typeSet.MY_TYPESET);
+			assert.equal(binary.typeSet, typeSet2);
 			binary.typeSet = typeSet;
 		});
 	});
@@ -116,50 +111,37 @@ suite('Common operations:', function () {
 
 //-----------------------------------------------------------------
 
-suite('Loading data', function () {
+suite('Loading data', () => {
 	var localFileName = __dirname + '/123.tar';
 
-	test('from data-URI', function () {
-		return jBinary.loadData('data:text/plain,123').then(function (data) {
-			assert.equal(new jDataView(data).getString(), '123');
-		});
-	});
+	test('from data-URI', () => loadData('data:text/plain,123').then(data => {
+		assert.equal(new jDataView(data).getString(), '123');
+	}));
 
-	test('from base-64 data-URI', function () {
-		return jBinary.loadData('data:text/plain;base64,MTIz').then(function (data) {
-			assert.equal(new jDataView(data).getString(), '123');
-		});
-	});
+	test('from base-64 data-URI', () => loadData('data:text/plain;base64,MTIz').then(data => {
+		assert.equal(new jDataView(data).getString(), '123');
+	}));
 
 	if (typeof Blob === 'function') {
-		test('from HTML5 Blob', function () {
-			var blob = new Blob(['123']);
-			return jBinary.loadData(blob).then(function (data) {
-				assert.equal(new jDataView(data).getString(), '123');
-			});
-		});
+		test('from HTML5 Blob', () => loadData(new Blob(['123'])).then(data => {
+			assert.equal(new jDataView(data).getString(), '123');
+		}));
 	}
 
-	test('from local file', function () {
-		return jBinary.loadData(localFileName).then(function (data) {
-			assert.equal(data.byteLength || data.length, 512);
-		});
-	});
+	test('from local file', () => loadData(localFileName).then(data => {
+		assert.equal(data.byteLength || data.length, 512);
+	}));
 
-	test('from non-existent local file', function () {
-		return jBinary.loadData('__NON_EXISTENT__').then(assert.fail, assert.ok);
-	});
+	test('from non-existent local file', () => loadData('__NON_EXISTENT__').then(assert.fail, assert.ok));
 
 	if (NODE && require('stream').Readable) {
-		test('from Node.js readable stream', function () {
+		test('from Node.js readable stream', () => {
 			var stream = require('stream').Readable(), i = 0;
 			stream._read = function () {
 				i++;
 				this.push(i <= 3 ? new Buffer([i]) : null);
 			};
-			return jBinary.loadData(stream, function (data) {
-				compareBytes(data, [1, 2, 3]);
-			});
+			return loadData(stream, data => compareBytes(data, [1, 2, 3]));
 		});
 
 		test('from URL', function () {
@@ -167,53 +149,47 @@ suite('Loading data', function () {
 
 			var port = 7359;
 
-			var server = require('http').createServer(function (req, res) {
+			var server = require('http').createServer((req, res) => {
 				require('fs').createReadStream(localFileName).pipe(res);
 			});
 
 			server.listen(port);
 
-			return jBinary.loadData('http://localhost:' + port).then(function (data) {
+			return loadData('http://localhost:' + port).then(data => {
 				assert.equal(data.byteLength || data.length, 512);
 				server.close();
 			});
 		});
 	}
 
-	test('with explicit typeset object', function () {
-		return jBinary.load(localFileName, {
-			IS_CORRECT_TYPESET: true
-		}).then(function (binary) {
-			assert.instanceOf(binary, jBinary);
-			assert.equal(binary.view.byteLength, 512);
-			assert.isTrue(binary.typeSet.IS_CORRECT_TYPESET);
-		});
-	});
+	test('with explicit typeset object', () => load(localFileName, {
+		IS_CORRECT_TYPESET: true
+	}).then(binary => {
+		assert.instanceOf(binary, jBinary);
+		assert.equal(binary.view.byteLength, 512);
+		assert.isTrue(binary.typeSet.IS_CORRECT_TYPESET);
+	}));
 
-	test('with implicitly empty typeset object', function () {
-		return jBinary.load(localFileName, function (binary) {
-			assert.instanceOf(binary, jBinary);
-			assert.equal(binary.view.byteLength, 512);
-			assert.equal(binary.typeSet, jBinary.prototype.typeSet);
-		});
-	});
+	test('with implicitly empty typeset object', () => load(localFileName).then(binary => {
+		assert.instanceOf(binary, jBinary);
+		assert.equal(binary.view.byteLength, 512);
+		assert.equal(binary.typeSet, defaultTypeSet);
+	}));
 });
 
 //-----------------------------------------------------------------
 
-suite('Saving data', function () {
-	test('to URI', function () {
-		return jBinary.load(binary.toURI()).then(function (newBinary) {
-			assert.deepEqual(newBinary.read('string', 0), binary.read('string', 0));
-		});
-	});
+suite('Saving data', () => {
+	test('to URI', () => load(binary.toURI()).then(function (newBinary) {
+		assert.deepEqual(newBinary.read('string', 0), binary.read('string', 0));
+	}));
 
 	if (NODE) {
-		test('to local file', function () {
+		test('to local file', () => {
 			var savedFileName = __dirname + '/' + Math.random().toString().slice(2) + '.tmp';
 
 			return binary.saveAs(savedFileName).then(function () {
-				return jBinary.load(savedFileName);
+				return load(savedFileName);
 			}).then(function (newBinary) {
 				assert.equal(newBinary.read('string', 0), binary.read('string', 0));
 				require('fs').unlink(savedFileName);
@@ -221,77 +197,33 @@ suite('Saving data', function () {
 		});
 
 		if (require('stream').Writable) {
-			test('to Node.js writable stream', function () {
+			test('to Node.js writable stream', () => {
 				var stream = require('stream').Writable(), chunks = [];
 				stream._write = function (chunk, encoding, callback) {
 					chunks.push(chunk);
 					callback();
 				};
 
-				return binary.saveAs(stream, function () {
+				return binary.saveAs(stream, () => {
 					assert.equal(Buffer.concat(chunks).toString('binary'), binary.read('string', 0));
 				});
 			});
 		}
 	} else {
-		test('via browser dialog', function () {
-			function addListener(node, eventType, handler) {
-				if (node.addEventListener) {
-					node.addEventListener(eventType, handler);
-				} else {
-					node.attachEvent('on' + eventType, handler);
-				}
+		test('via browser dialog', () => {
+			if (navigator.msSaveBlob) {
+				navigator.msSaveBlob = (blob, fileName) => {
+					assert.instanceOf(blob, Blob);
+					assert.equal(fileName, 'test.dat');
+				};
+			} else {
+				jBinary.downloader.click = function () {
+					assert.ok(this.href);
+					assert.equal(this.download, 'test.dat');
+				};
 			}
 
-			var ready = new Promise(function (resolve) {
-				if (document.readyState === 'complete') {
-					resolve();
-				} else {
-					addListener(window, 'load', resolve);
-				}
-			});
-
-			return ready.then(function () {
-				var msSaveBlob = navigator.msSaveBlob;
-
-				if (msSaveBlob) {
-					navigator.msSaveBlob = function (blob, fileName) {
-						assert.instanceOf(blob, Blob);
-						assert.equal(fileName, 'test.dat');
-					};
-				} else {
-					// Phantom.JS
-					if (!HTMLElement.prototype.click) {
-						HTMLElement.prototype.click = function() {
-							var event = document.createEvent('MouseEvent');
-
-							event.initMouseEvent(
-								'click',
-								/*bubble*/true, /*cancelable*/true,
-								window, null,
-								0, 0, 0, 0, /*coordinates*/
-								false, false, false, false, /*modifier keys*/
-								0/*button=left*/, null
-							);
-
-							this.dispatchEvent(event);
-						};
-					}
-
-					addListener(jBinary.downloader, 'click', function (event) {
-						assert.ok(this.href);
-						assert.equal(this.download, 'test.dat');
-
-						event.preventDefault ? event.preventDefault() : event.returnValue = false;
-					});
-				}
-
-				return binary.saveAs('test.dat').then(function () {
-					if (msSaveBlob) {
-						navigator.msSaveBlob = msSaveBlob;
-					}
-				});
-			});
+			return binary.saveAs('test.dat');
 		});
 	}
 });
@@ -301,38 +233,34 @@ suite('Saving data', function () {
 suite('Reading', function () {
 	// getter = value || {value, check?, binary?, args?, offset?}
 	function testGetters(typeName, getters) {
-		test(typeName, function () {
+		test(typeName, () => {
 			binary.seek(0);
 
-			for (var i = 0; i < getters.length; i++) {
-				var getter = getters[i];
-
+			getters.forEach(getter => {
 				if (typeof getter !== 'object') {
 					getter = {value: getter};
 				}
 
-				var args = getter.args,
+				var {args, offset, value, check} = getter,
 					type = args ? [typeName].concat(args) : typeName,
-					offset = getter.offset,
 					contextBinary = getter.binary || binary,
-					check = getter.check || assert.equal,
-					value = getter.value;
+					check = getter.check || assert.equal;
 
 				if (offset !== undefined) {
 					contextBinary.seek(offset);
 				}
 
 				check(contextBinary.read(type), value);
-			}
+			});
 		});
 	}
 
-	testGetters('blob', [
+	testGetters('Blob', [
 		{offset: 1, args: [2], value: [0xfe, 0xfd], check: compareBytes},
 		{args: [3], value: [0xfc, 0xfa, 0x00], check: compareBytes}
 	]);
 
-	testGetters('char', [
+	testGetters('Char', [
 		chr(0xff),
 		chr(0xfe),
 		chr(0xfd),
@@ -343,7 +271,7 @@ suite('Reading', function () {
 		chr(1)
 	]);
 
-	testGetters('string', [
+	testGetters('String', [
 		{offset: 0, args: [1], value: chr(0xff)},
 		{offset: 5, args: [1], value: chr(0)},
 		{offset: 7, args: [1], value: chr(1)},
@@ -351,12 +279,12 @@ suite('Reading', function () {
 		{binary: b(0xd1, 0x84, 0xd1, 0x8b, 0xd0, 0xb2), args: [6, 'utf8'], value: chr(1092) + chr(1099) + chr(1074)}
 	]);
 
-	testGetters('string0', [
+	testGetters('String0', [
 		{offset: 0, args: [8], value: chr(0xff) + chr(0xfe) + chr(0xfd) + chr(0xfc) + chr(0xfa)},
 		{binary: b(127, 0, 1, 65, 66), value: chr(127)}
 	]);
 
-	testGetters('int8', [
+	testGetters('Int8', [
 		-1,
 		-2,
 		-3,
@@ -367,7 +295,7 @@ suite('Reading', function () {
 		1
 	]);
 
-	testGetters('uint8', [
+	testGetters('Uint8', [
 		255,
 		254,
 		253,
@@ -378,7 +306,7 @@ suite('Reading', function () {
 		1
 	]);
 
-	testGetters('int16', [
+	testGetters('Int16', [
 		{offset: 0, value: -257},
 		{offset: 1, value: -514},
 		{offset: 2, value: -771},
@@ -388,7 +316,7 @@ suite('Reading', function () {
 		{offset: 6, value: 442}
 	]);
 
-	testGetters('uint16', [
+	testGetters('Uint16', [
 		{offset: 0, value: 65279},
 		{offset: 1, value: 65022},
 		{offset: 2, value: 64765},
@@ -398,7 +326,7 @@ suite('Reading', function () {
 		{offset: 6, value: 442}
 	]);
 
-	testGetters('uint32', [
+	testGetters('Uint32', [
 		{offset: 0, value: 4244504319},
 		{offset: 1, value: 4210884094},
 		{offset: 2, value: 16448765},
@@ -406,7 +334,7 @@ suite('Reading', function () {
 		{offset: 4, value: 28967162}
 	]);
 
-	testGetters('int32', [
+	testGetters('Int32', [
 		{offset: 0, value: -50462977},
 		{offset: 1, value: -84083202},
 		{offset: 2, value: 16448765},
@@ -414,7 +342,7 @@ suite('Reading', function () {
 		{offset: 4, value: 28967162}
 	]);
 
-	testGetters('float32', [
+	testGetters('Float32', [
 		{offset: 0, value: -1.055058432344064e+37},
 		{offset: 1, value: -6.568051909668895e+35},
 		{offset: 2, value: 2.30496291345398e-38},
@@ -426,7 +354,7 @@ suite('Reading', function () {
 		{binary: b(0xff, 0x80, 0x00, 0x01), check: compareWithNaN}
 	]);
 
-	testGetters('float64', [
+	testGetters('Float64', [
 		{offset: 0, value: 2.426842827241402e-300},
 		{binary: b(0x7f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00), value: Infinity},
 		{binary: b(0xff, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00), value: -Infinity},
@@ -444,35 +372,35 @@ suite('Reading', function () {
 		{binary: b(0xff, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01), check: compareWithNaN}
 	]);
 
-	testGetters('int64', [
+	testGetters('Int64', [
 		{offset: 0, args: [false], value: -283686985483775, check: compareInt64},
 		{binary: b(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe), value: -2, check: compareInt64},
 		{binary: b(0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77), value: 4822678189205111, check: compareInt64}
 	]);
 
-	testGetters('uint64', [
+	testGetters('Uint64', [
 		{binary: b(0x00, 0x67, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe), value: 29273397577908224, check: compareInt64},
 		{binary: b(0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77), value: 4822678189205111, check: compareInt64}
 	]);
 
-	test('skip', function () {
+	test('Skip', () => {
 		binary.read(['skip', 2]);
 		assert.equal(binary.tell(), 2);
 		binary.read(['skip', 1]);
 		assert.equal(binary.tell(), 3);
 	});
 
-	testGetters('enum', [
+	testGetters('Enum', [
 		{offset: 5, args: ['uint8', [false, true]], value: false},
 		{offset: 7, args: ['uint8', {'0': 'false', '1': 'true'}], value: 'true'}
 	]);
 
-	testGetters('array', [
+	testGetters('List', [
 		{offset: 0, args: ['uint16', 2], value: [65279, 64765], check: assert.deepEqual},
 		{offset: 5, args: ['uint8'], value: [0x00, 0xba, 0x01], check: assert.deepEqual}
 	]);
 
-	test('const', function () {
+	test('Const', () => {
 		assert.Throw(function () {
 			binary.read(['const', 'uint16', 0, true], 0);
 		});
@@ -492,17 +420,17 @@ suite('Reading', function () {
 		assert.isTrue(errorFlag);
 	});
 
-	testGetters('if', [
+	testGetters('If', [
 		{offset: 0, args: [true, 'uint8'], value: 0xff},
 		{offset: 0, args: [function () { return false }, 'uint8', 'uint16'], value: 65279}
 	]);
 
-	testGetters('if_not', [
+	testGetters('IfNot', [
 		{offset: 0, args: [false, 'uint8'], value: 0xff},
 		{offset: 0, args: [function () { return false }, 'uint16', 'uint8'], value: 65279}
 	]);
 
-	testGetters('bitfield', [
+	testGetters('Bitfield', [
 		// padded to byte here
 		{offset: 1, args: [3], value: 7},
 		{args: [5], value: 30},
@@ -512,7 +440,7 @@ suite('Reading', function () {
 		// padded to byte here
 	]);
 
-	testGetters('object', [{
+	testGetters('Struct', [{
 		binary: b(0x01, 0x02, 0xff, 0xfe, 0xfd, 0xfc, 0x00, 0x10),
 		args: [ObjectStructure],
 		value: {
@@ -532,7 +460,7 @@ suite('Reading', function () {
 		check: assert.deepEqual
 	}]);
 
-	testGetters('extend', [{
+	testGetters('Extend', [{
 		binary: b(0x01, 0x02, 0xff, 0xfe, 0xfd, 0xfc, 0x00, 0x10),
 		args: [ObjectStructure, ExtensionStructure],
 		value: {
@@ -553,18 +481,18 @@ suite('Reading', function () {
 		check: assert.deepEqual
 	}]);
 
-	testGetters('binary', [{
+	testGetters('Binary', [{
 		offset: 1,
 		args: [3, {__TEST_ME__: '__TEST_ME__'}],
 		value: [0xfe, 0xfd, 0xfc],
-		check: function (subBinary, values) {
-			assert.deepEqual(subBinary.read(['array', 'uint8'], 0), values);
+		check(subBinary, values) {
+			assert.deepEqual(subBinary.read(['list', 'uint8'], 0), values);
 			assert.equal(subBinary.view.buffer, binary.view.buffer);
 			assert.equal(subBinary.typeSet.__TEST_ME__, '__TEST_ME__');
 		}
 	}]);
 
-	test('lazy', function () {
+	test('Lazy', () => {
 		var innerType = 'uint32',
 			length = 4,
 			lazyType = ['lazy', innerType, length],
@@ -607,8 +535,8 @@ suite('Reading', function () {
 
 		var obj = {
 			innerObj: {
-				someLazy: ['lazy', jBinary.Type({
-					read: function (context) {
+				someLazy: ['lazy', Type({
+					read(context) {
 						assert.ok(context);
 						assert.property(context, 'someLazy');
 						var parentContext = this.binary.getContext(1);
@@ -622,75 +550,72 @@ suite('Reading', function () {
 		binary.read(obj).innerObj.someLazy();
 	});
 
-	this.tests.forEach(function (test) {
-		typeSet[test.title].isTested.getter = true;
+	this.tests.forEach(({title}) => {
+		defaultTypeSet[title].isTested.getter = true;
 	});
 });
 
 //-----------------------------------------------------------------
 
 suite('Writing', function () {
-	teardown(function () {
+	teardown(() => {
 		binary.write('blob', dataBytes.slice(dataStart), 0);
 	});
 
 	// setter = value || {value, args?, check?}
 	function testSetters(typeName, setters, stdSize) {
-		test(typeName, function () {
-			for (var i = 0; i < setters.length; i++) {
-				var setter = setters[i];
-
+		test(typeName, () => {
+			setters.forEach(setter => {
 				if (typeof setter !== 'object') {
 					setter = {value: setter};
 				}
 
-				var args = setter.args,
+				var {args, value} = setter,
 					type = args ? [typeName].concat(args) : typeName,
-					check = setter.check || assert.equal,
-					value = setter.value;
+					check = setter.check || assert.equal;
 
 				var writtenSize = binary.write(type, value, 0);
 				assert.equal('size' in setter ? setter.size : stdSize, writtenSize, 'writtenSize = ' + writtenSize + ' != ' + setter.size);
 				check(binary.read(type, 0), value);
-			}
+			});
 		});
 	}
 
-	testSetters('blob', [
+	testSetters('Blob', [
 		{args: [2], value: [0xfe, 0xfd], size: 2, check: compareBytes},
 		{args: [3], value: [0xfd, 0xfe, 0xff], size: 3, check: compareBytes}
 	]);
 
-	testSetters('char', [
+	testSetters('Char', [
 		chr(0xdf),
 		chr(0x03),
 		chr(0x00),
 		chr(0xff)
 	], 1);
 
-	testSetters('string', [
+	testSetters('String', [
 		{args: [3], value: chr(1) + chr(2) + chr(3), size: 3},
 		{args: [2], value: chr(8) + chr(9), size: 2},
 		{args: [6, 'utf8'], value: chr(1092) + chr(1099) + chr(1074), size: 6}
 	]);
 
-	testSetters('string0', [
-		{args: [4], value: chr(0xff) + chr(0xfe) + chr(0xfd), size: 3 + 1, check: function (value, expected) {
+	testSetters('String0', [
+		{args: [4], value: chr(0xff) + chr(0xfe) + chr(0xfd), size: 3 + 1, check(value, expected) {
 			assert.equal(value, expected);
 			assert.equal(binary.read('uint8', value.length), 0);
 		}},
-		{value: chr(127) + chr(0) + chr(1) + chr(65) + chr(66), size: 5 + 1, check: function (value, expected) {
+		{value: chr(127) + chr(0) + chr(1) + chr(65) + chr(66), size: 5 + 1, check(value, expected) {
 			assert.equal(value, expected.slice(0, value.length));
 			assert.equal(binary.read('uint8', value.length), 0);
 		}}
 	]);
 
-	testSetters('int8', [
+	testSetters('Int8', [
 		-10,
 		29
 	], 1);
 
-	testSetters('uint8', [
+	testSetters('Uint8', [
 		19,
 		129,
 		0,
@@ -698,27 +623,27 @@ suite('Writing', function () {
 		254
 	], 1);
 
-	testSetters('int16', [
+	testSetters('Int16', [
 		-17593,
 		23784
 	], 2);
 
-	testSetters('uint16', [
+	testSetters('Uint16', [
 		39571,
 		35
 	], 2);
 
-	testSetters('int32', [
+	testSetters('Int32', [
 		-1238748268,
 		69359465
 	], 4);
 
-	testSetters('uint32', [
+	testSetters('Uint32', [
 		3592756249,
 		257391
 	], 4);
 
-	testSetters('float32', [
+	testSetters('Float32', [
 		Math.pow(2, -149),
 		-Math.pow(2, -149),
 		Math.pow(2, -126),
@@ -734,7 +659,7 @@ suite('Writing', function () {
 		{value: NaN, check: compareWithNaN}
 	], 4);
 
-	testSetters('float64', [
+	testSetters('Float64', [
 		Math.pow(2, -1074),
 		-Math.pow(2, -1074),
 		Math.pow(2, -1022),
@@ -749,18 +674,18 @@ suite('Writing', function () {
 		{value: NaN, check: compareWithNaN}
 	], 8);
 
-	testSetters('int64', [
+	testSetters('Int64', [
 		{value: -283686985483775, check: compareInt64},
 		{value: -2, check: compareInt64},
 		{value: 4822678189205111, check: compareInt64}
 	], 8);
 
-	testSetters('uint64', [
+	testSetters('Uint64', [
 		{value: 29273397577908224, check: compareInt64},
 		{value: 4822678189205111, check: compareInt64}
 	], 8);
 
-	test('skip', function () {
+	test('Skip', () => {
 		binary.seek(0);
 		binary.write(['skip', 2]);
 		assert.equal(binary.tell(), 2);
@@ -768,17 +693,17 @@ suite('Writing', function () {
 		assert.equal(binary.tell(), 3);
 	});
 
-	testSetters('enum', [
+	testSetters('Enum', [
 		{args: ['uint8', {'0': false, '1': true}], value: false},
 		{args: ['uint8', ['false', 'true']], value: 'true'}
 	], 1);
 
-	testSetters('array', [
+	testSetters('List', [
 		{args: ['uint16', 2], value: [65279, 64765], size: 2 * 2, check: assert.deepEqual},
 		{args: ['uint8', 3], value: [0x00, 0xba, 0x01], size: 1 * 3, check: assert.deepEqual}
 	]);
 
-	test('const', function () {
+	test('Const', () => {
 		var type = ['const', 'uint16', 123, true],
 			size = 2;
 
@@ -798,19 +723,19 @@ suite('Writing', function () {
 		}
 	});
 
-	testSetters('if', [
+	testSetters('If', [
 		{args: [true, 'uint8'], value: 123, size: 1},
 		{args: [function () { return false }, 'uint8', 'uint16'], value: 17893, size: 2}
 	]);
 
-	testSetters('ifNot', [
+	testSetters('IfNot', [
 		{args: [false, 'uint8'], value: 123, size: 1},
-		{args: [function () { return false }, 'uint16', 'uint8'], value: 17893, size: 2}
+		{args: [() => false, 'uint16', 'uint8'], value: 17893, size: 2}
 	]);
 
 	// setter = {value, bitLength}
 	function testBitfieldSetters(type, setters) {
-		test(type, function () {
+		test(type, () => {
 			var binary = new jBinary(13);
 
 			function eachValue(callback) {
@@ -832,7 +757,7 @@ suite('Writing', function () {
 		});
 	}
 
-	testBitfieldSetters('bitfield', [
+	testBitfieldSetters('Bitfield', [
 		// padded to byte here
 		{value: 5, bitLength: 3},
 		{value: 29, bitLength: 5},
@@ -846,7 +771,7 @@ suite('Writing', function () {
 		{value: 1, bitLength: 1}
 	]);
 
-	testSetters('object', [{
+	testSetters('Struct', [{
 		args: [ObjectStructure],
 		value: {
 			arrays: [
@@ -866,7 +791,7 @@ suite('Writing', function () {
 		check: assert.deepEqual
 	}]);
 
-	testSetters('extend', [{
+	testSetters('Extend', [{
 		args: [ObjectStructure, ExtensionStructure],
 		value: {
 			arrays: [
@@ -887,23 +812,23 @@ suite('Writing', function () {
 		check: assert.deepEqual
 	}]);
 
-	testSetters('binary', [
+	testSetters('Binary', [
 		{
 			args: [2],
 			value: new jBinary([0x12, 0x34]),
 			size: 2,
-			check: function (readBinary, writeBinary) {
-				assert.deepEqual(readBinary.read(['array', 'uint8'], 0), writeBinary.read(['array', 'uint8'], 0));
+			check(readBinary, writeBinary) {
+				assert.deepEqual(readBinary.read(['list', 'uint8'], 0), writeBinary.read(['list', 'uint8'], 0));
 				assert.equal(readBinary.view.buffer, binary.view.buffer);
 			}
 		}
 	]);
 
-	test('lazy', function () {
+	test('Lazy', () => {
 		var innerType = 'uint32',
 			length = 4,
 			lazyType = ['lazy', innerType, length],
-			blobType = ['array', 'uint8', length],
+			blobType = ['list', 'uint8', length],
 			newBinary = new jBinary(length),
 			nativeAccessor = binary.read(lazyType, 0),
 			externalValue = 7849234,
@@ -922,23 +847,19 @@ suite('Writing', function () {
 		assert.deepEqual(newBinary.read(innerType, 0), externalValue);
 	});
 
-	this.tests.forEach(function (test) {
-		typeSet[test.title].isTested.setter = true;
+	this.tests.forEach(({title}) => {
+		defaultTypeSet[title].isTested.setter = true;
 	});
 });
 
 //-----------------------------------------------------------------
 
-suite('Test coverage of type', function () {
-	function testCoverage(typeName) {
-		test(typeName, function () {
-			var isTested = typeSet[typeName].isTested;
+suite('Test coverage of type', () => {
+	for (let typeName in defaultTypeSet) {
+		test(typeName, () => {
+			var isTested = defaultTypeSet[typeName].isTested;
 			assert.ok(isTested.getter, 'Getter tests');
 			assert.ok(isTested.setter, 'Setter tests');
 		});
-	}
-
-	for (var typeName in typeSet) {
-		testCoverage(typeName);
 	}
 });

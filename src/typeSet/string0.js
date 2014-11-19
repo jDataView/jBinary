@@ -1,4 +1,6 @@
-defaultTypeSet.string0 = Type({
+import Type from '../Type';
+
+export var String0 = Type({
 	params: ['length', 'encoding'],
 	read() {
 		var view = this.view, maxLength = this.length;
@@ -26,3 +28,5 @@ defaultTypeSet.string0 = Type({
 		}
 	}
 });
+
+export {String0 as CString};

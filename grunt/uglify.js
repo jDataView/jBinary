@@ -2,8 +2,7 @@ module.exports = {
 	options: {
 		compress: {
 			pure_getters: true
-		},
-		sourceMapIn: 'dist/<%= pkgName %>.js.map'
+		}
 	},
 	browser: {
 		options: {
@@ -11,10 +10,11 @@ module.exports = {
 				global_defs: {NODE: false, BROWSER: true}
 			},
 			sourceMap: true,
-			sourceMapName: function (js) { return js + '.map' }
+			sourceMapIn: 'dist/browser/<%= pkgName %>.js.map',
+			sourceMapRoot: process.env.CI ? 'https://raw.github.com/' + process.env.TRAVIS_REPO_SLUG + '/' + process.env.TRAVIS_COMMIT : '../..'
 		},
 		files: {
-			'dist/browser/<%= pkgName %>.js': 'dist/<%= pkgName %>.js'
+			'dist/browser/<%= pkgName %>.js': 'dist/browser/<%= pkgName %>.js'
 		}
 	},
 	node: {
@@ -25,8 +25,11 @@ module.exports = {
 			mangle: false,
 			beautify: true
 		},
-		files: {
-			'dist/node/<%= pkgName %>.js': 'dist/<%= pkgName %>.js'
-		}
+		files: [{
+			expand: true,
+			cwd: 'dist/es5',
+			src: '**/*.js',
+			dest: 'dist/node'
+		}]
 	}
 };

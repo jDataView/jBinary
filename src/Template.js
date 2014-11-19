@@ -1,32 +1,43 @@
-var Template = jBinary.Template = typeFactory(class extends Type.Base {
+import Type, {typeFactory} from './Type';
+import {extend} from './utils';
+
+var tmplFactory = typeFactory(class Template extends Type.Base {
 	resolveTypes(getType) {
+		super(getType);
 		var {baseType} = this;
 		if (baseType) {
 			this.baseType = getType(baseType);
 		}
 	}
 
-	createProperty(binary) {
-		var property = super(binary);
-		if (this.getBaseType) {
-			property.baseType = binary.getType(property.getBaseType(binary.contexts[0]));
+	getDisplayName(name) {
+		var {baseType} = this;
+		if (baseType && (!this.params || this.params.indexOf('baseType') < 0)) {
+			name += '<' + baseType.displayName + '>';
 		}
-		return property;
+		return super(name);
 	}
 
-	read() {
-		return this.baseRead();
+	createProperty(binary) {
+		var property = super(binary);
+		property.baseType = property.getBaseType ? binary.getType(property.getBaseType(binary.contexts[0])) : property.baseType;
+		return property;
 	}
 
 	baseRead() {
 		return this.binary.read(this.baseType);
 	}
 
-	write(value) {
-		return this.baseWrite(value);
-	}
-
 	baseWrite(value) {
 		return this.binary.write(this.baseType, value);
 	}
 });
+
+var proto = tmplFactory.Base.prototype;
+
+extend(proto, {
+	read: proto.baseRead,
+	write: proto.baseWrite
+});
+
+export default tmplFactory;

@@ -1,14 +1,21 @@
 require.config({
+	baseUrl: '/base',
 	paths: {
-		'jdataview': 'http://jdataview.github.io/dist/jdataview.js',
-		'..': 'dist/browser/jbinary.js'
+		'dist/es5': 'dist/browser/jbinary',
+		'chai': 'node_modules/chai/chai',
+		'jdataview': 'http://jdataview.github.io/dist/jdataview',
+		'ES6Promise': 'http://es6-promises.s3.amazonaws.com/es6-promise-2.0.0.min'
 	}
 });
 
-window.mocha.setup({ui: 'tdd'});
+window.__dirname = '/base/test';
+window.DEBUG = true;
+window.NODE = false;
+window.BROWSER = true;
 
-define('chai', function () { return window.chai; });
+mocha.setup({ui: 'tdd'});
 
-ES6Promise.polyfill();
-
-window.__dirname = 'base/test';
+require(['ES6Promise'], function (ES6Promise) {
+	ES6Promise.r();
+	require(['test/test.es5'], __karma__.start);
+});

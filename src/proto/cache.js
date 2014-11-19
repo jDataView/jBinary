@@ -1,11 +1,15 @@
-proto.cache = new WeakMap();
+var globalCache = new WeakMap();
 
-proto._getCached = function (obj, valueAccessor) {
-	if (!this.cache.has(obj)) {
-		var value = valueAccessor(obj);
-		this.cache.set(obj, value);
-		return value;
-	} else {
-		return this.cache.get(obj);
+function getCached(cache, key, valueAccessor) {
+	var value = cache.get(key);
+	if (!value) {
+		value = valueAccessor(key);
+		cache.set(key, value);
 	}
+	return value;
+}
+
+export default function (store, key, valueAccessor) {
+	var cache = getCached(globalCache, store, () => new WeakMap());
+	return getCached(cache, key, valueAccessor);
 };

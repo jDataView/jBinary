@@ -1,8 +1,14 @@
-defaultTypeSet.array = Template({
+import Template from '../Template';
+import {Uint8} from './';
+
+export var List = Template({
 	params: ['baseType', 'length'],
+	getDisplayName() {
+		return this.baseType.displayName + '[' + (this.length === undefined ? '' : this.length) + ']';
+	},
 	read() {
 		var length = this.toValue(this.length);
-		if (this.baseType === defaultTypeSet.uint8) {
+		if (this.baseType instanceof Uint8) {
 			return this.view.getBytes(length, undefined, true, true);
 		}
 		var results;
@@ -12,19 +18,18 @@ defaultTypeSet.array = Template({
 				results[i] = this.baseRead();
 			}
 		} else {
-			var end = this.view.byteLength;
 			results = [];
-			while (this.binary.tell() < end) {
+			while (!this.binary.eof()) {
 				results.push(this.baseRead());
 			}
 		}
 		return results;
 	},
 	write(values) {
-		if (this.baseType === defaultTypeSet.uint8) {
+		if (this.baseType instanceof Uint8) {
 			return this.view.writeBytes(values);
 		}
-		for (var i = 0, length = values.length; i < length; i++) {
+		for (var i = 0; i < values.length; i++) {
 			this.baseWrite(values[i]);
 		}
 	}

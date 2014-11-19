@@ -1,4 +1,6 @@
-defaultTypeSet.blob = Type({
+import Type from '../Type';
+
+export var Blob = Type({
 	params: ['length'],
 	read() {
 		return this.view.getBytes(this.toValue(this.length));

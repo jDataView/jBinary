@@ -1,9 +1,11 @@
-defaultTypeSet['const'] = Template({
+import Template from '../Template';
+
+export var Const = Template({
 	params: ['baseType', 'value', 'strict'],
 	read() {
 		var value = this.baseRead();
 		if (this.strict && value !== this.value) {
-			if (is(this.strict, Function)) {
+			if (this.strict instanceof Function) {
 				return this.strict(value);
 			} else {
 				throw new TypeError('Unexpected value (' + value + ' !== ' + this.value + ').');

@@ -1,11 +1,17 @@
 module.exports = {
 	options: {
-		reporter: process.env.CI ? 'dot' : 'progress',
+		reporter: process.env.CI ? 'dot' : 'spec',
 		ui: 'tdd',
 		require: [
-			'stack-displayname',
-			function () { require('6to5/register')({modules: 'umd'}); }
+			function () {
+				global.DEBUG = true;
+				global.NODE = true;
+				global.BROWSER = false;
+				Error.stackTraceLimit = 20;
+			},
+			'6to5/runtime',
+			'stack-displayname'
 		]
 	},
-	node: 'test/test.js'
+	node: 'test/test.es5.js'
 };

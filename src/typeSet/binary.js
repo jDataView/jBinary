@@ -1,4 +1,7 @@
-defaultTypeSet.binary = Template({
+import Template from '../Template';
+import jBinary from '..';
+
+export var Binary = Template({
 	params: ['length', 'typeSet'],
 	read() {
 		var startPos = this.binary.tell();

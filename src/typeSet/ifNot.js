@@ -1,9 +1,6 @@
-// Backward compatibility:
-/* jshint camelcase:false */
-defaultTypeSet.if_not =
-/* jshint camelcase:true */
+import Template from '../Template';
 
-defaultTypeSet.ifNot = Template({
+export var IfNot = Template({
 	setParams(condition, falseType, trueType) {
 		this.baseType = [
 			'if',

@@ -1,4 +1,4 @@
-proto.getContext = function (filter) {
+export function getContext(filter) {
 	switch (typeof filter) {
 		case 'undefined':
 			filter = 0;
@@ -19,9 +19,17 @@ proto.getContext = function (filter) {
 	}
 };
 
-proto.inContext = function (newContext, callback) {
+export function pushContext(newContext) {
 	this.contexts.unshift(newContext);
-	var result = callback.call(this);
+};
+
+export function popContext() {
 	this.contexts.shift();
+};
+
+export function inContext(newContext, callback) {
+	this.pushContext(newContext);
+	var result = callback.call(this);
+	this.popContext();
 	return result;
 };

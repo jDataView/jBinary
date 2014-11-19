@@ -1,27 +1,32 @@
-build_common:
-  - 'newer:lintspaces'
-  - 'newer:jshint:grunt'
-  #- 'newer:jshint:before_concat'
-  - 'concat_sourcemap:common'
-  - '6to5'
-  - 'concat_sourcemap:umd'
-  #- 'pure_cjs'
-  #- 'newer:jshint:after_concat'
+build:common:
+  - newer:lintspaces
+  - newer:jshint:grunt
+  - newer:replace
+  - newer:6to5
+
+build:browser:
+  - build:common
+  - pure_cjs
+  - newer:uglify:browser
+
+build:node:
+  - build:common
+  - newer:uglify:node
 
 default:
-  - 'build'
-  - 'newer:test'
-  - 'compare_size'
+  - node
+  - browser
 
 browser:
-  - 'build:browser'
-  - 'newer:test:browser'
-  - 'compare_size:browser'
+  - build:browser
+  - test:browser
+  - compare_size:browser
 
 node:
-  - 'build:node'
-  - 'newer:test:node'
+  - build:common
+  - test:node
+  - newer:uglify:node
 
 live:
-  - 'karma:watch:start'
-  - 'watch'
+  - karma:watch:start
+  - watch

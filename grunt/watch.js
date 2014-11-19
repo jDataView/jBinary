@@ -5,6 +5,6 @@ module.exports = {
 	},
 	all: {
 		files: ['+(src|test|grunt|umd)/**/*.js', '*.js'],
-		tasks: ['build', 'karma:watch:run', 'test:node']
+		tasks: ['build:browser', 'karma:watch:run']
 	}
 };

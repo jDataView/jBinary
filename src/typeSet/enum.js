@@ -1,4 +1,6 @@
-defaultTypeSet['enum'] = Template({
+import Template from '../Template';
+
+export var Enum = Template({
 	params: ['baseType', 'matches'],
 	setParams(baseType, matches) {
 		this.backMatches = {};

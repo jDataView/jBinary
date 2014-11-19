@@ -1,7 +1,21 @@
 module.exports = {
-	all: {
+	code: {
+		options: {
+			runtime: true
+		},
+		files: [{
+			expand: true,
+			cwd: 'dist/es5',
+			src: '**/*.js',
+			dest: 'dist/es5'
+		}]
+	},
+	tests: {
+		options: {
+			modules: 'umd'
+		},
 		files: {
-			'dist/<%= pkgName %>.js': 'dist/<%= pkgName %>.es6.js'
+			'test/test.es5.js': 'test/test.js'
 		}
 	}
 };

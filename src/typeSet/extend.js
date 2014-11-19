@@ -1,29 +1,29 @@
-defaultTypeSet.extend = Type({
-	setParams() {
-		this.parts = arguments;
+import Type from '../Type';
+import {extend} from '../utils';
+
+export var Extend = Type({
+	setParams(...parts) {
+		this.parts = parts;
 	},
 	resolve(getType) {
-		var parts = this.parts, length = parts.length, partTypes = new Array(length);
-		for (var i = 0; i < length; i++) {
-			partTypes[i] = getType(parts[i]);
-		}
-		this.parts = partTypes;
+		this.parts = this.parts.map(getType);
 	},
 	read() {
-		var parts = this.parts, obj = this.binary.read(parts[0]);
-		this.binary.inContext(obj, function () {
-			for (var i = 1, length = parts.length; i < length; i++) {
-				extend(obj, this.read(parts[i]));
-			}
-		});
+		var {binary, parts} = this;
+		var obj = binary.read(parts[0]);
+		binary.pushContext(obj);
+		for (var i = 1; i < parts.length; i++) {
+			extend(obj, binary.read(parts[i]));
+		}
+		binary.popContext();
 		return obj;
 	},
 	write(obj) {
-		var parts = this.parts;
-		this.binary.inContext(obj, function () {
-			for (var i = 0, length = parts.length; i < length; i++) {
-				this.write(parts[i], obj);
-			}
-		});
+		var {binary, parts} = this;
+		binary.pushContext(obj);
+		for (var i = 0; i < parts.length; i++) {
+			binary.write(parts[i], obj);
+		}
+		binary.popContext();
 	}
 });

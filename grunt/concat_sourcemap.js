@@ -7,7 +7,6 @@ module.exports = function (grunt) {
 		common: {
 			files: {
 				'dist/<%= pkgName %>.es6.js': [
-					'node_modules/array.from/array-from.js',
 					'src/shim.js',
 					'src/utils.js',
 					'src/core.js',

@@ -1,31 +1,33 @@
-var typeFactory = Base => extend(config => {
+import {extend, inherit, toValue, toString} from './utils';
+
+export var typeFactory = Base => extend(config => {
 	class Type extends Base {
 		constructor(...args) {
 			if (!(this instanceof Type)) {
 				return new Type(...args);
 			}
-			super(args);
+			super(...args);
 		}
 	}
 	extend(Type.prototype, config);
 	return Type;
 }, {Base});
 
-var Type = jBinary.Type = typeFactory(class {
-	constructor(args) {
-		var {params, setParams} = this;
+export default typeFactory(class Type {
+	constructor(...args) {
+		var {params} = this;
 		if (params) {
 			for (var i = 0; i < params.length; i++) {
 				this[params[i]] = args[i];
 			}
 		}
-		if (setParams) {
-			setParams.apply(this, args);
+		if (this.setParams) {
+			this.setParams(...args);
 		}
 	}
 
 	resolveTypes(getType) {
-		var {typeParams, resolve} = this;
+		var {typeParams} = this;
 		if (typeParams) {
 			for (var i = 0; i < typeParams.length; i++) {
 				var param = typeParams[i], descriptor = this[param];
@@ -34,9 +36,33 @@ var Type = jBinary.Type = typeFactory(class {
 				}
 			}
 		}
-		if (resolve) {
-			resolve.call(this, getType);
+		if (this.resolve) {
+			this.resolve(getType);
 		}
+	}
+
+	getDisplayName(name) {
+		var {params} = this;
+		if (params) {
+			var values = params.map(name => this[name]);
+			var firstDefined = -1;
+			for (var i = values.length - 1; i >= 0; i--) {
+				if (values[i] !== undefined) {
+					firstDefined = i;
+					break;
+				}
+			}
+			if (firstDefined >= 0) {
+				name += '(';
+				name +=
+					values
+					.slice(0, firstDefined + 1)
+					.map(value => value instanceof Type ? value.displayName : toString(value))
+					.join(', ');
+				name += ')';
+			}
+		}
+		return name;
 	}
 
 	read() {

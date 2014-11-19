@@ -1,8 +1,4 @@
-function is(obj, Ctor) {
-	return Ctor && (obj instanceof Ctor);
-}
-
-var extend = Object.assign || (NODE ? require('object-assign') : (obj, ...args) => {
+export function extend(obj, ...args) {
 	for (var i = 0; i < args.length; i++) {
 		var source = args[i];
 		for (var prop in source) {
@@ -12,18 +8,36 @@ var extend = Object.assign || (NODE ? require('object-assign') : (obj, ...args) 
 		}
 	}
 	return obj;
-});
+};
 
-function inherit(obj, ...args) {
+export function inherit(obj, ...args) {
 	return extend(Object.create(obj), ...args);
-}
+};
 
-function toValue(obj, binary, value) {
-	return is(value, Function) ? value.call(obj, binary.contexts[0]) : value;
-}
+export function toValue(obj, binary, value) {
+	return value instanceof Function ? value.call(obj, binary.contexts[0]) : value;
+};
 
-function callback(resolve, reject) {
-	return (err, data) => {
+if (NODE) {
+	export var callback = (resolve, reject) => (err, data) => {
 		err ? reject(err) : resolve(data);
 	};
 }
+
+export function capitalize(str) {
+	return str[0].toUpperCase() + str.slice(1);
+};
+
+export function toString(obj) {
+	if (obj === undefined) {
+		return '';
+	}
+	if (typeof obj !== 'object' || obj === null || obj.constructor !== Object) {
+		return JSON.stringify(obj);
+	}
+	var keys = Object.keys(obj);
+	if (keys.length > 4) {
+		keys = keys.slice(0, 3).concat(['...']);
+	}
+	return '{' + keys.join(', ') + '}';
+};

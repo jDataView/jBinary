@@ -1,4 +1,7 @@
-defaultTypeSet.lazy = Template({
+import Template from '../Template';
+import {extend} from '../utils';
+
+export var Lazy = Template({
 	marker: 'jBinary.Lazy',
 	params: ['innerType', 'length'],
 	getBaseType() {

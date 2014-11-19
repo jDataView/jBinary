@@ -1,44 +1,59 @@
-proto._toURI =
-	(BROWSER && 'URL' in global && 'createObjectURL' in URL)
-	? function (type) {
-		var data = this.seek(0, function () { return this.view.getBytes() });
-		return URL.createObjectURL(new Blob([data], {type}));
-	}
-	: function (type) {
-		var string = this.seek(0, function () { return this.view.getString(undefined, undefined, NODE && this.view._isNodeBuffer ? 'base64' : 'binary') });
-		return 'data:' + type + ';base64,' + (NODE && this.view._isNodeBuffer ? string : btoa(string));
-	};
-
-proto._mimeType = function (mimeType) {
-	return mimeType || this.typeSet['jBinary.mimeType'] || 'application/octet-stream';
-};
-
-proto.toURI = function (mimeType) {
-	return this._toURI(this._mimeType(mimeType));
-};
-
-var WritableStream = NODE && require('stream').Writable;
-
-if (BROWSER && document) {
-	var downloader = jBinary.downloader = document.createElement('a');
-	downloader.style.display = 'none';
+import jBinary from '..';
+import {btoa, Promise} from '../shim';
+import {isDebugEnabled} from '../debug';
+if (NODE) {
+	import {callback} from '../utils';
+	import {writeFile} from 'fs';
+	import {Writable} from 'stream';
 }
 
-proto.saveAs = function (dest, mimeType) {
+if (BROWSER && global.URL && URL.createObjectURL) {
+	var convertToURI = (binary, type) => {
+		var data = binary.seek(0, () => binary.view.getBytes());
+		return URL.createObjectURL(new Blob([data], {type}));
+	};
+} else {
+	var convertToURI = (binary, type) => {
+		var {view} = binary;
+		var string = binary.seek(0, () => view.getString(undefined, undefined, NODE && view._isNodeBuffer ? 'base64' : 'binary'));
+		return 'data:' + type + ';base64,' + (NODE && view._isNodeBuffer ? string : btoa(string));
+	};
+}
+
+function getMimeType(binary, mimeType) {
+	return mimeType || binary.typeSet['jBinary.mimeType'] || 'application/octet-stream';
+}
+
+export function toURI(mimeType) {
+	return convertToURI(this, getMimeType(this, mimeType));
+};
+
+if (BROWSER) {
+	var {document} = global;
+
+	if (document) {
+		var downloader = document.createElement('a');
+		downloader.style.display = 'none';
+		if (isDebugEnabled()) {
+			jBinary.downloader = downloader;
+		}
+	}
+}
+
+export function saveAs(dest, mimeType) {
 	return new Promise((resolve, reject) => {
 		if (typeof dest === 'string') {
 			if (NODE) {
-				let buffer = this.read('blob', 0);
+				var buffer = this.read('blob', 0);
 
-				if (!is(buffer, Buffer)) {
+				if (!(buffer instanceof Buffer)) {
 					buffer = new Buffer(buffer);
 				}
 
-				require('fs').writeFile(dest, buffer, callback(resolve, reject));
-			} else
-			if (BROWSER) {
-				if ('msSaveBlob' in navigator) {
-					navigator.msSaveBlob(new Blob([this.read('blob', 0)], {type: this._mimeType(mimeType)}), dest);
+				writeFile(dest, buffer, callback(resolve, reject));
+			} else {
+				if (navigator.msSaveBlob) {
+					navigator.msSaveBlob(new Blob([this.read('blob', 0)], {type: getMimeType(this, mimeType)}), dest);
 				} else {
 					if (!document) {
 						return reject(new TypeError('Saving from Web Worker is not supported.'));
@@ -54,7 +69,7 @@ proto.saveAs = function (dest, mimeType) {
 				resolve();
 			}
 		} else
-		if (NODE && is(dest, WritableStream)) {
+		if (NODE && dest instanceof Writable) {
 			dest.write(this.read('blob', 0), callback(resolve, reject));
 		} else {
 			reject(new TypeError('Unsupported storage type.'));

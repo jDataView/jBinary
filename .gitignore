@@ -5,3 +5,4 @@
 !/dist/browser/
 !/dist/node/
 /dist
+/test/test.es5.js
