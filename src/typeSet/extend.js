@@ -6,7 +6,10 @@ export var Extend = Type({
 		this.parts = parts;
 	},
 	resolve(getType) {
-		this.parts = this.parts.map(getType);
+		this.parts = this.parts.map(getType).filter(Boolean);
+	},
+	getDisplayName() {
+		return this.parts.map(part => part.displayName).join('+');
 	},
 	read() {
 		var {binary, parts} = this;
