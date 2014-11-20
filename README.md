@@ -45,12 +45,12 @@ require(['jbinary', 'TAR'], (jBinary, TAR) => {
     var files = binary.readAll();
 
     // do something with files in TAR archive (like rename them to upper case)
-    for (var file of files) {
+    for (let file of files) {
       file.name = file.name.toUpperCase();
     }
 
-    jb.writeAll(files, 0); // writing entire content from files array
-    jb.saveAs('sample.new.tar'); // saving file under given name
+    binary.writeAll(files, 0); // writing entire content from files array
+    binary.saveAs('sample.new.tar'); // saving file under given name
   });
 });
 ```
