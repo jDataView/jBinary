@@ -38,16 +38,16 @@ require.config({
   }
 });
 
-require(['jbinary', 'TAR'], function (jBinary, TAR) {
+require(['jbinary', 'TAR'], (jBinary, TAR) => {
   // loading TAR archive with given typeset
-  jBinary.load('sample.tar', TAR).then(function (jb/* : jBinary */) {
+  jBinary.load('sample.tar', TAR).then(binary => {
     // read everything using type aliased in TAR['jBinary.all']
-    var files = jb.readAll();
+    var files = binary.readAll();
 
     // do something with files in TAR archive (like rename them to upper case)
-    files.forEach(function (file) {
+    for (var file of files) {
       file.name = file.name.toUpperCase();
-    });
+    }
 
     jb.writeAll(files, 0); // writing entire content from files array
     jb.saveAs('sample.new.tar'); // saving file under given name
