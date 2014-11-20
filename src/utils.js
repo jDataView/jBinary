@@ -14,8 +14,24 @@ export function inherit(obj, ...args) {
 	return extend(Object.create(obj), ...args);
 };
 
+export function is(obj, Ctor) {
+	if (!obj || !Ctor) {
+		return false;
+	}
+	if (obj.constructor === Ctor) {
+		return true;
+	}
+	if (NODE && Ctor === Buffer) {
+		return Buffer.isBuffer(obj);
+	}
+	if (Ctor === Array) {
+		return Array.isArray(obj);
+	}
+	return Object.prototype.toString.call(obj) === '[object ' + Ctor.name + ']';
+};
+
 export function toValue(obj, binary, value) {
-	return value instanceof Function ? value.call(obj, binary.contexts[0]) : value;
+	return is(value, Function) ? value.call(obj, binary.contexts[0]) : value;
 };
 
 if (NODE) {

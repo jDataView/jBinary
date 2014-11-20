@@ -3,17 +3,17 @@ import './shim';
 import * as jDataView from 'jdataview';
 import {extend, toValue} from './utils';
 
-export default class jBinary {
+class jBinary {
 	constructor(view, typeSet) {
-		if (view instanceof jBinary) {
+		if (jBinary.is(view)) {
 			return view.as(typeSet);
 		}
 
-		if (!(view instanceof jDataView)) {
+		if (!jDataView.is(view)) {
 			view = new jDataView(view, undefined, undefined, typeSet ? typeSet['jBinary.littleEndian'] : undefined);
 		}
 
-		if (!(this instanceof jBinary)) {
+		if (!jBinary.is(this)) {
 			return new jBinary(view, typeSet);
 		}
 
@@ -22,6 +22,10 @@ export default class jBinary {
 		this.contexts = [];
 
 		return this.as(typeSet, true);
+	}
+
+	static is(binary) {
+		return binary && binary.jBinary;
 	}
 
 	static from() {
@@ -33,6 +37,12 @@ export default class jBinary {
 	}
 };
 
+// Hack to provide default exports for Node.js.
+// Other exports will extend it.
+module.exports = exports = jBinary;
+
+export default jBinary;
+
 import * as typeSet from './typeSet';
 export {typeSet};
 
@@ -43,4 +53,4 @@ export * from './io/load';
 
 import * as methods from './proto';
 import * as saveMethods from './io/save';
-extend(jBinary.prototype, methods, saveMethods);
+extend(jBinary.prototype, {jBinary: true}, methods, saveMethods);

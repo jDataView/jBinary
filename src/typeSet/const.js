@@ -1,11 +1,12 @@
 import Template from '../Template';
+import {is} from '../utils';
 
 export var Const = Template({
 	params: ['baseType', 'value', 'strict'],
 	read() {
 		var value = this.baseRead();
 		if (this.strict && value !== this.value) {
-			if (this.strict instanceof Function) {
+			if (is(this.strict, Function)) {
 				return this.strict(value);
 			} else {
 				throw new TypeError('Unexpected value (' + value + ' !== ' + this.value + ').');

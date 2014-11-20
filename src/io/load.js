@@ -1,10 +1,10 @@
 import * as jDataView from 'jdataview';
 import jBinary from '..';
 import {Promise} from '../shim';
+import {is} from '../utils';
 if (NODE) {
 	import {callback} from '../utils';
 	import {readFile} from 'fs';
-	import {Readable} from 'stream';
 	import {get} from 'request-promise';
 }
 
@@ -12,7 +12,7 @@ export function loadData(source) {
 	return new Promise((resolve, reject) => {
 		var dataParts;
 
-		if (BROWSER && global.Blob && source instanceof Blob) {
+		if (BROWSER && is(source, global.Blob)) {
 			if (global.FileReader) {
 				var reader = new FileReader();
 				reader.onload = function () { resolve(this.result) };
@@ -23,7 +23,7 @@ export function loadData(source) {
 				resolve(new FileReaderSync().readAsArrayBuffer(source));
 			}
 		} else
-		if (NODE && source instanceof Readable) {
+		if (NODE && source.readable) {
 			var buffers = [];
 			source
 			.on('readable', function () { buffers.push(this.read()) })

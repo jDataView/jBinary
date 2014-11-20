@@ -1,6 +1,6 @@
 import Type from '../Type';
 import * as defaultTypeSet from '../typeSet';
-import {capitalize} from '../utils';
+import {is, capitalize} from '../utils';
 import {Bitfield, Struct} from '../typeSet';
 import {isDebugEnabled} from '../debug';
 import getCached from './cache';
@@ -33,7 +33,7 @@ function resolveType(binary, type, args) {
 				return type;
 			} else {
 				return getCached(binary.typeSet, type, (
-					type instanceof Array
+					is(type, Array)
 					? type => resolveType(binary, type[0], type.slice(1))
 					: structure => resolveType(binary, new Struct(structure))
 				));
@@ -46,7 +46,7 @@ export function getType(type) {
 	var resolvedType = resolveType(this, type);
 
 	if (isDebugEnabled() && resolvedType && !resolvedType.displayName) {
-		var name = type instanceof Array ? type[0] : type;
+		var name = is(type, Array) ? type[0] : type;
 		if (typeof name !== 'string') {
 			name = '';
 		}

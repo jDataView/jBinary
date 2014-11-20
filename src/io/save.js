@@ -1,10 +1,10 @@
 import jBinary from '..';
 import {btoa, Promise} from '../shim';
 import {isDebugEnabled} from '../debug';
+import {is} from '../utils';
 if (NODE) {
 	import {callback} from '../utils';
 	import {writeFile} from 'fs';
-	import {Writable} from 'stream';
 }
 
 if (BROWSER && global.URL && URL.createObjectURL) {
@@ -15,8 +15,8 @@ if (BROWSER && global.URL && URL.createObjectURL) {
 } else {
 	var convertToURI = (binary, type) => {
 		var {view} = binary;
-		var string = binary.seek(0, () => view.getString(undefined, undefined, NODE && view._isNodeBuffer ? 'base64' : 'binary'));
-		return 'data:' + type + ';base64,' + (NODE && view._isNodeBuffer ? string : btoa(string));
+		var string = binary.seek(0, () => view.getString(undefined, undefined, NODE && is(view.buffer, Buffer) ? 'base64' : 'binary'));
+		return 'data:' + type + ';base64,' + (NODE && is(view.buffer, Buffer) ? string : btoa(string));
 	};
 }
 
@@ -46,7 +46,7 @@ export function saveAs(dest, mimeType) {
 			if (NODE) {
 				var buffer = this.read('blob', 0);
 
-				if (!(buffer instanceof Buffer)) {
+				if (!is(buffer, Buffer)) {
 					buffer = new Buffer(buffer);
 				}
 
@@ -69,7 +69,7 @@ export function saveAs(dest, mimeType) {
 				resolve();
 			}
 		} else
-		if (NODE && dest instanceof Writable) {
+		if (NODE && dest.writable) {
 			dest.write(this.read('blob', 0), callback(resolve, reject));
 		} else {
 			reject(new TypeError('Unsupported storage type.'));
