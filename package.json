@@ -14,9 +14,11 @@
   ],
   "author": "RReverser <me@rreverser.com> (http://rreverser.com/)",
   "files": [
-    "dist/node/jbinary.js"
+    "dist/node/jbinary.js",
+    "dist/browser/jbinary.js"
   ],
   "main": "dist/node/jbinary.js",
+  "browser": "dist/browser/jbinary.js",
   "scripts": {
     "test": "grunt"
   },
