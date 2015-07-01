@@ -28,8 +28,15 @@ jBinary.loadData = promising(function (source, callback) {
 	if (NODE && is(source, ReadableStream)) {
 		var buffers = [];
 		source
-			.on('readable', function () { buffers.push(this.read()) })
-			.on('end', function () { callback(null, Buffer.concat(buffers)) })
+			.on('readable', function () {
+				var buf = this.read();
+				if(buf) {
+					buffers.push(buf);
+				}
+			})
+			.on('end', function () {
+				callback(null, Buffer.concat(buffers));
+			})
 			.on('error', callback)
 		;
 	} else

@@ -204,6 +204,17 @@ suite('Loading data', function () {
 		});
 	}
 
+	if (hasNodeRequire && require('stream').Readable) {
+		test('from file-based readableStream', function (done) {
+			var stream = require('fs').createReadStream(localFileName);
+			jBinary.loadData(stream, function (err, data) {
+				assert.notOk(err, err);
+				assert.equal(data.byteLength || data.length, 512);
+				done();
+			});
+		});
+	}
+
 	test('with explicit typeset object', function (done) {
 		var typeSet = {
 			IS_CORRECT_TYPESET: true
