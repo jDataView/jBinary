@@ -56,7 +56,7 @@ require(['jbinary', 'TAR'], function (jBinary, TAR) {
 });
 ```
 
-[Run](http://jsbin.com/gopekewi/1/) or [edit](http://jsbin.com/gopekewi/1/edit?js,console) it on JSBin.
+[Run](http://jsbin.com/jofipi/1/) or [edit](http://jsbin.com/jofipi/1/edit?js,console) it on JSBin.
 
 # Show me amazing use-cases!
 
