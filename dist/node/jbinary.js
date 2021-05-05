@@ -1,18 +1,58 @@
 !function(factory) {
     var global = this;
     module.exports = factory(global, require("jdataview"));
-}(function(global, jDataView) {
+}(function(proto, jDataView) {
     "use strict";
+    var a, d;
+    "atob" in proto && "btoa" in proto || (a = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", 
+    d = [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1 ], 
+    proto.btoa || (proto.btoa = function(l) {
+        for (var k, h, f, e = l.length, j = 0, g = ""; j < e; ) {
+            if (k = 255 & l.charCodeAt(j++), j == e) {
+                g += a.charAt(k >> 2), g += a.charAt((3 & k) << 4), g += "==";
+                break;
+            }
+            if (h = l.charCodeAt(j++), j == e) {
+                g += a.charAt(k >> 2), g += a.charAt((3 & k) << 4 | (240 & h) >> 4), g += a.charAt((15 & h) << 2), 
+                g += "=";
+                break;
+            }
+            f = l.charCodeAt(j++), g += a.charAt(k >> 2), g += a.charAt((3 & k) << 4 | (240 & h) >> 4), 
+            g += a.charAt((15 & h) << 2 | (192 & f) >> 6), g += a.charAt(63 & f);
+        }
+        return g;
+    }), proto.atob || (proto.atob = function(m) {
+        for (var l, k, h, f, e = m.length, j = 0, g = ""; j < e; ) {
+            for (;l = d[255 & m.charCodeAt(j++)], j < e && -1 == l; ) ;
+            if (-1 == l) break;
+            for (;k = d[255 & m.charCodeAt(j++)], j < e && -1 == k; ) ;
+            if (-1 == k) break;
+            g += String.fromCharCode(l << 2 | (48 & k) >> 4);
+            do {
+                if (61 == (h = 255 & m.charCodeAt(j++))) return g;
+            } while (h = d[h], j < e && -1 == h);
+            if (-1 == h) break;
+            g += String.fromCharCode((15 & k) << 4 | (60 & h) >> 2);
+            do {
+                if (61 == (f = 255 & m.charCodeAt(j++))) return g;
+            } while (f = d[f], j < e && -1 == f);
+            if (-1 == f) break;
+            g += String.fromCharCode((3 & h) << 6 | f);
+        }
+        return g;
+    }));
+    var Promise = proto.Promise || require("es6-promise").Promise;
     function is(obj, Ctor) {
         return Ctor && obj instanceof Ctor;
     }
     function extend(obj) {
-        for (var i = 1, length = arguments.length; length > i; ++i) {
-            var source = arguments[i];
-            for (var prop in source) void 0 !== source[prop] && (obj[prop] = source[prop]);
+        for (var i = 1, length = arguments.length; i < length; ++i) {
+            var prop, source = arguments[i];
+            for (prop in source) void 0 !== source[prop] && (obj[prop] = source[prop]);
         }
         return obj;
     }
+    var _inherit = Object.create;
     function inherit(obj) {
         return arguments[0] = _inherit(obj), extend.apply(null, arguments);
     }
@@ -22,7 +62,7 @@
     function promising(func) {
         return function() {
             var args = arguments, lastArgsIndex = args.length - 1, lastFuncIndex = func.length - 1, callback = args[lastArgsIndex];
-            if (args.length = lastFuncIndex + 1, !is(callback, Function)) {
+            if (args.length = 1 + lastFuncIndex, !is(callback, Function)) {
                 var self = this;
                 return new Promise(function(resolveFn, rejectFn) {
                     args[lastFuncIndex] = function(err, res) {
@@ -37,73 +77,30 @@
         return is(view, jBinary) ? view.as(typeSet) : (is(view, jDataView) || (view = new jDataView(view, void 0, void 0, typeSet ? typeSet["jBinary.littleEndian"] : void 0)), 
         is(this, jBinary) ? (this.view = view, this.view.seek(0), this.contexts = [], this.as(typeSet, !0)) : new jBinary(view, typeSet));
     }
-    function Type(config) {
-        return inherit(Type.prototype, config);
-    }
-    function Template(config) {
-        return inherit(Template.prototype, config, {
-            createProperty: function() {
-                var property = (config.createProperty || Template.prototype.createProperty).apply(this, arguments);
-                return property.getBaseType && (property.baseType = property.binary.getType(property.getBaseType(property.binary.contexts[0]))), 
-                property;
-            }
-        });
-    }
-    "atob" in global && "btoa" in global || !function() {
-        function b(l) {
-            var g, j, e, k, h, f;
-            for (e = l.length, j = 0, g = ""; e > j; ) {
-                if (k = 255 & l.charCodeAt(j++), j == e) {
-                    g += a.charAt(k >> 2), g += a.charAt((3 & k) << 4), g += "==";
-                    break;
-                }
-                if (h = l.charCodeAt(j++), j == e) {
-                    g += a.charAt(k >> 2), g += a.charAt((3 & k) << 4 | (240 & h) >> 4), g += a.charAt((15 & h) << 2), 
-                    g += "=";
-                    break;
-                }
-                f = l.charCodeAt(j++), g += a.charAt(k >> 2), g += a.charAt((3 & k) << 4 | (240 & h) >> 4), 
-                g += a.charAt((15 & h) << 2 | (192 & f) >> 6), g += a.charAt(63 & f);
-            }
-            return g;
-        }
-        function c(m) {
-            var l, k, h, f, j, e, g;
-            for (e = m.length, j = 0, g = ""; e > j; ) {
-                do l = d[255 & m.charCodeAt(j++)]; while (e > j && -1 == l);
-                if (-1 == l) break;
-                do k = d[255 & m.charCodeAt(j++)]; while (e > j && -1 == k);
-                if (-1 == k) break;
-                g += String.fromCharCode(l << 2 | (48 & k) >> 4);
-                do {
-                    if (h = 255 & m.charCodeAt(j++), 61 == h) return g;
-                    h = d[h];
-                } while (e > j && -1 == h);
-                if (-1 == h) break;
-                g += String.fromCharCode((15 & k) << 4 | (60 & h) >> 2);
-                do {
-                    if (f = 255 & m.charCodeAt(j++), 61 == f) return g;
-                    f = d[f];
-                } while (e > j && -1 == f);
-                if (-1 == f) break;
-                g += String.fromCharCode((3 & h) << 6 | f);
-            }
-            return g;
-        }
-        var a = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", d = [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1 ];
-        global.btoa || (global.btoa = b), global.atob || (global.atob = c);
-    }();
-    var Promise = global.Promise || require("es6-promise").Promise, _inherit = Object.create, proto = jBinary.prototype, defaultTypeSet = proto.typeSet = {};
+    var proto = jBinary.prototype, defaultTypeSet = proto.typeSet = {};
     proto.toValue = function(value) {
         return toValue(this, this, value);
     }, proto._named = function(func, name, offset) {
         return func.displayName = name + " @ " + (void 0 !== offset ? offset : this.view.tell()), 
         func;
     };
-    var defineProperty = Object.defineProperty, cacheKey = "jBinary.Cache", cacheId = 0;
-    proto._getCached = function(obj, valueAccessor, allowVisible) {
+    var defineProperty = Object.defineProperty;
+    var cacheId = 0;
+    function Type(config) {
+        return inherit(Type.prototype, config);
+    }
+    function Template(config) {
+        return inherit(Template.prototype, config, {
+            createProperty: function(binary) {
+                var property = (config.createProperty || Template.prototype.createProperty).apply(this, arguments);
+                return property.getBaseType && (property.baseType = property.binary.getType(property.getBaseType(property.binary.contexts[0]))), 
+                property;
+            }
+        });
+    }
+    proto._getCached = function(obj, value, allowVisible) {
         if (obj.hasOwnProperty(this.cacheKey)) return obj[this.cacheKey];
-        var value = valueAccessor.call(this, obj);
+        value = value.call(this, obj);
         return defineProperty(obj, this.cacheKey, {
             value: value
         }, allowVisible), value;
@@ -121,28 +118,28 @@
             });
 
           case "function":
-            for (var i = 0, length = this.contexts.length; length > i; i++) {
+            for (var i = 0, length = this.contexts.length; i < length; i++) {
                 var context = this.contexts[i];
                 if (filter.call(this, context)) return context;
             }
         }
-    }, proto.inContext = function(newContext, callback) {
+    }, proto.inContext = function(newContext, result) {
         this.contexts.unshift(newContext);
-        var result = callback.call(this);
+        result = result.call(this);
         return this.contexts.shift(), result;
     }, Type.prototype = {
         inherit: function(args, getType) {
+            var type, _type = this;
             function withProp(name, callback) {
                 var value = _type[name];
-                value && (type || (type = inherit(_type)), callback.call(type, value), type[name] = null);
+                value && (type = type || inherit(_type), callback.call(type, value), type[name] = null);
             }
-            var type, _type = this;
             return withProp("params", function(params) {
-                for (var i = 0, length = params.length; length > i; i++) this[params[i]] = args[i];
+                for (var i = 0, length = params.length; i < length; i++) this[params[i]] = args[i];
             }), withProp("setParams", function(setParams) {
                 setParams.apply(this, args);
             }), withProp("typeParams", function(typeParams) {
-                for (var i = 0, length = typeParams.length; length > i; i++) {
+                for (var i = 0, length = typeParams.length; i < length; i++) {
                     var param = typeParams[i], descriptor = this[param];
                     descriptor && (this[param] = getType(descriptor));
                 }
@@ -157,9 +154,9 @@
             });
         },
         toValue: function(val, allowResolve) {
-            return allowResolve !== !1 && "string" == typeof val ? this.binary.getContext(val)[val] : toValue(this, this.binary, val);
+            return !1 !== allowResolve && "string" == typeof val ? this.binary.getContext(val)[val] : toValue(this, this.binary, val);
         }
-    }, jBinary.Type = Type, Template.prototype = inherit(Type.prototype, {
+    }, Template.prototype = inherit((jBinary.Type = Type).prototype, {
         setParams: function() {
             this.baseType && (this.typeParams = [ "baseType" ].concat(this.typeParams || []));
         },
@@ -172,20 +169,18 @@
     }), extend(Template.prototype, {
         read: Template.prototype.baseRead,
         write: Template.prototype.baseWrite
-    }), jBinary.Template = Template, proto.as = function(typeSet, modifyOriginal) {
-        var binary = modifyOriginal ? this : inherit(this);
-        return typeSet = typeSet || defaultTypeSet, binary.typeSet = typeSet === defaultTypeSet || defaultTypeSet.isPrototypeOf(typeSet) ? typeSet : inherit(defaultTypeSet, typeSet), 
-        binary.cacheKey = cacheKey, binary.cacheKey = binary._getCached(typeSet, function() {
-            return cacheKey + "." + ++cacheId;
+    }), jBinary.Template = Template, proto.as = function(typeSet, binary) {
+        binary = binary ? this : inherit(this);
+        return binary.typeSet = (typeSet = typeSet || defaultTypeSet) === defaultTypeSet || defaultTypeSet.isPrototypeOf(typeSet) ? typeSet : inherit(defaultTypeSet, typeSet), 
+        binary.cacheKey = "jBinary.Cache", binary.cacheKey = binary._getCached(typeSet, function() {
+            return "jBinary.Cache." + ++cacheId;
         }, !0), binary;
-    }, proto.seek = function(position, callback) {
-        if (position = this.toValue(position), void 0 !== callback) {
-            var oldPos = this.view.tell();
-            this.view.seek(position);
-            var result = callback.call(this);
-            return this.view.seek(oldPos), result;
-        }
-        return this.view.seek(position);
+    }, proto.seek = function(position, result) {
+        if (position = this.toValue(position), void 0 === result) return this.view.seek(position);
+        var oldPos = this.view.tell();
+        this.view.seek(position);
+        result = result.call(this);
+        return this.view.seek(oldPos), result;
     }, proto.tell = function() {
         return this.view.tell();
     }, proto.skip = function(offset, callback) {
@@ -214,8 +209,8 @@
                 return this.getType(defaultTypeSet.object, [ structure ]);
             }, !1);
         }
-    }, proto.getType = function(type, args) {
-        var resolvedType = this._getType(type, args);
+    }, proto.getType = function(type, resolvedType) {
+        resolvedType = this._getType(type, resolvedType);
         return resolvedType && !is(type, Type) && (resolvedType.name = "object" == typeof type ? is(type, Array) ? type[0] + "(" + type.slice(1).join(", ") + ")" : "object" : String(type)), 
         resolvedType;
     }, proto._action = function(type, offset, _callback) {
@@ -240,7 +235,7 @@
     }, proto.writeAll = function(data) {
         return this.write("jBinary.all", data, 0);
     }, function(simpleType, dataTypes) {
-        for (var i = 0, length = dataTypes.length; length > i; i++) {
+        for (var i = 0, length = dataTypes.length; i < length; i++) {
             var dataType = dataTypes[i];
             defaultTypeSet[dataType.toLowerCase()] = inherit(simpleType, {
                 dataType: dataType
@@ -256,19 +251,15 @@
         }
     }), [ "Uint8", "Uint16", "Uint32", "Uint64", "Int8", "Int16", "Int32", "Int64", "Float32", "Float64", "Char" ]), 
     extend(defaultTypeSet, {
-        "byte": defaultTypeSet.uint8,
-        "float": defaultTypeSet.float32,
-        "double": defaultTypeSet.float64
+        byte: defaultTypeSet.uint8,
+        float: defaultTypeSet.float32,
+        double: defaultTypeSet.float64
     }), defaultTypeSet.array = Template({
         params: [ "baseType", "length" ],
         read: function() {
             var length = this.toValue(this.length);
             if (this.baseType === defaultTypeSet.uint8) return this.view.getBytes(length, void 0, !0, !0);
-            var results;
-            if (void 0 !== length) {
-                results = new Array(length);
-                for (var i = 0; length > i; i++) results[i] = this.baseRead();
-            } else {
+            if (void 0 !== length) for (var results = new Array(length), i = 0; i < length; i++) results[i] = this.baseRead(); else {
                 var end = this.view.byteLength;
                 for (results = []; this.binary.tell() < end; ) results.push(this.baseRead());
             }
@@ -276,13 +267,13 @@
         },
         write: function(values) {
             if (this.baseType === defaultTypeSet.uint8) return this.view.writeBytes(values);
-            for (var i = 0, length = values.length; length > i; i++) this.baseWrite(values[i]);
+            for (var i = 0, length = values.length; i < length; i++) this.baseWrite(values[i]);
         }
     }), defaultTypeSet.binary = Template({
         params: [ "length", "typeSet" ],
         read: function() {
-            var startPos = this.binary.tell(), endPos = this.binary.skip(this.toValue(this.length)), view = this.view.slice(startPos, endPos);
-            return new jBinary(view, this.typeSet);
+            var startPos = this.binary.tell(), endPos = this.binary.skip(this.toValue(this.length));
+            return new jBinary(this.view.slice(startPos, endPos), this.typeSet);
         },
         write: function(binary) {
             this.binary.write("blob", binary.read("blob", 0));
@@ -303,7 +294,7 @@
         write: function(bytes) {
             this.view.writeBytes(bytes, !0);
         }
-    }), defaultTypeSet["const"] = Template({
+    }), defaultTypeSet.const = Template({
         params: [ "baseType", "value", "strict" ],
         read: function() {
             var value = this.baseRead();
@@ -316,11 +307,10 @@
         write: function(value) {
             this.baseWrite(this.strict || void 0 === value ? this.value : value);
         }
-    }), defaultTypeSet["enum"] = Template({
+    }), defaultTypeSet.enum = Template({
         params: [ "baseType", "matches" ],
         setParams: function(baseType, matches) {
-            this.backMatches = {};
-            for (var key in matches) this.backMatches[matches[key]] = key;
+            for (var key in this.backMatches = {}, matches) this.backMatches[matches[key]] = key;
         },
         read: function() {
             var value = this.baseRead();
@@ -334,25 +324,25 @@
             this.parts = arguments;
         },
         resolve: function(getType) {
-            for (var parts = this.parts, length = parts.length, partTypes = new Array(length), i = 0; length > i; i++) partTypes[i] = getType(parts[i]);
+            for (var parts = this.parts, length = parts.length, partTypes = new Array(length), i = 0; i < length; i++) partTypes[i] = getType(parts[i]);
             this.parts = partTypes;
         },
         read: function() {
             var parts = this.parts, obj = this.binary.read(parts[0]);
             return this.binary.inContext(obj, function() {
-                for (var i = 1, length = parts.length; length > i; i++) extend(obj, this.read(parts[i]));
+                for (var i = 1, length = parts.length; i < length; i++) extend(obj, this.read(parts[i]));
             }), obj;
         },
         write: function(obj) {
             var parts = this.parts;
             this.binary.inContext(obj, function() {
-                for (var i = 0, length = parts.length; length > i; i++) this.write(parts[i], obj);
+                for (var i = 0, length = parts.length; i < length; i++) this.write(parts[i], obj);
             });
         }
-    }), defaultTypeSet["if"] = Template({
+    }), defaultTypeSet.if = Template({
         params: [ "condition", "trueType", "falseType" ],
         typeParams: [ "trueType", "falseType" ],
-        getBaseType: function() {
+        getBaseType: function(context) {
             return this.toValue(this.condition) ? this.trueType : this.falseType;
         }
     }), defaultTypeSet.if_not = defaultTypeSet.ifNot = Template({
@@ -385,8 +375,8 @@
     }), defaultTypeSet.object = Type({
         params: [ "structure", "proto" ],
         resolve: function(getType) {
-            var structure = {};
-            for (var key in this.structure) structure[key] = is(this.structure[key], Function) ? this.structure[key] : getType(this.structure[key]);
+            var key, structure = {};
+            for (key in this.structure) structure[key] = is(this.structure[key], Function) ? this.structure[key] : getType(this.structure[key]);
             this.structure = structure;
         },
         read: function() {
@@ -425,28 +415,26 @@
     }), defaultTypeSet.string0 = Type({
         params: [ "length", "encoding" ],
         read: function() {
-            var view = this.view, maxLength = this.length;
-            if (void 0 === maxLength) {
-                var code, startPos = view.tell(), length = 0;
-                for (maxLength = view.byteLength - startPos; maxLength > length && (code = view.getUint8()); ) length++;
-                var string = view.getString(length, startPos, this.encoding);
-                return maxLength > length && view.skip(1), string;
-            }
-            return view.getString(maxLength, void 0, this.encoding).replace(/\0.*$/, "");
+            var view = this.view;
+            if (void 0 !== (maxLength = this.length)) return view.getString(maxLength, void 0, this.encoding).replace(/\0.*$/, "");
+            for (var string = view.tell(), length = 0, maxLength = view.byteLength - string; length < maxLength && view.getUint8(); ) length++;
+            string = view.getString(length, string, this.encoding);
+            return length < maxLength && view.skip(1), string;
         },
         write: function(value) {
             var view = this.view, zeroLength = void 0 === this.length ? 1 : this.length - value.length;
-            view.writeString(value, void 0, this.encoding), zeroLength > 0 && (view.writeUint8(0), 
+            view.writeString(value, void 0, this.encoding), 0 < zeroLength && (view.writeUint8(0), 
             view.skip(zeroLength - 1));
         }
     });
-    var ReadableStream = !0 && require("stream").Readable;
+    var ReadableStream = require("stream").Readable;
     jBinary.loadData = promising(function(source, callback) {
         var dataParts;
-        if (is(source, ReadableStream)) {
+        if (0, is(source, ReadableStream)) {
             var buffers = [];
             source.on("readable", function() {
-                buffers.push(this.read());
+                var buf = this.read();
+                buf && buffers.push(buf);
             }).on("end", function() {
                 callback(null, Buffer.concat(buffers));
             }).on("error", callback);
@@ -455,26 +443,22 @@
             callback(null, isBase64 && jDataView.prototype.compatibility.NodeBuffer ? new Buffer(content, "base64") : (isBase64 ? atob : decodeURIComponent)(content));
         } catch (e) {
             callback(e);
-        } else {
-            /^(https?):\/\//.test(source) ? require("request").get({
-                uri: source,
-                encoding: null
-            }, function(error, response, body) {
-                if (!error && 200 !== response.statusCode) {
-                    var statusText = require("http").STATUS_CODES[response.statusCode];
-                    error = new Error("HTTP Error #" + response.statusCode + ": " + statusText);
-                }
-                callback(error, body);
-            }) : require("fs").readFile(source, callback);
-        }
-    }), jBinary.load = promising(function(source, typeSet, callback) {
+        } else /^(https?):\/\//.test(source) ? require("request").get({
+            uri: source,
+            encoding: null
+        }, function(error, response, body) {
+            var statusText;
+            error || 200 === response.statusCode || (statusText = require("http").STATUS_CODES[response.statusCode], 
+            error = new Error("HTTP Error #" + response.statusCode + ": " + statusText)), callback(error, body);
+        }) : require("fs").readFile(source, callback);
+    }), (jBinary.load = promising(function(source, typeSet, callback) {
         var whenData = jBinary.loadData(source);
         jBinary.load.getTypeSet(source, typeSet, function(typeSet) {
             whenData.then(function(data) {
                 callback(null, new jBinary(data, typeSet));
             }, callback);
         });
-    }), jBinary.load.getTypeSet = function(source, typeSet, callback) {
+    })).getTypeSet = function(source, typeSet, callback) {
         callback(typeSet);
     }, proto._toURI = function(type) {
         var string = this.seek(0, function() {
@@ -486,11 +470,10 @@
     }, proto.toURI = function(mimeType) {
         return this._toURI(this._mimeType(mimeType));
     };
-    var WritableStream = !0 && require("stream").Writable;
+    var WritableStream = require("stream").Writable;
     return proto.saveAs = promising(function(dest, mimeType, callback) {
-        if ("string" == typeof dest) {
-            var buffer = this.read("blob", 0);
-            is(buffer, Buffer) || (buffer = new Buffer(buffer)), require("fs").writeFile(dest, buffer, callback);
-        } else is(dest, WritableStream) ? dest.write(this.read("blob", 0), callback) : callback(new TypeError("Unsupported storage type."));
+        var buffer;
+        "string" == typeof dest ? (is(buffer = this.read("blob", 0), Buffer) || (buffer = new Buffer(buffer)), 
+        require("fs").writeFile(dest, buffer, callback)) : is(dest, WritableStream) ? dest.write(this.read("blob", 0), callback) : callback(new TypeError("Unsupported storage type."));
     }), jBinary;
 });
