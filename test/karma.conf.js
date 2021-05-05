@@ -4,7 +4,7 @@ module.exports = function (config) {
 	config.set({
 		basePath: '..',
 		frameworks: ['mocha', 'chai'],
-		browsers: CI ? ['PhantomJS', 'Firefox'] : ['Chrome', 'Firefox', 'IE'],
+		browsers: CI ? ['ChromeHeadless'] : ['Chrome', 'Firefox', 'IE'],
 		files: [
 			'http://jdataview.github.io/dist/jdataview.js',
 			'dist/browser/jbinary.js',
