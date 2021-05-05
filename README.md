@@ -9,7 +9,7 @@ jBinary
 
 jBinary makes it easy to create, load, parse, modify and save complex binary files and data structures in both browser and Node.js.
 
-It works on top of [jDataView](https://github.com/jDataView/jDataView) ([DataView](http://www.khronos.org/registry/typedarray/specs/latest/#8) polyfill with convenient extensions).
+It works on top of [jDataView](https://github.com/jDataView/jDataView) ([DataView](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView) polyfill with convenient extensions).
 
 Was inspired by [jParser](https://github.com/vjeux/jParser) and derived as new library with full set of operations for binary data.
 
@@ -33,9 +33,9 @@ How about TAR archive modification:
 // (you can use CommonJS (Component, Node.js) or simple script tags as well)
 require.config({
   paths: {
-    jdataview: '//jdataview.github.io/dist/jdataview',
-    jbinary: '//jdataview.github.io/dist/jbinary',
-    TAR: '//jdataview.github.io/jBinary.Repo/typeSets/tar' // TAR archive typeset
+    jdataview: 'https://jdataview.github.io/dist/jdataview',
+    jbinary: 'https://unpkg.com/jbinary@2.1.3/dist/browser/jbinary',
+    TAR: 'https://jdataview.github.io/jBinary.Repo/typeSets/tar' // TAR archive typeset
   }
 });
 
@@ -56,19 +56,19 @@ require(['jbinary', 'TAR'], function (jBinary, TAR) {
 });
 ```
 
-[Run](http://jsbin.com/jofipi/1/) or [edit](http://jsbin.com/jofipi/1/edit?js,console) it on JSBin.
+[Run](https://jsbin.com/jofipi/1/) or [edit](https://jsbin.com/jofipi/1/edit?js,console) it on JSBin.
 
 # Show me amazing use-cases!
 
 Advanced demo that shows abilities and performance of jBinary - [Apple HTTP Live Streaming player](https://rreverser.github.io/mpegts/) which converts MPEG-TS video chunks from realtime stream to MP4 and plays them immediately one by one while converting few more chunks in background.
 
-[![Screenshot](http://rreverser.github.io/mpegts/screenshot.png?)](http://rreverser.github.io/mpegts/)
+[![Screenshot](https://rreverser.github.io/mpegts/screenshot.png?)](https://rreverser.github.io/mpegts/)
 
 ---
 
-A [World of Warcraft Model Viewer](http://vjeux.github.io/jsWoWModelViewer/). It uses [jDataView](https://github.com/jDataView/jDataView)+[jBinary](https://github.com/jDataView/jBinary) to read the binary file and then WebGL to display it.
+A [World of Warcraft Model Viewer](https://vjeux.github.io/jsWoWModelViewer/). It uses [jDataView](https://github.com/jDataView/jDataView)+[jBinary](https://github.com/jDataView/jBinary) to read the binary file and then WebGL to display it.
 
-[![Screenshot](http://vjeux.github.io/jsWoWModelViewer/images/modelviewer.png)](http://vjeux.github.io/jsWoWModelViewer/)
+[![Screenshot](https://vjeux.github.io/jsWoWModelViewer/images/modelviewer.png)](https://vjeux.github.io/jsWoWModelViewer/)
 ---
 
 Also check out [jBinary.Repo](https://jDataView.github.io/jBinary.Repo/) for advanced usage and demos of some popular file formats (and feel free to submit more!).
