@@ -6,9 +6,6 @@ node_js:
 - 14
 services:
 - xvfb
-before_install:
-- npm install -g npm
-- npm install -g grunt-cli
 env:
   global:
     - NPM_USERNAME=rreverser

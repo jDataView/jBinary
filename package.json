@@ -33,14 +33,15 @@
     }
   ],
   "dependencies": {
+    "es6-promise": "*",
     "jdataview": "*",
-    "request": "*",
-    "es6-promise": "*"
+    "request": "*"
   },
   "devDependencies": {
     "chai": "^1.9.1",
     "grunt": "^1.3.0",
     "grunt-bump": "0.8.0",
+    "grunt-cli": "^1.4.2",
     "grunt-compare-size": "^0.4.2",
     "grunt-concat-sourcemap": "^0.4.3",
     "grunt-contrib-clean": "^2.0.0",
