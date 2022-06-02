@@ -63,6 +63,6 @@
     "karma-phantomjs-launcher": "^1.0.4",
     "load-grunt-config": "^3.0.1",
     "mocha": "^8.3.2",
-    "npm": "^7.9.0"
+    "npm": "^8.11.0"
   }
 }
